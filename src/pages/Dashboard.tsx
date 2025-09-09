@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardNavbar from '@/components/DashboardNavbar';
-import DisasterMap from '@/components/DisasterMap';
+import SimpleMap from '@/components/SimpleMap';
 import WeatherWidget from '@/components/WeatherWidget';
 import DisasterList from '@/components/DisasterList';
 import AIChat from '@/components/AIChat';
@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
       case 'overview':
         return (
           <div className="h-full">
-            <DisasterMap
+            <SimpleMap
               disasters={disasters}
               facilities={facilities}
               userLocation={userLocation}
