@@ -5,6 +5,7 @@ import SimpleMap from '@/components/SimpleMap';
 import WeatherWidget from '@/components/WeatherWidget';
 import DisasterList from '@/components/DisasterList';
 import AIChat from '@/components/AIChat';
+import GovernmentDisasterData from '@/components/GovernmentDisasterData';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -149,6 +150,13 @@ const Dashboard: React.FC = () => {
               userLocation={userLocation}
               nearestFacilities={facilities}
             />
+          </div>
+        );
+
+      case 'government-alerts':
+        return (
+          <div className="h-full overflow-y-auto p-6">
+            <GovernmentDisasterData onDisasterClick={handleDisasterClick} />
           </div>
         );
 

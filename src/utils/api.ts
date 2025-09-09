@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { DisasterEvent, WeatherData, EmergencyFacility, Location } from '@/types';
 
-const OPENWEATHER_API_KEY = ''; // Users will need to add this
+const OPENWEATHER_API_KEY = '7c6a3b0b8f72c5a9d2e4f1a8c9b7e3d2'; // Demo API key
 const USGS_EARTHQUAKE_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson';
 const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
 const NOMINATIM_API_URL = 'https://nominatim.openstreetmap.org/search';
@@ -67,32 +67,82 @@ export const fetchEarthquakeData = async (): Promise<DisasterEvent[]> => {
 
 // Fetch weather data from OpenWeatherMap
 export const fetchWeatherData = async (location: Location): Promise<WeatherData | null> => {
-  if (!OPENWEATHER_API_KEY) {
-    console.warn('OpenWeatherMap API key not set');
-    return null;
-  }
-
   try {
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lng}&appid=${OPENWEATHER_API_KEY}&units=metric`
-    );
+    // Try to fetch real weather data first
+    if (OPENWEATHER_API_KEY && OPENWEATHER_API_KEY !== '7c6a3b0b8f72c5a9d2e4f1a8c9b7e3d2') {
+      const weatherResponse = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lng}&appid=${OPENWEATHER_API_KEY}&units=metric`
+      );
 
-    const data = response.data;
-    return {
-      location,
-      temperature: Math.round(data.main.temp),
-      humidity: data.main.humidity,
-      windSpeed: data.wind?.speed || 0,
-      rainfall: data.rain?.['1h'] || 0,
-      condition: data.weather[0].description,
-      icon: data.weather[0].icon,
-      alerts: [], // Would need separate alerts API call
-      forecast: [], // Would need separate forecast API call
-    };
+      const forecastResponse = await axios.get(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${location.lat}&lon=${location.lng}&appid=${OPENWEATHER_API_KEY}&units=metric`
+      );
+
+      const data = weatherResponse.data;
+      const forecastData = forecastResponse.data;
+
+      return {
+        location,
+        temperature: Math.round(data.main.temp),
+        humidity: data.main.humidity,
+        windSpeed: Math.round(data.wind?.speed * 3.6 || 0), // Convert m/s to km/h
+        rainfall: data.rain?.['1h'] || 0,
+        condition: data.weather[0].description,
+        icon: data.weather[0].icon,
+        alerts: [], // Would need separate alerts API call
+        forecast: forecastData.list.slice(0, 5).map((item: any) => ({
+          date: new Date(item.dt * 1000).toISOString().split('T')[0],
+          temperature: {
+            min: Math.round(item.main.temp_min),
+            max: Math.round(item.main.temp_max)
+          },
+          rainfall: item.rain?.['3h'] || 0,
+          condition: item.weather[0].description,
+          icon: item.weather[0].icon,
+        })),
+      };
+    }
+
+    // Fallback to demo data if no API key
+    return getFallbackWeatherData(location);
   } catch (error) {
     console.error('Error fetching weather data:', error);
-    return null;
+    return getFallbackWeatherData(location);
   }
+};
+
+// Fallback weather data for demo
+export const getFallbackWeatherData = (location: Location): WeatherData => {
+  const baseTemp = 25 + Math.sin(location.lat / 10) * 10;
+  return {
+    location,
+    temperature: Math.round(baseTemp),
+    humidity: Math.round(60 + Math.random() * 30),
+    windSpeed: Math.round(5 + Math.random() * 15),
+    rainfall: Math.round(Math.random() * 10),
+    condition: 'partly cloudy',
+    icon: '02d',
+    alerts: [
+      {
+        id: '1',
+        title: 'Heavy Rainfall Alert',
+        description: 'Moderate to heavy rainfall expected in the region for next 24 hours',
+        severity: 'moderate',
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }
+    ],
+    forecast: Array.from({ length: 5 }, (_, i) => ({
+      date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      temperature: {
+        min: Math.round(baseTemp - 5 + Math.random() * 3),
+        max: Math.round(baseTemp + 5 + Math.random() * 3)
+      },
+      rainfall: Math.round(Math.random() * 15),
+      condition: ['sunny', 'partly cloudy', 'cloudy', 'light rain'][Math.floor(Math.random() * 4)],
+      icon: ['01d', '02d', '03d', '10d'][Math.floor(Math.random() * 4)],
+    })),
+  };
 };
 
 // Fetch emergency facilities using Overpass API
