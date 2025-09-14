@@ -29,107 +29,91 @@ const GovernmentDisasterData: React.FC<GovernmentDisasterDataProps> = ({ onDisas
   const [loading, setLoading] = useState(true);
   const [selectedState, setSelectedState] = useState<string>('all');
 
-  // Real-time government disaster data (simulated with realistic data)
+// Real-time alerts: fetch from ReliefWeb (OCHA) for India as a reliable public source
+  // Note: Some official Indian sources lack public JSON/CORS APIs; ReliefWeb aggregates from gov agencies
   const fetchGovernmentAlerts = async (): Promise<GovernmentDisasterAlert[]> => {
-    // In production, this would fetch from NDMA, IMD, INCOIS APIs
-    // For now, using realistic current disaster data for Indian states
-    return [
-      {
-        id: 'NDMA-2024-001',
-        state: 'Punjab',
-        district: 'Ludhiana',
-        type: 'Flood',
-        severity: 'high',
-        description: 'Heavy monsoon rains have caused severe flooding in multiple villages. Sutlej river water level rising rapidly.',
-        issueDate: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        source: 'NDMA Punjab',
-        coordinates: { lat: 30.900965, lng: 75.857277 },
-        affectedAreas: ['Ludhiana', 'Jalandhar', 'Kapurthala'],
-        guidelines: [
-          'Evacuate low-lying areas immediately',
-          'Avoid travel on flooded roads',
-          'Contact emergency helpline: 1077',
-          'Move to higher ground or relief camps'
-        ]
-      },
-      {
-        id: 'IMD-2024-002',
-        state: 'Maharashtra',
-        district: 'Mumbai',
-        type: 'Cyclone',
-        severity: 'medium',
-        description: 'Cyclonic storm approaching Mumbai coast. Expected to make landfall in 18-24 hours with wind speeds of 90-100 km/h.',
-        issueDate: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        validUntil: new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString(),
-        source: 'IMD Mumbai',
-        coordinates: { lat: 19.0760, lng: 72.8777 },
-        affectedAreas: ['Mumbai', 'Thane', 'Raigad', 'Palghar'],
-        guidelines: [
-          'Secure loose objects and close windows',
-          'Stock up on food, water and emergency supplies',
-          'Avoid coastal areas and beaches',
-          'Emergency helpline: 1916'
-        ]
-      },
-      {
-        id: 'INCOIS-2024-003',
-        state: 'Tamil Nadu',
-        district: 'Chennai',
-        type: 'Tsunami Warning',
-        severity: 'high',
-        description: 'Tsunami watch issued for Tamil Nadu and Puducherry coast following underwater seismic activity in Bay of Bengal.',
-        issueDate: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        validUntil: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-        source: 'INCOIS Chennai',
-        coordinates: { lat: 13.0827, lng: 80.2707 },
-        affectedAreas: ['Chennai', 'Kanchipuram', 'Tiruvallur', 'Puducherry'],
-        guidelines: [
-          'Evacuate coastal areas within 1km immediately',
-          'Move to higher ground at least 30m above sea level',
-          'Do not return until all clear signal',
-          'Emergency helpline: 1070'
-        ]
-      },
-      {
-        id: 'CWC-2024-004',
-        state: 'Assam',
-        district: 'Guwahati',
-        type: 'Flood',
-        severity: 'medium',
-        description: 'Brahmaputra river water level rising due to continuous rainfall in upstream areas. Flood alert issued for low-lying areas.',
-        issueDate: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        validUntil: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-        source: 'CWC Assam',
-        coordinates: { lat: 26.1445, lng: 91.7362 },
-        affectedAreas: ['Guwahati', 'Kamrup', 'Nalbari', 'Barpeta'],
-        guidelines: [
-          'Monitor water levels regularly',
-          'Keep emergency kit ready',
-          'Avoid driving through waterlogged areas',
-          'Contact district control room: 0361-2237209'
-        ]
-      },
-      {
-        id: 'NDMA-2024-005',
-        state: 'Gujarat',
-        district: 'Kutch',
-        type: 'Earthquake',
-        severity: 'low',
-        description: 'Minor earthquake of magnitude 4.2 recorded in Kutch region. No immediate damage reported.',
-        issueDate: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        validUntil: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-        source: 'NDMA Gujarat',
-        coordinates: { lat: 23.7337, lng: 69.8597 },
-        affectedAreas: ['Kutch', 'Surendranagar', 'Rajkot'],
-        guidelines: [
-          'Check for structural damage in buildings',
-          'Be prepared for aftershocks',
-          'Keep emergency supplies ready',
-          'Report damage: 108'
-        ]
-      }
-    ];
+    try {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const res = await fetch('https://api.reliefweb.int/v1/reports?appname=lovable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filter: {
+            operator: 'AND',
+            conditions: [
+              { field: 'country', value: 'India' },
+              { field: 'date.created', value: { from: since } }
+            ]
+          },
+          sort: ['date.created:desc'],
+          limit: 50,
+          fields: {
+            include: ['title', 'url', 'date', 'disaster_type', 'primary_country']
+          }
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to load alerts');
+      const json = await res.json();
+
+      const indianStates = [
+        'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh','Puducherry','Chandigarh','Andaman and Nicobar Islands','Lakshadweep','Dadra and Nagar Haveli and Daman and Diu'] as const;
+
+      const stateCentroids: Record<string, { lat: number; lng: number }> = {
+        Punjab: { lat: 31.1471, lng: 75.3412 },
+        Maharashtra: { lat: 19.7515, lng: 75.7139 },
+        'Tamil Nadu': { lat: 11.1271, lng: 78.6569 },
+        Assam: { lat: 26.2006, lng: 92.9376 },
+        Gujarat: { lat: 22.2587, lng: 71.1924 },
+        Delhi: { lat: 28.6139, lng: 77.2090 },
+        'Uttar Pradesh': { lat: 26.8467, lng: 80.9462 },
+        'West Bengal': { lat: 22.9868, lng: 87.8550 },
+      };
+
+      const mapTypeToSeverity = (type?: string): 'low' | 'medium' | 'high' => {
+        const t = (type || '').toLowerCase();
+        if (t.includes('cyclone') || t.includes('flood') || t.includes('earthquake') || t.includes('tsunami')) return 'high';
+        if (t.includes('landslide') || t.includes('storm') || t.includes('drought')) return 'medium';
+        return 'low';
+      };
+
+      const alerts: GovernmentDisasterAlert[] = (json.data || []).map((item: any) => {
+        const fields = item.fields || {};
+        const title: string = fields.title || 'Alert';
+        const type: string = fields.disaster_type?.[0]?.name || 'Advisory';
+        const issueDate: string = fields.date?.created || new Date().toISOString();
+        const validUntil: string = fields.date?.changed || issueDate;
+        const source: string = fields.primary_country?.name || 'Official Source';
+
+        // Detect state from title text
+        const matchedState = (indianStates as readonly string[]).find((s) => new RegExp(`\\b${s}\\b`, 'i').test(title)) || 'India';
+        const coords = stateCentroids[matchedState];
+
+        return {
+          id: String(item.id),
+          state: matchedState,
+          district: matchedState === 'India' ? 'Multiple Districts' : matchedState,
+          type,
+          severity: mapTypeToSeverity(type),
+          description: title,
+          issueDate,
+          validUntil,
+          source,
+          coordinates: coords,
+          affectedAreas: matchedState === 'India' ? ['Multiple States'] : [matchedState],
+          guidelines: [
+            'Follow local authority advisories',
+            'Keep emergency kit and important documents ready',
+            'Avoid risky travel and waterlogged/low-lying areas'
+          ]
+        } as GovernmentDisasterAlert;
+      });
+
+      return alerts;
+    } catch (e) {
+      console.error('Failed to fetch ReliefWeb alerts', e);
+      return [];
+    }
   };
 
   useEffect(() => {

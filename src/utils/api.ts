@@ -68,46 +68,105 @@ export const fetchEarthquakeData = async (): Promise<DisasterEvent[]> => {
 // Fetch weather data from OpenWeatherMap
 export const fetchWeatherData = async (location: Location): Promise<WeatherData | null> => {
   try {
-    // Try to fetch real weather data first
-    if (OPENWEATHER_API_KEY && OPENWEATHER_API_KEY !== '7c6a3b0b8f72c5a9d2e4f1a8c9b7e3d2') {
-      const weatherResponse = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lng}&appid=${OPENWEATHER_API_KEY}&units=metric`
-      );
+    // Use Open-Meteo (no API key required) for reliable, real weather data
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&timezone=auto`;
+    const response = await axios.get(url);
+    const data = response.data;
 
-      const forecastResponse = await axios.get(
-        `https://api.openweathermap.org/data/2.5/forecast?lat=${location.lat}&lon=${location.lng}&appid=${OPENWEATHER_API_KEY}&units=metric`
-      );
+    const currentTemp = Math.round(data.current?.temperature_2m ?? 0);
+    const humidity = Math.round(data.current?.relative_humidity_2m ?? 0);
+    const wind = Math.round(data.current?.wind_speed_10m ?? 0); // already in km/h
+    const rainfall = Math.round((data.current?.precipitation ?? 0) * 10) / 10;
 
-      const data = weatherResponse.data;
-      const forecastData = forecastResponse.data;
-
-      return {
-        location,
-        temperature: Math.round(data.main.temp),
-        humidity: data.main.humidity,
-        windSpeed: Math.round(data.wind?.speed * 3.6 || 0), // Convert m/s to km/h
-        rainfall: data.rain?.['1h'] || 0,
-        condition: data.weather[0].description,
-        icon: data.weather[0].icon,
-        alerts: [], // Would need separate alerts API call
-        forecast: forecastData.list.slice(0, 5).map((item: any) => ({
-          date: new Date(item.dt * 1000).toISOString().split('T')[0],
+    const forecast: WeatherData['forecast'] = [];
+    if (data.daily?.time?.length) {
+      for (let i = 0; i < Math.min(5, data.daily.time.length); i++) {
+        forecast.push({
+          date: data.daily.time[i],
           temperature: {
-            min: Math.round(item.main.temp_min),
-            max: Math.round(item.main.temp_max)
+            min: Math.round(data.daily.temperature_2m_min[i]),
+            max: Math.round(data.daily.temperature_2m_max[i]),
           },
-          rainfall: item.rain?.['3h'] || 0,
-          condition: item.weather[0].description,
-          icon: item.weather[0].icon,
-        })),
-      };
+          rainfall: Math.round((data.daily.precipitation_sum[i] ?? 0) * 10) / 10,
+          condition: mapWeatherCodeToText(data.daily.weathercode?.[i]),
+          icon: mapWeatherCodeToIcon(data.daily.weathercode?.[i]),
+        });
+      }
     }
 
-    // Fallback to demo data if no API key
-    return getFallbackWeatherData(location);
+    return {
+      location,
+      temperature: currentTemp,
+      humidity,
+      windSpeed: wind,
+      rainfall,
+      condition: mapWeatherCodeToText(data.daily?.weathercode?.[0] ?? data.current?.weathercode),
+      icon: mapWeatherCodeToIcon(data.daily?.weathercode?.[0] ?? data.current?.weathercode),
+      alerts: [],
+      forecast,
+    };
   } catch (error) {
     console.error('Error fetching weather data:', error);
     return getFallbackWeatherData(location);
+  }
+};
+
+// Map Open-Meteo WMO weather codes to readable text and icons
+const mapWeatherCodeToText = (code?: number): string => {
+  switch (code) {
+    case 0: return 'clear sky';
+    case 1:
+    case 2: return 'partly cloudy';
+    case 3: return 'overcast';
+    case 45:
+    case 48: return 'fog';
+    case 51:
+    case 53:
+    case 55: return 'drizzle';
+    case 61:
+    case 63:
+    case 65: return 'rain';
+    case 66:
+    case 67: return 'freezing rain';
+    case 71:
+    case 73:
+    case 75: return 'snow';
+    case 80:
+    case 81:
+    case 82: return 'rain showers';
+    case 95: return 'thunderstorm';
+    case 96:
+    case 99: return 'thunderstorm with hail';
+    default: return 'unknown';
+  }
+};
+
+const mapWeatherCodeToIcon = (code?: number): string => {
+  switch (code) {
+    case 0: return '01d';
+    case 1:
+    case 2: return '02d';
+    case 3: return '04d';
+    case 45:
+    case 48: return '50d';
+    case 51:
+    case 53:
+    case 55: return '09d';
+    case 61:
+    case 63:
+    case 65: return '10d';
+    case 66:
+    case 67: return '13d';
+    case 71:
+    case 73:
+    case 75: return '13d';
+    case 80:
+    case 81:
+    case 82: return '09d';
+    case 95:
+    case 96:
+    case 99: return '11d';
+    default: return '02d';
   }
 };
 
