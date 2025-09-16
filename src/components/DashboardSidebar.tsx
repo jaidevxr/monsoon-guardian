@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Cloud, AlertTriangle, Bot, Menu, X, Phone, Hospital, Shield } from 'lucide-react';
+import { MapPin, Cloud, AlertTriangle, Bot, Menu, X, Phone, Hospital, Shield, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +28,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const [userLocation, setUserLocation] = useState<Location | null>(null);
 
   const navItems = [
-    { id: 'overview', label: 'Overview', icon: MapPin },
+    { id: 'overview', label: 'Heatmap', icon: MapPin },
+    { id: 'map', label: 'Map View', icon: Map },
+    { id: 'emergency-services', label: 'Emergency', icon: Hospital },
     { id: 'weather', label: 'Weather', icon: Cloud },
     { id: 'disasters', label: 'Disasters', icon: AlertTriangle },
     { id: 'government-alerts', label: 'Gov Alerts', icon: Shield },
