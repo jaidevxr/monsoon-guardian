@@ -31,7 +31,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     { id: 'overview', label: 'Heatmap', icon: MapPin },
     { id: 'weather', label: 'Weather', icon: Cloud },
     { id: 'disasters', label: 'Disasters', icon: AlertTriangle },
-    { id: 'government-alerts', label: 'Gov Alerts', icon: Shield },
+    { id: 'guidelines', label: 'Guidelines', icon: Shield },
     { id: 'ai-insights', label: 'AI Copilot', icon: Bot },
   ];
 

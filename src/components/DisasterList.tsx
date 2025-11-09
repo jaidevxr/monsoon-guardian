@@ -9,10 +9,34 @@ interface DisasterListProps {
   disasters: DisasterEvent[];
   onDisasterClick: (disaster: DisasterEvent) => void;
   loading?: boolean;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
-const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick, loading }) => {
+const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick, loading, userLocation }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Calculate distance from user location
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Separate disasters into nearby (within 500km) and India-wide
+  const nearbyDisasters = userLocation 
+    ? disasters.filter(d => {
+        const distance = calculateDistance(userLocation.lat, userLocation.lng, d.location.lat, d.location.lng);
+        return distance <= 500;
+      })
+    : [];
+
+  const indiaWideDisasters = disasters;
 
   if (loading) {
     return (
@@ -90,16 +114,28 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
     return acc;
   }, {} as Record<string, DisasterEvent[]>);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Active Disasters</h2>
-        <Badge variant="outline" className="text-sm">
-          {disasters.length} Active Alert{disasters.length !== 1 ? 's' : ''}
-        </Badge>
-      </div>
+  const renderDisasterGroup = (disastersList: DisasterEvent[], title: string) => {
+    const grouped = disastersList.reduce((acc, disaster) => {
+      if (!acc[disaster.type]) {
+        acc[disaster.type] = [];
+      }
+      acc[disaster.type].push(disaster);
+      return acc;
+    }, {} as Record<string, DisasterEvent[]>);
 
-      {Object.entries(groupedDisasters).map(([type, typeDisasters]) => (
+    if (disastersList.length === 0) {
+      return (
+        <Card className="glass p-8 text-center">
+          <AlertTriangle className="h-12 w-12 text-success mx-auto mb-4" />
+          <h3 className="font-semibold text-lg mb-2">No Disasters in This Area</h3>
+          <p className="text-muted-foreground">No disasters reported in this region.</p>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {Object.entries(grouped).map(([type, typeDisasters]) => (
         <div key={type} className="space-y-3">
           <h3 className="font-semibold text-lg capitalize flex items-center gap-2">
             <span className="text-2xl">{getDisasterIcon(type)}</span>
@@ -109,6 +145,9 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
           <div className="space-y-3">
             {typeDisasters.map((disaster) => {
               const isExpanded = expandedItems.has(disaster.id);
+              const distance = userLocation 
+                ? calculateDistance(userLocation.lat, userLocation.lng, disaster.location.lat, disaster.location.lng)
+                : null;
               
               return (
                 <Card 
@@ -127,7 +166,7 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {disaster.description}
                           </p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               <span>{new Date(disaster.time).toLocaleString('en-IN')}</span>
@@ -137,6 +176,11 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
                                 <MapPin className="h-3 w-3" />
                                 <span>{disaster.location.name}</span>
                               </div>
+                            )}
+                            {distance !== null && (
+                              <Badge variant="outline" className="text-xs">
+                                {distance.toFixed(0)} km away
+                              </Badge>
                             )}
                           </div>
                         </div>
@@ -198,7 +242,7 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
                             <Button size="sm" variant="outline" asChild>
                               <a href={disaster.url} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="h-3 w-3 mr-2" />
-                                Details
+                                Full Report
                               </a>
                             </Button>
                           )}
@@ -212,6 +256,35 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
           </div>
         </div>
       ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Nearby Disasters Section */}
+      {userLocation && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-foreground">📍 Nearby Disasters (within 500 km)</h2>
+            <Badge variant="outline" className="text-sm">
+              {nearbyDisasters.length} Event{nearbyDisasters.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+          {renderDisasterGroup(nearbyDisasters, 'Nearby Disasters')}
+        </div>
+      )}
+
+      {/* All India Disasters Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground">🇮🇳 All India Disasters</h2>
+          <Badge variant="outline" className="text-sm">
+            {indiaWideDisasters.length} Active Alert{indiaWideDisasters.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        {renderDisasterGroup(indiaWideDisasters, 'All India')}
+      </div>
     </div>
   );
 };

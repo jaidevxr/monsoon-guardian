@@ -4,7 +4,7 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import WeatherWidget from '@/components/WeatherWidget';
 import DisasterList from '@/components/DisasterList';
 import CopilotChat from '@/components/CopilotChat';
-import GovernmentDisasterData from '@/components/GovernmentDisasterData';
+import DisasterGuidelines from '@/components/DisasterGuidelines';
 import HeatmapOverview from '@/components/HeatmapOverview';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +15,10 @@ import {
   Location 
 } from '@/types';
 import { 
-  fetchEarthquakeData, 
+  fetchDisasterData, 
   fetchEmergencyFacilities, 
   fetchWeatherData,
   getCurrentLocation,
-  getFallbackDisasterData
 } from '@/utils/api';
 
 const Dashboard: React.FC = () => {
@@ -53,16 +52,11 @@ const Dashboard: React.FC = () => {
   const loadDisasterData = async () => {
     setLoading(prev => ({ ...prev, disasters: true }));
     try {
-      const earthquakeData = await fetchEarthquakeData();
-      if (earthquakeData.length > 0) {
-        setDisasters(earthquakeData);
-      } else {
-        // Use fallback data for demo
-        setDisasters(getFallbackDisasterData());
-      }
+      const disasterData = await fetchDisasterData();
+      setDisasters(disasterData);
     } catch (error) {
       console.error('Error loading disaster data:', error);
-      setDisasters(getFallbackDisasterData());
+      setDisasters([]);
     }
     setLoading(prev => ({ ...prev, disasters: false }));
   };
@@ -132,6 +126,7 @@ const Dashboard: React.FC = () => {
               disasters={disasters} 
               onDisasterClick={handleDisasterClick}
               loading={loading.disasters}
+              userLocation={userLocation}
             />
           </div>
         );
@@ -143,10 +138,10 @@ const Dashboard: React.FC = () => {
           </div>
         );
 
-      case 'government-alerts':
+      case 'guidelines':
         return (
           <div className="h-full overflow-y-auto p-6">
-            <GovernmentDisasterData onDisasterClick={handleDisasterClick} />
+            <DisasterGuidelines />
           </div>
         );
 
