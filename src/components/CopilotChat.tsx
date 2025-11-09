@@ -58,7 +58,16 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for specific error types
+        if (error.message.includes('429') || error.message.includes('rate limit')) {
+          throw new Error('Rate limit reached. Please try again in a few moments.');
+        }
+        if (error.message.includes('402') || error.message.includes('payment required')) {
+          throw new Error('AI service requires credits. Please contact support.');
+        }
+        throw error;
+      }
 
       const assistantMessage: Message = {
         role: 'assistant',
@@ -67,9 +76,13 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error:', error);
+      
+      // Remove the user message on error
+      setMessages(prev => prev.slice(0, -1));
+      
       toast({
         title: "Error",
-        description: "Failed to get response. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to get response. Please try again.",
         variant: "destructive",
       });
     } finally {

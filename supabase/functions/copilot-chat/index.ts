@@ -13,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { messages, location } = await req.json();
-    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
-    if (!GROQ_API_KEY) {
-      throw new Error('GROQ_API_KEY is not configured');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
     console.log('Received request with location:', location);
@@ -96,15 +96,15 @@ ${location ? `The user is currently at coordinates: ${location.lat.toFixed(4)}, 
 Always be concise, helpful, and prioritize safety information. When providing location-based information, mention the general area (city/region) to help users confirm you're using the right location.`
     };
 
-    // Call Groq API with updated model
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Call Lovable AI Gateway
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'google/gemini-2.5-flash',
         messages: [systemMessage, ...messages],
         tools: tools,
         tool_choice: "auto",
@@ -114,15 +114,15 @@ Always be concise, helpful, and prioritize safety information. When providing lo
     });
 
     const data = await response.json();
-    console.log('Groq response:', JSON.stringify(data));
+    console.log('AI response:', JSON.stringify(data));
 
     // Check for API errors
     if (data.error) {
-      throw new Error(`Groq API error: ${data.error.message}`);
+      throw new Error(`AI API error: ${data.error.message || JSON.stringify(data.error)}`);
     }
 
     if (!data.choices || !data.choices[0]) {
-      throw new Error('Invalid response from Groq API');
+      throw new Error('Invalid response from AI API');
     }
 
     // Check if the model wants to call tools
@@ -174,15 +174,15 @@ Always be concise, helpful, and prioritize safety information. When providing lo
         });
       }
 
-      // Call Groq again with tool results
-      const finalResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      // Call AI again with tool results
+      const finalResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'google/gemini-2.5-flash',
           messages: [
             systemMessage,
             ...messages,
@@ -199,11 +199,11 @@ Always be concise, helpful, and prioritize safety information. When providing lo
 
       // Check for errors in final response
       if (finalData.error) {
-        throw new Error(`Groq API error: ${finalData.error.message}`);
+        throw new Error(`AI API error: ${finalData.error.message || JSON.stringify(finalData.error)}`);
       }
 
       if (!finalData.choices || !finalData.choices[0]) {
-        throw new Error('Invalid final response from Groq API');
+        throw new Error('Invalid final response from AI API');
       }
 
       return new Response(JSON.stringify({ 
