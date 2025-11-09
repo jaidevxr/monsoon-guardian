@@ -82,7 +82,7 @@ serve(async (req) => {
       }
     ];
 
-    // System prompt
+    // System prompt with location awareness
     const systemMessage = {
       role: "system",
       content: `You are a disaster response AI assistant for India. You help users with:
@@ -91,8 +91,9 @@ serve(async (req) => {
 - Finding nearby emergency services (hospitals, police, fire stations)
 - Current disaster alerts and warnings
 
-When users ask about conditions "here" or "my location", use the provided location data.
-Always be concise, helpful, and prioritize safety information.`
+${location ? `The user is currently at coordinates: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}. Use this location automatically when they ask about "here", "my location", "nearby", or similar context-based queries.` : ''}
+
+Always be concise, helpful, and prioritize safety information. When providing location-based information, mention the general area (city/region) to help users confirm you're using the right location.`
     };
 
     // Call Groq API with updated model

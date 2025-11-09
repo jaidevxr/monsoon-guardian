@@ -20,8 +20,23 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [locationName, setLocationName] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Fetch location name when location changes
+    if (userLocation) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
+        .then(res => res.json())
+        .then(data => {
+          const address = data.address;
+          const name = address.city || address.town || address.village || address.state || 'Unknown location';
+          setLocationName(name);
+        })
+        .catch(err => console.error('Error fetching location name:', err));
+    }
+  }, [userLocation]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,7 +101,9 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
           {userLocation && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
               <MapPin className="w-4 h-4 text-primary" />
-              <span>Location Active</span>
+              <span className="font-medium">
+                {locationName || `${userLocation.lat.toFixed(2)}, ${userLocation.lng.toFixed(2)}`}
+              </span>
             </div>
           )}
         </div>
@@ -102,6 +119,11 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
             <h3 className="text-lg font-semibold mb-2 text-foreground">Welcome to AI Copilot</h3>
             <p className="text-muted-foreground mb-4">
               I can help you with weather, disaster risks, nearby emergency services, and active alerts.
+              {userLocation && locationName && (
+                <span className="block mt-2 text-primary font-medium">
+                  📍 Your location: {locationName}
+                </span>
+              )}
             </p>
             <div className="grid grid-cols-2 gap-2 text-sm max-w-md mx-auto">
               <div className="p-3 bg-muted/50 rounded-lg text-left">
