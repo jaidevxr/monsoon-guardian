@@ -57,6 +57,16 @@ export interface EmergencyFacility {
   isOpen?: boolean;
 }
 
+export interface EmergencyService {
+  id: string;
+  name: string;
+  type: string;
+  lat: number;
+  lng: number;
+  distance: number;
+  address?: string;
+}
+
 export interface ChatMessage {
   id: string;
   content: string;

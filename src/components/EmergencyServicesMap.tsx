@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { EmergencyFacility, Location } from '@/types';
-import { fetchEmergencyFacilities, getCurrentLocation } from '@/utils/api';
+import { EmergencyService, Location } from '@/types';
+import { getCurrentLocation } from '@/utils/api';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Hospital, Shield, AlertTriangle, Phone, RefreshCw } from 'lucide-react';
+import { MapPin, Hospital, Shield, AlertTriangle, Phone, RefreshCw, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface EmergencyServicesMapProps {
-  onFacilityClick?: (facility: EmergencyFacility) => void;
+  onFacilityClick?: (facility: EmergencyService) => void;
 }
 
 // Fix Leaflet default icon
@@ -24,10 +26,11 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
-  const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
+  const [services, setServices] = useState<EmergencyService[]>([]);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['hospital', 'police', 'fire_station']);
+  const { toast } = useToast();
 
   // Initialize map
   useEffect(() => {
@@ -49,41 +52,80 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
     };
   }, []);
 
-  // Get user location and load facilities
+  // Get user location and load services
   useEffect(() => {
-    const loadUserLocationAndFacilities = async () => {
-      setLoading(true);
-      try {
-        const location = await getCurrentLocation();
-        setUserLocation(location);
-        
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.setView([location.lat, location.lng], 12);
-        }
-        
-        await loadFacilities(location);
-      } catch (error) {
-        console.error('Error loading user location:', error);
-        // Load facilities around Delhi as fallback
-        const defaultLocation = { lat: 28.6139, lng: 77.2090 };
-        await loadFacilities(defaultLocation);
-      }
-      setLoading(false);
-    };
-
-    loadUserLocationAndFacilities();
+    getUserLocation();
   }, []);
 
-  const loadFacilities = async (location: Location) => {
+  const getUserLocation = () => {
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setView([latitude, longitude], 13);
+        }
+        
+        fetchNearbyServices(latitude, longitude);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast({
+          title: 'Location Error',
+          description: 'Unable to get your location. Using default location.',
+          variant: 'destructive',
+        });
+        // Default to Delhi
+        const defaultLoc = { lat: 28.6139, lng: 77.2090 };
+        setUserLocation(defaultLoc);
+        
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setView([defaultLoc.lat, defaultLoc.lng], 12);
+        }
+        
+        fetchNearbyServices(defaultLoc.lat, defaultLoc.lng);
+      }
+    );
+  };
+
+  const fetchNearbyServices = async (lat: number, lng: number) => {
     try {
-      const data = await fetchEmergencyFacilities(location, 20000); // 20km radius
-      setFacilities(data);
-    } catch (error) {
-      console.error('Error loading facilities:', error);
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('nearby', {
+        body: { lat, lng, types: selectedTypes.join(',') },
+      });
+
+      if (error) throw error;
+      
+      setServices(data.services || []);
+      
+      toast({
+        title: 'Services Found',
+        description: `Found ${data.services?.length || 0} nearby emergency services`,
+      });
+    } catch (error: any) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load emergency services',
+        variant: 'destructive',
+      });
+      setServices([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Update markers when facilities change
+  // Refresh when selected types change
+  useEffect(() => {
+    if (userLocation) {
+      fetchNearbyServices(userLocation.lat, userLocation.lng);
+    }
+  }, [selectedTypes]);
+
+  // Update markers when services change
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -119,15 +161,10 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       markersRef.current.push(userMarker);
     }
 
-    // Filter facilities by selected type
-    const filteredFacilities = selectedType 
-      ? facilities.filter(f => f.type === selectedType)
-      : facilities;
-
-    // Add facility markers
-    filteredFacilities.forEach(facility => {
-      const icon = getFacilityIcon(facility.type);
-      const color = getFacilityColor(facility.type);
+    // Add service markers
+    services.forEach(service => {
+      const icon = getFacilityIcon(service.type);
+      const color = getFacilityColor(service.type);
       
       const facilityIcon = L.divIcon({
         className: 'facility-marker',
@@ -149,35 +186,33 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
         iconAnchor: [16, 16],
       });
 
-      const marker = L.marker([facility.location.lat, facility.location.lng], { 
+      const marker = L.marker([service.lat, service.lng], { 
         icon: facilityIcon 
       })
         .bindPopup(`
           <div class="facility-popup">
-            <h3 style="margin: 0 0 8px 0; font-weight: bold;">${facility.name}</h3>
+            <h3 style="margin: 0 0 8px 0; font-weight: bold;">${service.name}</h3>
             <p style="margin: 2px 0; font-size: 12px; color: #666;">
-              <strong>Type:</strong> ${facility.type.replace('_', ' ')}
+              <strong>Type:</strong> ${service.type.replace('_', ' ')}
             </p>
-            ${facility.distance ? `
+            <p style="margin: 2px 0; font-size: 12px; color: #666;">
+              <strong>Distance:</strong> ${service.distance}km away
+            </p>
+            ${service.address ? `
               <p style="margin: 2px 0; font-size: 12px; color: #666;">
-                <strong>Distance:</strong> ${facility.distance}km away
-              </p>
-            ` : ''}
-            ${facility.contact ? `
-              <p style="margin: 2px 0; font-size: 12px; color: #666;">
-                <strong>Contact:</strong> ${facility.contact}
+                <strong>Address:</strong> ${service.address}
               </p>
             ` : ''}
           </div>
         `)
         .on('click', () => {
-          onFacilityClick?.(facility);
+          onFacilityClick?.(service);
         })
         .addTo(mapInstanceRef.current!);
       
       markersRef.current.push(marker);
     });
-  }, [facilities, userLocation, selectedType, onFacilityClick]);
+  }, [services, userLocation, onFacilityClick]);
 
   const getFacilityIcon = (type: string): string => {
     switch (type) {
@@ -197,17 +232,15 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
     }
   };
 
-  const facilityCounts = {
-    hospital: facilities.filter(f => f.type === 'hospital').length,
-    police: facilities.filter(f => f.type === 'police').length,
-    fire_station: facilities.filter(f => f.type === 'fire_station').length,
+  const serviceCounts = {
+    hospital: services.filter(s => s.type === 'hospital').length,
+    police: services.filter(s => s.type === 'police').length,
+    fire_station: services.filter(s => s.type === 'fire_station').length,
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     if (userLocation) {
-      setLoading(true);
-      await loadFacilities(userLocation);
-      setLoading(false);
+      fetchNearbyServices(userLocation.lat, userLocation.lng);
     }
   };
 
@@ -234,56 +267,41 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
             </div>
             
             <div className="space-y-2">
-              <Button
-                variant={selectedType === null ? 'default' : 'outline'}
-                size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => setSelectedType(null)}
-              >
-                <MapPin className="h-3 w-3 mr-2" />
-                All ({facilities.length})
-              </Button>
-              
-              <Button
-                variant={selectedType === 'hospital' ? 'default' : 'outline'}
-                size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => setSelectedType('hospital')}
-              >
-                <Hospital className="h-3 w-3 mr-2" />
-                Hospitals ({facilityCounts.hospital})
-              </Button>
-              
-              <Button
-                variant={selectedType === 'police' ? 'default' : 'outline'}
-                size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => setSelectedType('police')}
-              >
-                <Shield className="h-3 w-3 mr-2" />
-                Police ({facilityCounts.police})
-              </Button>
-              
-              <Button
-                variant={selectedType === 'fire_station' ? 'default' : 'outline'}
-                size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => setSelectedType('fire_station')}
-              >
-                <AlertTriangle className="h-3 w-3 mr-2" />
-                Fire Stations ({facilityCounts.fire_station})
-              </Button>
+              <p className="font-semibold text-sm mb-2">Filter by Type:</p>
+              {[
+                { id: 'hospital', label: 'Hospitals', icon: Hospital, count: serviceCounts.hospital },
+                { id: 'police', label: 'Police', icon: Shield, count: serviceCounts.police },
+                { id: 'fire_station', label: 'Fire Stations', icon: AlertTriangle, count: serviceCounts.fire_station },
+              ].map(({ id, label, icon: Icon, count }) => (
+                <label key={id} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-accent">
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedTypes([...selectedTypes, id]);
+                      } else {
+                        setSelectedTypes(selectedTypes.filter((t) => t !== id));
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <Icon className="h-4 w-4" />
+                  <span className="text-sm flex-1">{label}</span>
+                  <Badge variant="secondary" className="text-xs">{count}</Badge>
+                </label>
+              ))}
             </div>
           </Card>
         </div>
       </div>
 
-      {/* Sidebar with facility list */}
+      {/* Sidebar with services list */}
       <div className="w-80 glass-strong border-l border-border/20 p-4 overflow-y-auto">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-foreground mb-2">Emergency Services</h2>
           <p className="text-sm text-muted-foreground">
-            Click on markers or list items for details
+            Nearby Services ({services.length})
           </p>
         </div>
 
@@ -295,49 +313,43 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
           </div>
         ) : (
           <div className="space-y-2">
-            {(selectedType ? facilities.filter(f => f.type === selectedType) : facilities)
-              .map((facility) => (
-                <Card
-                  key={facility.id}
-                  className="p-3 cursor-pointer hover:shadow-lg transition-smooth glass border-border/10"
-                  onClick={() => onFacilityClick?.(facility)}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">
-                      {getFacilityIcon(facility.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate">
-                        {facility.name}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {facility.type.replace('_', ' ')}
-                        </Badge>
-                        {facility.distance && (
-                          <span className="text-xs text-muted-foreground">
-                            {facility.distance}km away
-                          </span>
-                        )}
-                      </div>
-                      {facility.contact && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <Phone className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {facility.contact}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+            {services.map((service) => (
+              <Card
+                key={service.id}
+                className="p-3 cursor-pointer hover:shadow-lg transition-smooth glass border-border/10"
+                onClick={() => onFacilityClick?.(service)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">
+                    {getFacilityIcon(service.type)}
                   </div>
-                </Card>
-              ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-foreground truncate">
+                      {service.name}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="text-xs">
+                        {service.type.replace('_', ' ')}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {service.distance}km away
+                      </span>
+                    </div>
+                    {service.address && (
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {service.address}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
             
-            {facilities.length === 0 && (
+            {services.length === 0 && !loading && (
               <div className="text-center py-8">
                 <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  No emergency facilities found nearby
+                  No emergency services found nearby
                 </p>
               </div>
             )}

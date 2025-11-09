@@ -108,8 +108,13 @@ const Dashboard: React.FC = () => {
     setActiveTab('overview');
   }, []);
 
-  const handleFacilityClick = useCallback((facility: EmergencyFacility) => {
-    setMapCenter(facility.location);
+  const handleFacilityClick = useCallback((facility: EmergencyFacility | any) => {
+    // Handle both EmergencyService and EmergencyFacility types
+    const location = facility.location 
+      ? facility.location 
+      : { lat: facility.lat, lng: facility.lng };
+    
+    setMapCenter(location);
     setActiveTab('overview');
   }, []);
 
