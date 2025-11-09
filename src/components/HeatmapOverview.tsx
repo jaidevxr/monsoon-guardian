@@ -34,7 +34,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
 
-  // Initialize map with state boundaries
+  // Initialize map with state boundaries and click-to-zoom
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -46,7 +46,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       maxZoom: 18,
     }).addTo(map);
 
-    // Add India state boundaries
+    // Add India state boundaries with click-to-zoom
     fetch('https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States')
       .then(response => response.json())
       .then(geojsonData => {
@@ -55,7 +55,41 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             color: '#3388ff',
             weight: 2,
             opacity: 0.5,
-            fillOpacity: 0.05
+            fillOpacity: 0.05,
+            fillColor: '#3388ff'
+          },
+          onEachFeature: (feature, layer) => {
+            // Add hover effect
+            layer.on({
+              mouseover: (e) => {
+                const layer = e.target;
+                layer.setStyle({
+                  weight: 3,
+                  opacity: 0.8,
+                  fillOpacity: 0.15
+                });
+              },
+              mouseout: (e) => {
+                const layer = e.target;
+                layer.setStyle({
+                  weight: 2,
+                  opacity: 0.5,
+                  fillOpacity: 0.05
+                });
+              },
+              click: (e) => {
+                const bounds = layer.getBounds();
+                map.fitBounds(bounds, { padding: [50, 50] });
+              }
+            });
+            
+            // Add state name tooltip
+            const stateName = feature.properties?.NAME_1 || feature.properties?.name || 'State';
+            layer.bindTooltip(stateName, {
+              permanent: false,
+              direction: 'center',
+              className: 'state-tooltip'
+            });
           }
         }).addTo(map);
       })
@@ -401,6 +435,15 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         }
         .custom-tooltip::before {
           border-top-color: rgba(0, 0, 0, 0.8) !important;
+        }
+        .state-tooltip {
+          background: rgba(51, 136, 255, 0.9) !important;
+          border: 1px solid rgba(255, 255, 255, 0.3) !important;
+          border-radius: 6px !important;
+          padding: 4px 10px !important;
+          color: white !important;
+          font-weight: 600 !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
         }
       `}</style>
       <div ref={mapRef} className="h-full w-full" />

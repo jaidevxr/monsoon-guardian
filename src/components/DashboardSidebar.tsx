@@ -29,7 +29,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   const navItems = [
     { id: 'overview', label: 'Heatmap', icon: MapPin },
-    { id: 'emergency-services', label: 'Emergency', icon: Hospital },
     { id: 'weather', label: 'Weather', icon: Cloud },
     { id: 'disasters', label: 'Disasters', icon: AlertTriangle },
     { id: 'government-alerts', label: 'Gov Alerts', icon: Shield },
@@ -130,73 +129,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         })}
       </div>
 
-      {/* Emergency Facilities */}
-      {!isCollapsed && (
-        <div className="flex-1 p-4 overflow-y-auto">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold text-sm text-foreground">Nearest Emergency Services</h2>
-            </div>
-
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="glass h-16 animate-pulse rounded-xl" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {facilities.slice(0, 8).map((facility) => (
-                  <Card
-                    key={facility.id}
-                    className="p-3 cursor-pointer hover:shadow-lg transition-smooth glass border-border/10"
-                    onClick={() => onFacilityClick(facility)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${getSeverityColor(facility.type)}`}>
-                        {getFacilityIcon(facility.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-foreground truncate">
-                          {facility.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {facility.type.replace('_', ' ')}
-                          </Badge>
-                          {facility.distance && (
-                            <span className="text-xs text-muted-foreground">
-                              {facility.distance}km away
-                            </span>
-                          )}
-                        </div>
-                        {facility.contact && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              {facility.contact}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-                
-                {facilities.length === 0 && (
-                  <div className="text-center py-8">
-                    <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      No emergency facilities found nearby
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Empty space - emergency facilities removed */}
     </div>
   );
 };
