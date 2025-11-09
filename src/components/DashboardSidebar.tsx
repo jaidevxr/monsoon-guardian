@@ -141,32 +141,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`relative glass-strong h-full flex flex-col transition-all duration-500 ease-out overflow-hidden ${
-        isCollapsed ? 'w-20' : 'w-80'
+      className={`relative glass h-full flex flex-col transition-all duration-300 ease-out overflow-hidden ${
+        isCollapsed ? 'w-20' : 'w-72'
       }`}
     >
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5 animate-shimmer" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-      
       {/* Content */}
-      <div className="relative z-10 flex flex-col h-full">
+      <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="p-4 border-b border-border/30">
+        <div className="p-4 border-b border-border/20">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
-              <div className="flex items-center gap-3 group">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-primary rounded-xl blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
-                  <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-primary rounded-xl">
-                    <Shield className="h-5 w-5 text-white animate-pulse" />
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-display font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Predict Aid
-                  </h2>
-                  <p className="text-xs text-muted-foreground">Control Center</p>
+                  <h2 className="font-semibold text-base">Predict Aid</h2>
+                  <p className="text-xs text-muted-foreground">Dashboard</p>
                 </div>
               </div>
             )}
@@ -174,20 +165,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+              className="h-9 w-9 p-0"
             >
-              {isCollapsed ? (
-                <Menu className="h-5 w-5 animate-pulse" />
-              ) : (
-                <X className="h-5 w-5" />
-              )}
+              {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-          {navItems.map((item, index) => {
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             
@@ -195,49 +182,19 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
-                style={{ animationDelay: `${index * 50}ms` }}
                 className={`
-                  group relative w-full rounded-xl transition-all duration-300 animate-fade-in
-                  ${isCollapsed ? 'p-3' : 'p-4'}
+                  group w-full rounded-lg transition-all duration-200
+                  ${isCollapsed ? 'p-3' : 'p-3'}
                   ${isActive 
-                    ? 'bg-gradient-to-r ' + item.gradient + ' text-white shadow-lg hover-glow' 
-                    : 'hover:bg-accent/10 text-foreground hover:text-primary'
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'hover:bg-muted text-foreground'
                   }
                 `}
               >
-                {/* Active indicator */}
-                {isActive && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent animate-shimmer" />
-                )}
-                
-                <div className="relative flex items-center gap-3">
-                  {/* Icon with animation */}
-                  <div className={`
-                    flex items-center justify-center transition-transform duration-300
-                    ${isActive ? 'scale-110' : 'group-hover:scale-110'}
-                    ${isActive && !isCollapsed ? '' : 'group-hover:rotate-6'}
-                  `}>
-                    <Icon className={`h-5 w-5 ${isActive ? 'animate-pulse' : ''}`} />
-                  </div>
-                  
-                  {/* Label and description */}
+                <div className="flex items-center gap-3">
+                  <Icon className="h-5 w-5 flex-shrink-0" />
                   {!isCollapsed && (
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-sm">
-                          {item.label}
-                        </span>
-                        <ChevronRight className={`
-                          h-4 w-4 transition-transform duration-300
-                          ${isActive ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-1'}
-                        `} />
-                      </div>
-                      {isActive && (
-                        <p className="text-xs opacity-90 mt-0.5 animate-fade-in">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
+                    <span className="font-medium text-sm">{item.label}</span>
                   )}
                 </div>
               </button>
@@ -245,37 +202,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           })}
         </nav>
 
-        {/* Footer Stats */}
+        {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-border/30 space-y-3 animate-fade-in">
-            <div className="grid grid-cols-2 gap-2">
-              <Card className="glass p-3 hover-lift cursor-pointer">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-success to-success/50 flex items-center justify-center">
-                    <Activity className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Active</p>
-                    <p className="text-sm font-bold text-success">Live</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="glass p-3 hover-lift cursor-pointer">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                    <Flame className="h-4 w-4 text-white animate-pulse" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Alerts</p>
-                    <p className="text-sm font-bold text-primary">{facilities.length}</p>
-                  </div>
-                </div>
-              </Card>
+          <div className="p-4 border-t border-border/20">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Status</span>
+              <Badge variant="outline" className="text-success border-success/30">
+                <Activity className="h-3 w-3 mr-1" />
+                Active
+              </Badge>
             </div>
-            <Badge className="w-full justify-center bg-gradient-primary border-0 text-white py-2">
-              <Shield className="h-3 w-3 mr-1" />
-              System Operational
-            </Badge>
           </div>
         )}
       </div>

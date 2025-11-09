@@ -1,19 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 
-interface Particle {
+interface Blade {
   x: number;
-  y: number;
-  size: number;
-  speedX: number;
-  speedY: number;
-  opacity: number;
-  color: string;
+  baseY: number;
+  height: number;
+  width: number;
+  swayOffset: number;
+  swaySpeed: number;
+  swayAmount: number;
 }
 
 const AnimatedBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
+  const bladesRef = useRef<Blade[]>([]);
   const animationFrameRef = useRef<number>();
+  const timeRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,90 +27,77 @@ const AnimatedBackground: React.FC = () => {
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      createGrass();
     };
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Create particles
-    const createParticles = () => {
-      const particles: Particle[] = [];
-      const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
+    // Create grass blades
+    const createGrass = () => {
+      const blades: Blade[] = [];
+      const bladeCount = Math.floor(canvas.width / 8);
       
-      const colors = [
-        'rgba(139, 92, 246, 0.6)',  // Primary purple
-        'rgba(59, 130, 246, 0.5)',   // Secondary blue
-        'rgba(168, 85, 247, 0.4)',   // Accent purple
-        'rgba(34, 211, 238, 0.5)',   // Cyan
-      ];
-
-      for (let i = 0; i < particleCount; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 3 + 1,
-          speedX: (Math.random() - 0.5) * 0.5,
-          speedY: (Math.random() - 0.5) * 0.5,
-          opacity: Math.random() * 0.5 + 0.2,
-          color: colors[Math.floor(Math.random() * colors.length)],
+      for (let i = 0; i < bladeCount; i++) {
+        blades.push({
+          x: (i * canvas.width) / bladeCount + Math.random() * 5,
+          baseY: canvas.height,
+          height: Math.random() * 80 + 40,
+          width: Math.random() * 3 + 2,
+          swayOffset: Math.random() * Math.PI * 2,
+          swaySpeed: Math.random() * 0.5 + 0.5,
+          swayAmount: Math.random() * 15 + 10,
         });
       }
-      return particles;
+      bladesRef.current = blades;
     };
 
-    particlesRef.current = createParticles();
+    createGrass();
 
     // Animation loop
     const animate = () => {
+      timeRef.current += 0.01;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw gradient background
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, 'rgba(139, 92, 246, 0.03)');
-      gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.02)');
-      gradient.addColorStop(1, 'rgba(168, 85, 247, 0.03)');
+      // Soft gradient background (nature colors)
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, 'rgba(145, 200, 150, 0.08)'); // soft green
+      gradient.addColorStop(0.5, 'rgba(100, 180, 140, 0.05)');
+      gradient.addColorStop(1, 'rgba(80, 160, 120, 0.1)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
-      particlesRef.current.forEach((particle, index) => {
-        // Update position
-        particle.x += particle.speedX;
-        particle.y += particle.speedY;
-
-        // Wrap around edges
-        if (particle.x < 0) particle.x = canvas.width;
-        if (particle.x > canvas.width) particle.x = 0;
-        if (particle.y < 0) particle.y = canvas.height;
-        if (particle.y > canvas.height) particle.y = 0;
-
-        // Draw particle
+      // Draw grass blades
+      bladesRef.current.forEach((blade) => {
+        const sway = Math.sin(timeRef.current * blade.swaySpeed + blade.swayOffset) * blade.swayAmount;
+        
+        // Grass blade as bezier curve
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = particle.color;
-        ctx.globalAlpha = particle.opacity;
-        ctx.fill();
-
-        // Draw connections
-        particlesRef.current.forEach((otherParticle, otherIndex) => {
-          if (index === otherIndex) return;
-          
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 120) {
-            ctx.beginPath();
-            ctx.strokeStyle = particle.color;
-            ctx.globalAlpha = (1 - distance / 120) * 0.2;
-            ctx.lineWidth = 1;
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.stroke();
-          }
-        });
+        ctx.moveTo(blade.x, blade.baseY);
+        
+        const controlX = blade.x + sway;
+        const controlY = blade.baseY - blade.height * 0.6;
+        const endX = blade.x + sway * 1.5;
+        const endY = blade.baseY - blade.height;
+        
+        ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+        
+        // Gradient for grass blade (darker at base, lighter at tip)
+        const bladeGradient = ctx.createLinearGradient(
+          blade.x,
+          blade.baseY,
+          endX,
+          endY
+        );
+        bladeGradient.addColorStop(0, 'rgba(60, 130, 80, 0.4)');
+        bladeGradient.addColorStop(0.5, 'rgba(80, 160, 100, 0.35)');
+        bladeGradient.addColorStop(1, 'rgba(100, 180, 120, 0.25)');
+        
+        ctx.strokeStyle = bladeGradient;
+        ctx.lineWidth = blade.width;
+        ctx.lineCap = 'round';
+        ctx.stroke();
       });
 
-      ctx.globalAlpha = 1;
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
