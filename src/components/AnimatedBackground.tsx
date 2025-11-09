@@ -23,15 +23,6 @@ const AnimatedBackground: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      createGrass();
-    };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
     // Create grass blades
     const createGrass = () => {
       const blades: Blade[] = [];
@@ -51,7 +42,14 @@ const AnimatedBackground: React.FC = () => {
       bladesRef.current = blades;
     };
 
-    createGrass();
+    // Set canvas size
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      createGrass();
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     // Animation loop
     const animate = () => {
