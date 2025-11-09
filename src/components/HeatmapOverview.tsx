@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
 });
 
 type RiskLevel = 'low' | 'medium' | 'high';
-type OverlayMode = 'disaster' | 'temperature' | 'rainfall';
+type OverlayMode = 'disaster' | 'temperature' | 'rainfall' | 'pollution';
 
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -31,6 +31,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   );
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('disaster');
   const [weatherData, setWeatherData] = useState<Map<string, { temp: number; rainfall: number }>>(new Map());
+  const [pollutionData, setPollutionData] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(false);
 
   // Initialize map
@@ -170,6 +171,14 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       if (value < 10) return `rgba(125, 184, 234, ${opacity})`; // Medium blue
       if (value < 15) return `rgba(81, 149, 211, ${opacity})`; // Blue
       return `rgba(46, 107, 166, ${opacity})`; // Dark blue
+    } else if (mode === 'pollution') {
+      // AQI: 0-300+
+      if (value < 50) return `rgba(0, 228, 0, ${opacity})`; // Good - green
+      if (value < 100) return `rgba(255, 255, 0, ${opacity})`; // Moderate - yellow
+      if (value < 150) return `rgba(255, 126, 0, ${opacity})`; // Unhealthy for sensitive - orange
+      if (value < 200) return `rgba(255, 0, 0, ${opacity})`; // Unhealthy - red
+      if (value < 300) return `rgba(153, 0, 76, ${opacity})`; // Very unhealthy - purple
+      return `rgba(126, 0, 35, ${opacity})`; // Hazardous - maroon
     } else {
       // Disaster risk
       if (value < 0.45) return `rgba(0, 255, 0, ${opacity})`; // Green (low)
@@ -211,8 +220,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
         // Large glow circle for heatmap effect
         const glowCircle = L.circleMarker([lat, lng], {
-          radius: 45,
-          fillColor: getColor(risk, 'disaster', 0.15),
+          radius: 60,
+          fillColor: getColor(risk, 'disaster', 0.25),
           color: 'transparent',
           weight: 0,
           fillOpacity: 1,
@@ -221,11 +230,11 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         
         // Small center point
         const centerCircle = L.circleMarker([lat, lng], {
-          radius: 3,
-          fillColor: getColor(risk, 'disaster', 0.9),
-          color: getColor(risk, 'disaster', 1),
+          radius: 2.5,
+          fillColor: getColor(risk, 'disaster', 0.7),
+          color: getColor(risk, 'disaster', 0.9),
           weight: 1,
-          fillOpacity: 1,
+          fillOpacity: 0.8,
         });
         
         glowCircle.addTo(mapInstanceRef.current!);
@@ -240,8 +249,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         
         // Large glow circle for heatmap effect
         const glowCircle = L.circleMarker([lat, lng], {
-          radius: 45,
-          fillColor: getColor(value, overlayMode, 0.15),
+          radius: 60,
+          fillColor: getColor(value, overlayMode, 0.25),
           color: 'transparent',
           weight: 0,
           fillOpacity: 1,
@@ -250,15 +259,15 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         
         // Small center point with popup
         const centerCircle = L.circleMarker([lat, lng], {
-          radius: 3,
-          fillColor: getColor(value, overlayMode, 0.9),
-          color: getColor(value, overlayMode, 1),
+          radius: 2.5,
+          fillColor: getColor(value, overlayMode, 0.7),
+          color: getColor(value, overlayMode, 0.9),
           weight: 1,
-          fillOpacity: 1,
+          fillOpacity: 0.8,
         }).bindPopup(`
           <div style="font-size: 12px;">
-            <strong>${overlayMode === 'temperature' ? 'Temperature' : 'Rainfall'}</strong><br/>
-            ${overlayMode === 'temperature' ? `${data.temp.toFixed(1)}°C` : `${data.rainfall.toFixed(1)}mm`}
+            <strong>${overlayMode === 'temperature' ? 'Temperature' : overlayMode === 'pollution' ? 'Air Quality' : 'Rainfall'}</strong><br/>
+            ${overlayMode === 'temperature' ? `${data.temp.toFixed(1)}°C` : overlayMode === 'pollution' ? `AQI: ${value.toFixed(0)}` : `${data.rainfall.toFixed(1)}mm`}
           </div>
         `);
         
@@ -273,7 +282,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     <div className="h-full w-full relative">
       <style>{`
         .heatmap-glow {
-          filter: blur(20px);
+          filter: blur(35px);
+          opacity: 0.7;
         }
       `}</style>
       <div ref={mapRef} className="h-full w-full" />
@@ -293,6 +303,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             <TabsTrigger value="rainfall" className="gap-2">
               <Droplets className="h-4 w-4" />
               <span className="hidden sm:inline">Rain</span>
+            </TabsTrigger>
+            <TabsTrigger value="pollution" className="gap-2">
+              <Cloud className="h-4 w-4" />
+              <span className="hidden sm:inline">AQI</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
