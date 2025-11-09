@@ -73,11 +73,12 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     return 'low';
   };
 
-  // Dense grid across India
+  // Very dense grid for smooth coverage
   const generateDenseGrid = (): Location[] => {
     const locations: Location[] = [];
-    for (let lat = 8; lat <= 36; lat += 1) {
-      for (let lng = 68; lng <= 97; lng += 1) {
+    // 0.25 degree spacing for smooth coverage
+    for (let lat = 6; lat <= 38; lat += 0.25) {
+      for (let lng = 66; lng <= 99; lng += 0.25) {
         locations.push({ lat, lng });
       }
     }
@@ -103,57 +104,52 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     loadWeatherData();
   }, [overlayMode]);
 
-  // Generate disaster risk data covering all of India
+  // Generate disaster risk data with dense coverage
   const generateDisasterData = (): [number, number, number][] => {
     const data: [number, number, number][] = [];
     
-    // Very high risk zones
-    const highRisk: [number, number, number][] = [
-      // Coastal cyclone belt
-      [20.9, 85.1, 1.0], [19.8, 85.8, 0.95], [20.3, 85.8, 0.95], [17.7, 83.2, 0.9],
-      [16.5, 80.6, 0.85], [13.1, 80.3, 0.9], [11.1, 79.8, 0.85], [22.6, 88.4, 0.85],
-      // Flood zones  
-      [25.1, 85.3, 1.0], [26.2, 92.9, 0.95], [26.1, 91.7, 0.9], [10.9, 76.3, 0.9],
-      // Earthquake zones
-      [34.1, 74.8, 0.9], [31.1, 77.2, 0.85], [23.0, 72.6, 0.9],
-      // Drought zones
-      [27.0, 74.2, 0.95], [26.9, 75.8, 0.9], [19.1, 72.9, 0.9],
-    ];
-    
-    // Medium-high risk (spread across India)
-    for (let lat = 8; lat <= 36; lat += 2) {
-      for (let lng = 68; lng <= 97; lng += 2) {
-        // Coastal areas
-        if ((lng < 73 && lat < 22) || (lng > 85 && lat < 24)) {
-          data.push([lat, lng, 0.7]);
+    // Dense grid for full coverage (0.3 degree spacing)
+    for (let lat = 6; lat <= 38; lat += 0.3) {
+      for (let lng = 66; lng <= 99; lng += 0.3) {
+        let intensity = 0.3; // base low risk
+        
+        // Coastal cyclone belt (East coast)
+        if (lng > 79 && lng < 87 && lat > 15 && lat < 24) {
+          intensity = 0.85 + Math.random() * 0.15;
         }
-        // North and northeast
-        else if (lat > 28 || (lng > 88 && lat > 23)) {
-          data.push([lat, lng, 0.75]);
+        // Coastal areas (West coast)
+        else if (lng < 77 && lat > 8 && lat < 22) {
+          intensity = 0.7 + Math.random() * 0.15;
         }
-        // Central India
+        // Flood zones (Bihar, Assam, Bengal)
+        else if ((lng > 83 && lng < 92 && lat > 24 && lat < 27) || 
+                 (lng > 87 && lng < 96 && lat > 24 && lat < 29)) {
+          intensity = 0.75 + Math.random() * 0.2;
+        }
+        // Earthquake zones (North, Gujarat)
+        else if ((lat > 30 && lng > 73 && lng < 80) || 
+                 (lat > 22 && lat < 25 && lng > 68 && lng < 74)) {
+          intensity = 0.7 + Math.random() * 0.15;
+        }
+        // Drought zones (Rajasthan, Maharashtra interior)
+        else if ((lng > 70 && lng < 78 && lat > 24 && lat < 30) ||
+                 (lng > 74 && lng < 80 && lat > 17 && lat < 22)) {
+          intensity = 0.65 + Math.random() * 0.15;
+        }
+        // Central India - medium risk
         else if (lat > 18 && lat < 28 && lng > 74 && lng < 85) {
-          data.push([lat, lng, 0.6]);
+          intensity = 0.5 + Math.random() * 0.15;
         }
-        // Peninsula
-        else if (lat < 20) {
-          data.push([lat, lng, 0.65]);
-        }
-        // Rest
+        // Other areas - low to medium
         else {
-          data.push([lat, lng, 0.55]);
+          intensity = 0.35 + Math.random() * 0.2;
         }
+        
+        data.push([lat, lng, intensity]);
       }
     }
     
-    // Low risk zones (fill gaps)
-    for (let lat = 9; lat <= 35; lat += 1.5) {
-      for (let lng = 69; lng <= 96; lng += 1.5) {
-        data.push([lat, lng, 0.4]);
-      }
-    }
-    
-    return [...highRisk, ...data];
+    return data;
   };
 
   // Update heatmap
@@ -176,15 +172,15 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     } else if (overlayMode === 'temperature' && weatherData.size > 0) {
       heatData = Array.from(weatherData.entries()).map(([key, data]) => {
         const [lat, lng] = key.split(',').map(Number);
-        const intensity = Math.max(0.3, Math.min(1, data.temp / 45));
+        // Temperature range: 10°C (0.0) to 45°C (1.0)
+        const intensity = Math.max(0.0, Math.min(1.0, (data.temp - 10) / 35));
         return [lat, lng, intensity];
       });
     } else if (overlayMode === 'rainfall' && weatherData.size > 0) {
       heatData = Array.from(weatherData.entries()).map(([key, data]) => {
         const [lat, lng] = key.split(',').map(Number);
-        const intensity = data.rainfall > 0 
-          ? Math.max(0.4, Math.min(1, data.rainfall / 25))
-          : 0.2;
+        // Rainfall: 0mm (0.0) to 20mm+ (1.0)
+        const intensity = Math.max(0.0, Math.min(1.0, data.rainfall / 20));
         return [lat, lng, intensity];
       });
     }
@@ -197,44 +193,50 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       if (overlayMode === 'temperature') {
         gradient = {
-          0.0: '#0044ff',
-          0.4: '#00ff00',
-          0.6: '#ffff00',
-          0.8: '#ff4400',
-          1.0: '#ff0000'
+          0.0: '#6B2C91',  // Purple (cold)
+          0.15: '#2E5A9E', // Dark blue
+          0.3: '#3FA0D5',  // Light blue
+          0.45: '#6EC9B6', // Cyan
+          0.6: '#A8D96E',  // Light green
+          0.7: '#F9E547',  // Yellow
+          0.8: '#F9A947',  // Orange
+          0.9: '#F95738',  // Red-orange
+          1.0: '#D72C16'   // Dark red (hot)
         };
-        radius = 60;
-        blur = 50;
+        radius = 25;
+        blur = 20;
       } else if (overlayMode === 'rainfall') {
         gradient = {
-          0.0: '#e0e0e0',
-          0.3: '#80b3ff',
-          0.5: '#4d94ff',
-          0.7: '#1a75ff',
-          0.9: '#0052cc',
-          1.0: '#003d99'
+          0.0: '#f5f5f5',  // White (no rain)
+          0.2: '#d4e4f7',  // Very light blue
+          0.35: '#a8cef1', // Light blue
+          0.5: '#7db8ea',  // Medium blue
+          0.65: '#5195d3', // Blue
+          0.8: '#2e6ba6',  // Dark blue
+          1.0: '#1a4d7a'   // Very dark blue (heavy rain)
         };
-        radius = 60;
-        blur = 50;
+        radius = 25;
+        blur = 20;
       } else {
         gradient = {
-          0.0: '#00ff00',
-          0.3: '#aaff00',
-          0.5: '#ffff00',
-          0.6: '#ffaa00',
-          0.7: '#ff5500',
-          0.85: '#ff0000',
-          1.0: '#cc0000'
+          0.0: '#00ff00',  // Green (low risk)
+          0.35: '#aaff00', // Yellow-green
+          0.5: '#ffff00',  // Yellow
+          0.65: '#ffaa00', // Orange
+          0.75: '#ff5500', // Red-orange
+          0.85: '#ff0000', // Red
+          1.0: '#cc0000'   // Dark red (high risk)
         };
-        radius = 50;
-        blur = 40;
+        radius = 30;
+        blur = 25;
       }
 
       const heatLayer = (L as any).heatLayer(heatData, {
         radius: radius,
         blur: blur,
         max: 1.0,
-        minOpacity: 0.6,
+        minOpacity: 0.7,
+        maxZoom: 18,
         gradient: gradient
       });
       
