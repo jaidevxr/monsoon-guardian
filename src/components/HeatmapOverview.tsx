@@ -36,6 +36,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [allStatesData, setAllStatesData] = useState<any>(null);
+  const [stateAverages, setStateAverages] = useState<Map<string, { avgTemp: number; avgAqi: number; avgRisk: number; count: number }>>(new Map());
 
   // Initialize map
   useEffect(() => {
@@ -126,16 +127,114 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           }
         });
         
-        layer.bindTooltip(selectedState ? `${stateName} (Click again to show all India)` : stateName, {
+        // Create dynamic tooltip based on overlay mode and available data
+        const getTooltipContent = () => {
+          const avgData = stateAverages.get(stateName);
+          let content = `<div style="font-size: 11px; padding: 2px;">
+            <strong>${stateName}</strong>`;
+          
+          if (avgData && avgData.count > 0) {
+            content += `<br/><span style="opacity: 0.8;">Based on ${avgData.count} cities</span>`;
+            
+            if (overlayMode === 'disaster') {
+              const riskLevel = avgData.avgRisk >= 0.65 ? 'HIGH' : avgData.avgRisk >= 0.45 ? 'MEDIUM' : 'LOW';
+              const riskColor = avgData.avgRisk >= 0.65 ? '#ff0000' : avgData.avgRisk >= 0.45 ? '#ffaa00' : '#00ff00';
+              content += `<br/>Avg Risk: <strong style="color: ${riskColor};">${riskLevel}</strong> (${(avgData.avgRisk * 100).toFixed(0)}%)`;
+            } else if (overlayMode === 'temperature') {
+              content += `<br/>Avg Temp: <strong>${avgData.avgTemp.toFixed(1)}°C</strong>`;
+            } else if (overlayMode === 'pollution') {
+              content += `<br/>Avg AQI: <strong>${avgData.avgAqi.toFixed(0)}</strong>`;
+            }
+          }
+          
+          content += selectedState === stateName ? '<br/><span style="opacity: 0.7; font-size: 10px;">Click again for all India</span>' : '';
+          content += '</div>';
+          return content;
+        };
+        
+        const tooltip = layer.bindTooltip(getTooltipContent(), {
           permanent: false,
           direction: 'center',
           className: 'state-tooltip'
+        });
+        
+        // Update tooltip on hover to show current overlay data
+        layer.on('mouseover', () => {
+          tooltip.setContent(getTooltipContent());
         });
       }
     }).addTo(mapInstanceRef.current);
 
     stateLayerRef.current = stateLayer;
-  }, [allStatesData, selectedState]);
+  }, [allStatesData, selectedState, overlayMode, stateAverages]);
+
+  // Calculate state averages from city data
+  useEffect(() => {
+    if (weatherData.size === 0) return;
+
+    const stateMap = new Map<string, { tempSum: number; aqiSum: number; riskSum: number; count: number }>();
+    
+    const cities = getIndianCities();
+    cities.forEach(({ lat, lng }) => {
+      // Determine state based on coordinates (simplified mapping)
+      let state = 'Unknown';
+      if (lat > 28 && lat < 32 && lng > 76 && lng < 78) state = 'Delhi';
+      else if (lat > 18 && lat < 22 && lng > 72 && lng < 78) state = 'Maharashtra';
+      else if (lat > 22 && lat < 27 && lng > 87 && lng < 89) state = 'West Bengal';
+      else if (lat > 12 && lat < 14 && lng > 79 && lng < 81) state = 'Tamil Nadu';
+      else if (lat > 12 && lat < 14 && lng > 76 && lng < 79) state = 'Karnataka';
+      else if (lat > 16 && lat < 19 && lng > 77 && lng < 79) state = 'Telangana';
+      else if (lat > 22 && lat < 25 && lng > 71 && lng < 74) state = 'Gujarat';
+      else if (lat > 17 && lat < 20 && lng > 73 && lng < 75) state = 'Maharashtra';
+      else if (lat > 26 && lat < 28 && lng > 75 && lng < 76) state = 'Rajasthan';
+      else if (lat > 26 && lat < 27 && lng > 80 && lng < 82) state = 'Uttar Pradesh';
+      else if (lat > 22 && lat < 24 && lng > 75 && lng < 78) state = 'Madhya Pradesh';
+      else if (lat > 30 && lat < 31 && lng > 76 && lng < 77) state = 'Chandigarh';
+      else if (lat > 25 && lat < 27 && lng > 91 && lng < 92) state = 'Assam';
+      else if (lat > 20 && lat < 21 && lng > 85 && lng < 86) state = 'Odisha';
+      else if (lat > 25 && lat < 26 && lng > 85 && lng < 86) state = 'Bihar';
+      else if (lat > 8 && lat < 10 && lng > 76 && lng < 77) state = 'Kerala';
+      else if (lat > 10 && lat < 12 && lng > 76 && lng < 78) state = 'Tamil Nadu';
+      else if (lat > 15 && lat < 16 && lng > 74 && lng < 75) state = 'Goa';
+      else if (lat > 23 && lat < 24 && lng > 85 && lng < 86) state = 'Jharkhand';
+      
+      // Calculate risk
+      let risk = 0.3;
+      if ((lng > 79 && lng < 87 && lat > 15 && lat < 24) || (lng < 77 && lat > 8 && lat < 22)) {
+        risk = 0.85;
+      } else if ((lng > 83 && lng < 92 && lat > 24 && lat < 27) || (lat > 30 && lng > 73 && lng < 80)) {
+        risk = 0.75;
+      } else if ((lng > 70 && lng < 78 && lat > 24 && lat < 30)) {
+        risk = 0.65;
+      } else if (lat > 18 && lat < 28 && lng > 74 && lng < 85) {
+        risk = 0.5;
+      }
+      
+      const data = weatherData.get(`${lat},${lng}`);
+      if (data) {
+        const existing = stateMap.get(state) || { tempSum: 0, aqiSum: 0, riskSum: 0, count: 0 };
+        stateMap.set(state, {
+          tempSum: existing.tempSum + data.temp,
+          aqiSum: existing.aqiSum + data.aqi,
+          riskSum: existing.riskSum + risk,
+          count: existing.count + 1
+        });
+      }
+    });
+    
+    // Calculate averages
+    const averages = new Map<string, { avgTemp: number; avgAqi: number; avgRisk: number; count: number }>();
+    stateMap.forEach((data, state) => {
+      averages.set(state, {
+        avgTemp: data.tempSum / data.count,
+        avgAqi: data.aqiSum / data.count,
+        avgRisk: data.riskSum / data.count,
+        count: data.count
+      });
+    });
+    
+    setStateAverages(averages);
+  }, [weatherData]);
 
   const toggleFilter = (level: RiskLevel) => {
     setActiveFilters(prev => {
