@@ -1,16 +1,76 @@
-import React from 'react';
-import { Cloud, Droplets, Wind, Thermometer, AlertCircle, Eye } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Cloud, Droplets, Wind, Thermometer, AlertCircle, Eye, MapPin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { WeatherData, WeatherAlert } from '@/types';
+import { Input } from '@/components/ui/input';
+import { WeatherData, WeatherAlert, Location } from '@/types';
+import { searchLocation } from '@/utils/api';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface WeatherWidgetProps {
   weather: WeatherData | null;
   loading?: boolean;
+  onLocationChange?: (location: Location) => void;
 }
 
-const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading }) => {
+const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocationChange }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Location[]>([]);
+  const [open, setOpen] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced search for city suggestions
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchLocation(searchQuery);
+        setSearchResults(results.slice(0, 5));
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const handleSelectLocation = (location: Location) => {
+    if (onLocationChange) {
+      onLocationChange(location);
+    }
+    setSearchQuery('');
+    setSearchResults([]);
+    setOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -52,13 +112,67 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading }) => {
 
   return (
     <div className="space-y-6">
+      {/* City Search */}
+      <Card className="glass p-4">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+              <Input
+                type="text"
+                placeholder="Search for a city to view weather..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setOpen(true);
+                }}
+                onFocus={() => setOpen(true)}
+                className="pl-10 glass border-border/30 focus:border-primary/50"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                </div>
+              )}
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0 bg-card border-border" align="start">
+            <Command>
+              <CommandList>
+                {searchQuery.trim() && !isSearching && searchResults.length === 0 ? (
+                  <CommandEmpty>No cities found.</CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {searchResults.map((result, index) => (
+                      <CommandItem
+                        key={index}
+                        onSelect={() => handleSelectLocation(result)}
+                        className="cursor-pointer"
+                      >
+                        <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <div className="flex flex-col">
+                          <span className="font-medium">{result.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </Card>
+
       {/* Current Weather */}
       <Card className="glass p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Current Weather</h2>
             <p className="text-muted-foreground">
-              {weather.location.name || `${weather.location.lat.toFixed(2)}, ${weather.location.lng.toFixed(2)}`}
+              📍 {weather.location.name || `${weather.location.lat.toFixed(4)}, ${weather.location.lng.toFixed(4)}`}
             </p>
           </div>
           <div className="text-right">

@@ -130,7 +130,11 @@ const Dashboard: React.FC = () => {
       case 'weather':
         return (
           <div className="h-full overflow-y-auto p-6">
-            <WeatherWidget weather={weather} loading={loading.weather} />
+            <WeatherWidget 
+              weather={weather} 
+              loading={loading.weather}
+              onLocationChange={handleLocationSearch}
+            />
           </div>
         );
 
@@ -174,7 +178,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardNavbar onLocationSearch={handleLocationSearch} />
+      <DashboardNavbar />
       
       <div className="flex h-[calc(100vh-73px)]">
         <DashboardSidebar
