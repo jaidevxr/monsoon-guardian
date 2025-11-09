@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardNavbar from '@/components/DashboardNavbar';
-import SimpleMap from '@/components/SimpleMap';
 import WeatherWidget from '@/components/WeatherWidget';
 import DisasterList from '@/components/DisasterList';
 import CopilotChat from '@/components/CopilotChat';
@@ -156,20 +155,6 @@ const Dashboard: React.FC = () => {
         return (
           <div className="h-full">
             <EmergencyServicesMap onFacilityClick={handleFacilityClick} />
-          </div>
-        );
-
-      case 'map':
-        return (
-          <div className="h-full">
-            <SimpleMap
-              disasters={disasters}
-              facilities={facilities}
-              userLocation={userLocation}
-              center={mapCenter}
-              onDisasterClick={handleDisasterClick}
-              onFacilityClick={handleFacilityClick}
-            />
           </div>
         );
 
