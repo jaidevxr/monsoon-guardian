@@ -86,30 +86,90 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     return 'low';
   };
 
-  // Major Indian cities for weather data (reduced list for API limits)
+  // Cities covering all Indian states and regions
   const getIndianCities = (): Location[] => {
     return [
-      // Major metros and state capitals only
+      // North - Delhi, UP, Punjab, Haryana, HP, J&K, Uttarakhand
       { lat: 28.7041, lng: 77.1025 }, // Delhi
-      { lat: 19.0760, lng: 72.8777 }, // Mumbai
-      { lat: 22.5726, lng: 88.3639 }, // Kolkata
-      { lat: 13.0827, lng: 80.2707 }, // Chennai
-      { lat: 12.9716, lng: 77.5946 }, // Bangalore
-      { lat: 17.3850, lng: 78.4867 }, // Hyderabad
-      { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
-      { lat: 18.5204, lng: 73.8567 }, // Pune
-      { lat: 26.9124, lng: 75.7873 }, // Jaipur
       { lat: 26.8467, lng: 80.9462 }, // Lucknow
-      { lat: 22.7196, lng: 75.8577 }, // Indore
-      { lat: 23.2599, lng: 77.4126 }, // Bhopal
+      { lat: 25.3176, lng: 82.9739 }, // Varanasi
+      { lat: 27.1767, lng: 78.0081 }, // Agra
+      { lat: 28.9845, lng: 77.7064 }, // Meerut
       { lat: 30.7333, lng: 76.7794 }, // Chandigarh
-      { lat: 26.1445, lng: 91.7362 }, // Guwahati
-      { lat: 20.2961, lng: 85.8245 }, // Bhubaneswar
-      { lat: 25.5941, lng: 85.1376 }, // Patna
-      { lat: 8.5241, lng: 76.9366 }, // Trivandrum
-      { lat: 11.0168, lng: 76.9558 }, // Coimbatore
+      { lat: 31.6340, lng: 74.8723 }, // Amritsar
+      { lat: 30.9010, lng: 75.8573 }, // Ludhiana
+      { lat: 31.1048, lng: 77.1734 }, // Shimla
+      { lat: 32.7266, lng: 74.8570 }, // Jammu
+      { lat: 34.0837, lng: 74.7973 }, // Srinagar
+      { lat: 30.0668, lng: 79.0193 }, // Dehradun
+      { lat: 29.3803, lng: 79.4636 }, // Haldwani
+      
+      // Rajasthan
+      { lat: 26.9124, lng: 75.7873 }, // Jaipur
+      { lat: 26.4499, lng: 74.6399 }, // Ajmer
+      { lat: 26.2389, lng: 73.0243 }, // Jodhpur
+      { lat: 24.5854, lng: 73.7125 }, // Udaipur
+      { lat: 27.0238, lng: 74.2179 }, // Bikaner
+      { lat: 25.1810, lng: 75.8648 }, // Kota
+      
+      // West - Maharashtra, Gujarat, Goa
+      { lat: 19.0760, lng: 72.8777 }, // Mumbai
+      { lat: 18.5204, lng: 73.8567 }, // Pune
+      { lat: 21.1458, lng: 79.0882 }, // Nagpur
+      { lat: 19.9975, lng: 73.7898 }, // Nashik
+      { lat: 16.7050, lng: 74.2433 }, // Kolhapur
+      { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
+      { lat: 21.1702, lng: 72.8311 }, // Surat
+      { lat: 22.3072, lng: 73.1812 }, // Vadodara
+      { lat: 23.0300, lng: 72.5800 }, // Gandhinagar
+      { lat: 22.2587, lng: 70.7739 }, // Rajkot
+      { lat: 21.1959, lng: 72.8302 }, // Bhavnagar
       { lat: 15.2993, lng: 74.1240 }, // Goa
+      
+      // Central - MP, Chhattisgarh
+      { lat: 23.2599, lng: 77.4126 }, // Bhopal
+      { lat: 22.7196, lng: 75.8577 }, // Indore
+      { lat: 26.2183, lng: 78.1828 }, // Gwalior
+      { lat: 23.1765, lng: 79.9339 }, // Jabalpur
+      { lat: 21.1959, lng: 81.2831 }, // Raipur
+      { lat: 22.0797, lng: 82.1391 }, // Bilaspur
+      
+      // East - Bengal, Bihar, Jharkhand, Odisha
+      { lat: 22.5726, lng: 88.3639 }, // Kolkata
+      { lat: 22.8046, lng: 86.2029 }, // Jamshedpur
       { lat: 23.3441, lng: 85.3096 }, // Ranchi
+      { lat: 25.5941, lng: 85.1376 }, // Patna
+      { lat: 25.3960, lng: 86.4700 }, // Bhagalpur
+      { lat: 26.4499, lng: 87.2677 }, // Muzaffarpur
+      { lat: 20.2961, lng: 85.8245 }, // Bhubaneswar
+      { lat: 21.5041, lng: 83.9856 }, // Rourkela
+      { lat: 19.8135, lng: 85.8312 }, // Puri
+      
+      // Northeast - Assam, Meghalaya, Tripura, Manipur, Nagaland
+      { lat: 26.1445, lng: 91.7362 }, // Guwahati
+      { lat: 27.4728, lng: 94.9120 }, // Dibrugarh
+      { lat: 26.1833, lng: 91.7667 }, // Dispur
+      { lat: 25.5788, lng: 91.8933 }, // Shillong
+      { lat: 23.8315, lng: 91.2868 }, // Agartala
+      { lat: 24.6158, lng: 93.9368 }, // Imphal
+      { lat: 25.6747, lng: 94.1086 }, // Kohima
+      
+      // South - Karnataka, TN, Kerala, AP, Telangana
+      { lat: 12.9716, lng: 77.5946 }, // Bangalore
+      { lat: 12.2958, lng: 76.6394 }, // Mysore
+      { lat: 15.3173, lng: 75.7139 }, // Hubli
+      { lat: 14.4426, lng: 79.9865 }, // Nellore
+      { lat: 13.0827, lng: 80.2707 }, // Chennai
+      { lat: 11.0168, lng: 76.9558 }, // Coimbatore
+      { lat: 10.7905, lng: 78.7047 }, // Trichy
+      { lat: 9.9252, lng: 78.1198 }, // Madurai
+      { lat: 17.3850, lng: 78.4867 }, // Hyderabad
+      { lat: 17.6868, lng: 83.2185 }, // Visakhapatnam
+      { lat: 16.5062, lng: 80.6480 }, // Vijayawada
+      { lat: 8.5241, lng: 76.9366 }, // Trivandrum
+      { lat: 9.9312, lng: 76.2673 }, // Kochi
+      { lat: 11.2588, lng: 75.7804 }, // Kozhikode
+      { lat: 10.8505, lng: 76.2711 }, // Palakkad
     ];
   };
 
