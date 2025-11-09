@@ -5,6 +5,68 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Multiple Overpass API mirrors for failover
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+];
+
+// Retry with exponential backoff
+async function fetchWithRetry(
+  endpoints: string[],
+  query: string,
+  maxRetries: number = 2
+): Promise<any> {
+  let lastError: Error | null = null;
+
+  for (const endpoint of endpoints) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Trying ${endpoint} (attempt ${attempt + 1}/${maxRetries + 1})`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: query,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (response.status === 504 || response.status === 429) {
+            // Rate limited or gateway timeout - try next endpoint
+            console.log(`${endpoint} returned ${response.status}, trying next...`);
+            throw new Error(`HTTP ${response.status}`);
+          }
+          throw new Error(`Overpass API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(`✅ Successfully fetched from ${endpoint}`);
+        return data;
+
+      } catch (error: any) {
+        lastError = error;
+        console.log(`Failed attempt ${attempt + 1}: ${error.message}`);
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          const waitTime = Math.min(1000 * Math.pow(2, attempt), 5000);
+          console.log(`Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+      }
+    }
+  }
+
+  throw lastError || new Error('All Overpass API endpoints failed');
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -42,19 +104,9 @@ serve(async (req) => {
 
     console.log('Overpass query:', query);
 
-    // Fetch from Overpass API
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: query,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(`Found ${data.elements.length} services`);
+    // Fetch from Overpass API with retry and failover
+    const data = await fetchWithRetry(OVERPASS_ENDPOINTS, query);
+    console.log(`Found ${data.elements?.length || 0} services`);
 
     // Transform and calculate distances
     const services = data.elements.map((element: any) => {
