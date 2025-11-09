@@ -38,13 +38,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   useEffect(() => {
     const loadUserLocation = async () => {
+      console.log('🔍 [DashboardSidebar] Starting location detection...');
       try {
         const location = await getCurrentLocation();
+        console.log('✅ [DashboardSidebar] Location detected:', location);
+        console.log(`📍 Coordinates: ${location.lat}, ${location.lng}`);
         setUserLocation(location);
         onLocationUpdate(location);
         loadEmergencyFacilities(location);
       } catch (error) {
-        console.error('Error getting user location:', error);
+        console.error('❌ [DashboardSidebar] Error getting user location:', error);
       }
     };
 

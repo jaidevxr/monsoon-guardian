@@ -50,14 +50,20 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
     // Request with high accuracy and proper timeout
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("✅ Location found:", position.coords.latitude, position.coords.longitude);
+        console.log("✅ [EmergencyServicesMap] RAW Location from browser:", {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: new Date(position.timestamp).toISOString()
+        });
         const { latitude, longitude } = position.coords;
         const location: [number, number] = [latitude, longitude];
         setUserLocation(location);
         
         toast({
-          title: "Location Access Granted",
-          description: `Found your location at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+          title: "Location Detected",
+          description: `Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}, Accuracy: ${position.coords.accuracy.toFixed(0)}m`,
+          duration: 10000,
         });
         
         fetchNearbyServices(latitude, longitude);
@@ -240,6 +246,7 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   }, []);
 
   useEffect(() => {
+    console.log('🗺️ [EmergencyServicesMap] Component mounted, requesting location...');
     getUserLocation();
   }, []);
 
@@ -442,9 +449,29 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
         
         {/* Location Status */}
         {userLocation && (
-          <div className="absolute bottom-4 left-4 bg-card border rounded-lg shadow-lg px-3 py-2">
-            <p className="text-xs text-muted-foreground">
-              📍 Your location: {userLocation[0].toFixed(4)}, {userLocation[1].toFixed(4)}
+          <div className="absolute bottom-4 left-4 bg-card border rounded-lg shadow-lg px-4 py-3 space-y-2 min-w-64">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-foreground">📍 Detected Location:</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={getUserLocation}
+                className="h-6 text-xs"
+                disabled={loading}
+              >
+                {loading ? '...' : 'Refresh'}
+              </Button>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-mono text-muted-foreground">
+                Lat: {userLocation[0].toFixed(6)}
+              </p>
+              <p className="text-xs font-mono text-muted-foreground">
+                Lng: {userLocation[1].toFixed(6)}
+              </p>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              If this is incorrect, check browser location permissions or use a different device
             </p>
           </div>
         )}
