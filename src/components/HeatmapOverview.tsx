@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
 });
 
 type RiskLevel = 'low' | 'medium' | 'high';
-type OverlayMode = 'disaster' | 'temperature' | 'rainfall' | 'pollution';
+type OverlayMode = 'disaster' | 'temperature' | 'pollution';
 
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -30,8 +30,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     new Set(['low', 'medium', 'high'])
   );
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('disaster');
-  const [weatherData, setWeatherData] = useState<Map<string, { temp: number; rainfall: number }>>(new Map());
-  const [pollutionData, setPollutionData] = useState<Map<string, number>>(new Map());
+  const [weatherData, setWeatherData] = useState<Map<string, { temp: number; aqi: number }>>(new Map());
   const [loading, setLoading] = useState(false);
 
   // Initialize map
@@ -136,41 +135,60 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     ];
   };
 
-  // Fetch weather data for cities
+  // Fetch weather and pollution data
   useEffect(() => {
-    const loadWeatherData = async () => {
+    const loadData = async () => {
       if (overlayMode === 'disaster') return;
       
       setLoading(true);
       try {
         const cities = getIndianCities();
-        const data = await fetchWeatherDataForMultipleLocations(cities);
-        setWeatherData(data);
+        const dataMap = new Map<string, { temp: number; aqi: number }>();
+        
+        // Fetch data for each city
+        const promises = cities.map(async ({ lat, lng }) => {
+          try {
+            // Fetch temperature
+            const weatherResponse = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`
+            );
+            const weatherData = await weatherResponse.json();
+            const temp = weatherData.current?.temperature_2m || 25;
+            
+            // Fetch AQI
+            const aqiResponse = await fetch(
+              `https://api.waqi.info/feed/geo:${lat};${lng}/?token=d148749b9e7bc2b5013c0c4cb1b3c9942197fa95`
+            );
+            const aqiData = await aqiResponse.json();
+            const aqi = aqiData.data?.aqi || 50;
+            
+            dataMap.set(`${lat},${lng}`, { temp, aqi });
+          } catch (error) {
+            console.error(`Error fetching data for ${lat},${lng}:`, error);
+          }
+        });
+        
+        await Promise.all(promises);
+        setWeatherData(dataMap);
       } catch (error) {
-        console.error('Error loading weather:', error);
+        console.error('Error loading data:', error);
       }
       setLoading(false);
     };
 
-    loadWeatherData();
+    loadData();
   }, [overlayMode]);
 
   // Get color based on value with better opacity for heatmap effect
   const getColor = (value: number, mode: OverlayMode, opacity: number = 0.6): string => {
     if (mode === 'temperature') {
-      // Temperature: 15-40°C
-      if (value < 20) return `rgba(46, 90, 158, ${opacity})`; // Cool blue
-      if (value < 25) return `rgba(110, 201, 182, ${opacity})`; // Cyan
-      if (value < 30) return `rgba(168, 217, 110, ${opacity})`; // Light green
+      // Temperature: 10-45°C
+      if (value < 15) return `rgba(46, 90, 158, ${opacity})`; // Cool blue
+      if (value < 22) return `rgba(110, 201, 182, ${opacity})`; // Cyan
+      if (value < 28) return `rgba(168, 217, 110, ${opacity})`; // Light green
       if (value < 35) return `rgba(249, 229, 71, ${opacity})`; // Yellow
+      if (value < 40) return `rgba(255, 126, 0, ${opacity})`; // Orange
       return `rgba(249, 87, 56, ${opacity})`; // Hot red-orange
-    } else if (mode === 'rainfall') {
-      // Rainfall: 0-20mm
-      if (value < 2) return `rgba(245, 245, 245, ${opacity})`; // Very light
-      if (value < 5) return `rgba(168, 206, 241, ${opacity})`; // Light blue
-      if (value < 10) return `rgba(125, 184, 234, ${opacity})`; // Medium blue
-      if (value < 15) return `rgba(81, 149, 211, ${opacity})`; // Blue
-      return `rgba(46, 107, 166, ${opacity})`; // Dark blue
     } else if (mode === 'pollution') {
       // AQI: 0-300+
       if (value < 50) return `rgba(0, 228, 0, ${opacity})`; // Good - green
@@ -242,10 +260,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         markersRef.current.push(glowCircle, centerCircle);
       });
     } else if (weatherData.size > 0) {
-      // Show weather data with heatmap glow effect
+      // Show weather/pollution data with heatmap glow effect
       weatherData.forEach((data, key) => {
         const [lat, lng] = key.split(',').map(Number);
-        const value = overlayMode === 'temperature' ? data.temp : data.rainfall;
+        const value = overlayMode === 'temperature' ? data.temp : data.aqi;
         
         // Large glow circle for heatmap effect
         const glowCircle = L.circleMarker([lat, lng], {
@@ -266,8 +284,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           fillOpacity: 0.8,
         }).bindPopup(`
           <div style="font-size: 12px;">
-            <strong>${overlayMode === 'temperature' ? 'Temperature' : overlayMode === 'pollution' ? 'Air Quality' : 'Rainfall'}</strong><br/>
-            ${overlayMode === 'temperature' ? `${data.temp.toFixed(1)}°C` : overlayMode === 'pollution' ? `AQI: ${value.toFixed(0)}` : `${data.rainfall.toFixed(1)}mm`}
+            <strong>${overlayMode === 'temperature' ? 'Temperature' : 'Air Quality (AQI)'}</strong><br/>
+            ${overlayMode === 'temperature' ? `${data.temp.toFixed(1)}°C` : `AQI: ${data.aqi.toFixed(0)}`}
           </div>
         `);
         
@@ -300,12 +318,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               <Cloud className="h-4 w-4" />
               <span className="hidden sm:inline">Temp</span>
             </TabsTrigger>
-            <TabsTrigger value="rainfall" className="gap-2">
-              <Droplets className="h-4 w-4" />
-              <span className="hidden sm:inline">Rain</span>
-            </TabsTrigger>
             <TabsTrigger value="pollution" className="gap-2">
-              <Cloud className="h-4 w-4" />
+              <Droplets className="h-4 w-4" />
               <span className="hidden sm:inline">AQI</span>
             </TabsTrigger>
           </TabsList>
@@ -369,22 +383,26 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         </div>
       )}
 
-      {/* Weather Legend */}
+      {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
         <div className="absolute bottom-4 right-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
           <h3 className="text-xs font-semibold mb-2">
-            {overlayMode === 'temperature' ? 'Temperature' : 'Rainfall'}
+            {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
           </h3>
           <div className="space-y-1">
             {overlayMode === 'temperature' ? (
               <>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-blue-600/50 border border-blue-700"></div>
-                  <span className="text-xs">Cool (&lt;20°C)</span>
+                  <span className="text-xs">Cold (&lt;15°C)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-green-500/50 border border-green-700"></div>
-                  <span className="text-xs">Warm (25-30°C)</span>
+                  <span className="text-xs">Mild (22-28°C)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-700"></div>
+                  <span className="text-xs">Warm (28-35°C)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500/50 border border-red-700"></div>
@@ -394,21 +412,25 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-300/50 border border-gray-500"></div>
-                  <span className="text-xs">Dry (&lt;2mm)</span>
+                  <div className="w-3 h-3 rounded-full bg-green-500/50 border border-green-700"></div>
+                  <span className="text-xs">Good (0-50)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-400/50 border border-blue-600"></div>
-                  <span className="text-xs">Light (5-10mm)</span>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-700"></div>
+                  <span className="text-xs">Moderate (50-100)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-700/50 border border-blue-900"></div>
-                  <span className="text-xs">Heavy (&gt;15mm)</span>
+                  <div className="w-3 h-3 rounded-full bg-orange-500/50 border border-orange-700"></div>
+                  <span className="text-xs">Unhealthy (100-150)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-600/50 border border-red-800"></div>
+                  <span className="text-xs">Hazardous (&gt;200)</span>
                 </div>
               </>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Click circles for details</p>
+          <p className="text-xs text-muted-foreground mt-2">Click points for details</p>
         </div>
       )}
     </div>
