@@ -26,6 +26,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
+  const stateLayerRef = useRef<any>(null);
   const [activeFilters, setActiveFilters] = useState<Set<RiskLevel>>(
     new Set(['low', 'medium', 'high'])
   );
@@ -33,8 +34,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [weatherData, setWeatherData] = useState<Map<string, { temp: number; aqi: number }>>(new Map());
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
+  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [allStatesData, setAllStatesData] = useState<any>(null);
 
-  // Initialize map with state boundaries and click-to-zoom
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -46,52 +49,11 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       maxZoom: 18,
     }).addTo(map);
 
-    // Add India state boundaries with click-to-zoom
+    // Load state boundaries
     fetch('https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States')
       .then(response => response.json())
       .then(geojsonData => {
-        L.geoJSON(geojsonData, {
-          style: {
-            color: '#3388ff',
-            weight: 2,
-            opacity: 0.5,
-            fillOpacity: 0.05,
-            fillColor: '#3388ff'
-          },
-          onEachFeature: (feature, layer) => {
-            // Add hover effect
-            layer.on({
-              mouseover: (e) => {
-                const layer = e.target;
-                layer.setStyle({
-                  weight: 3,
-                  opacity: 0.8,
-                  fillOpacity: 0.15
-                });
-              },
-              mouseout: (e) => {
-                const layer = e.target;
-                layer.setStyle({
-                  weight: 2,
-                  opacity: 0.5,
-                  fillOpacity: 0.05
-                });
-              },
-              click: (e) => {
-                const bounds = layer.getBounds();
-                map.fitBounds(bounds, { padding: [50, 50] });
-              }
-            });
-            
-            // Add state name tooltip
-            const stateName = feature.properties?.NAME_1 || feature.properties?.name || 'State';
-            layer.bindTooltip(stateName, {
-              permanent: false,
-              direction: 'center',
-              className: 'state-tooltip'
-            });
-          }
-        }).addTo(map);
+        setAllStatesData(geojsonData);
       })
       .catch(error => console.error('Error loading state boundaries:', error));
 
@@ -102,6 +64,78 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       }
     };
   }, []);
+
+  // Update state boundaries layer
+  useEffect(() => {
+    if (!mapInstanceRef.current || !allStatesData) return;
+
+    // Remove old state layer
+    if (stateLayerRef.current) {
+      mapInstanceRef.current.removeLayer(stateLayerRef.current);
+    }
+
+    const dataToShow = selectedState 
+      ? {
+          ...allStatesData,
+          features: allStatesData.features.filter((f: any) => 
+            (f.properties?.NAME_1 || f.properties?.name) === selectedState
+          )
+        }
+      : allStatesData;
+
+    const stateLayer = L.geoJSON(dataToShow, {
+      style: {
+        color: '#3388ff',
+        weight: 1,
+        opacity: 0.25,
+        fillOpacity: 0.02,
+        fillColor: '#3388ff'
+      },
+      onEachFeature: (feature, layer) => {
+        const stateName = feature.properties?.NAME_1 || feature.properties?.name || 'State';
+        
+        layer.on({
+          mouseover: (e) => {
+            if (!selectedState) {
+              e.target.setStyle({
+                weight: 1.5,
+                opacity: 0.4,
+                fillOpacity: 0.05
+              });
+            }
+          },
+          mouseout: (e) => {
+            if (!selectedState) {
+              e.target.setStyle({
+                weight: 1,
+                opacity: 0.25,
+                fillOpacity: 0.02
+              });
+            }
+          },
+          click: (e) => {
+            if (selectedState === stateName) {
+              // Double click to reset
+              setSelectedState(null);
+              mapInstanceRef.current?.setView([20.5937, 78.9629], 5);
+            } else {
+              setSelectedState(stateName);
+              const bounds = layer.getBounds();
+              mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50] });
+            }
+          }
+        });
+        
+        layer.bindTooltip(selectedState ? `${stateName} (Click again to show all India)` : stateName, {
+          permanent: false,
+          direction: 'center',
+          className: 'state-tooltip'
+        });
+      }
+    }).addTo(mapInstanceRef.current);
+
+    stateLayerRef.current = stateLayer;
+  }, [allStatesData, selectedState]);
 
   const toggleFilter = (level: RiskLevel) => {
     setActiveFilters(prev => {
@@ -437,35 +471,50 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           border-top-color: rgba(0, 0, 0, 0.8) !important;
         }
         .state-tooltip {
-          background: rgba(51, 136, 255, 0.9) !important;
-          border: 1px solid rgba(255, 255, 255, 0.3) !important;
+          background: rgba(51, 136, 255, 0.85) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
           border-radius: 6px !important;
-          padding: 4px 10px !important;
+          padding: 3px 8px !important;
           color: white !important;
-          font-weight: 600 !important;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+          font-weight: 500 !important;
+          font-size: 11px !important;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
         }
       `}</style>
       <div ref={mapRef} className="h-full w-full" />
       
-      {/* Mode Selector */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 z-[1000]">
-        <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-          <TabsList className="glass bg-background/50">
-            <TabsTrigger value="disaster" className="gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="hidden sm:inline">Risk</span>
-            </TabsTrigger>
-            <TabsTrigger value="temperature" className="gap-2">
-              <Cloud className="h-4 w-4" />
-              <span className="hidden sm:inline">Temp</span>
-            </TabsTrigger>
-            <TabsTrigger value="pollution" className="gap-2">
-              <Droplets className="h-4 w-4" />
-              <span className="hidden sm:inline">AQI</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Mode Selector & Reset */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
+        <div className="glass backdrop-blur-md rounded-xl shadow-lg border border-border/20">
+          <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
+            <TabsList className="glass bg-background/50">
+              <TabsTrigger value="disaster" className="gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="hidden sm:inline">Risk</span>
+              </TabsTrigger>
+              <TabsTrigger value="temperature" className="gap-2">
+                <Cloud className="h-4 w-4" />
+                <span className="hidden sm:inline">Temp</span>
+              </TabsTrigger>
+              <TabsTrigger value="pollution" className="gap-2">
+                <Droplets className="h-4 w-4" />
+                <span className="hidden sm:inline">AQI</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        
+        {selectedState && (
+          <button
+            onClick={() => {
+              setSelectedState(null);
+              mapInstanceRef.current?.setView([20.5937, 78.9629], 5);
+            }}
+            className="glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 px-3 py-2 text-xs font-medium hover:bg-background/80 transition-colors"
+          >
+            Show All India
+          </button>
+        )}
       </div>
 
       {loading && (
