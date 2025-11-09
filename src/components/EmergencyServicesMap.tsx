@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+// @ts-ignore
+import 'leaflet-routing-machine';
 import { EmergencyService } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Hospital, Shield, Flame } from 'lucide-react';
+import { Loader2, Hospital, Shield, Flame, Navigation, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmergencyServicesMapProps {
@@ -17,10 +20,13 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const routingControlRef = useRef<any>(null);
   const [services, setServices] = useState<EmergencyService[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["hospital", "police", "fire_station"]);
+  const [selectedService, setSelectedService] = useState<EmergencyService | null>(null);
+  const [showingRoute, setShowingRoute] = useState(false);
   const { toast } = useToast();
 
   const getUserLocation = () => {
@@ -39,43 +45,51 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       return;
     }
 
-    console.log("Requesting geolocation...");
+    console.log("🔍 Requesting geolocation permission...");
     
+    // Request with high accuracy and proper timeout
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("Location found:", position.coords.latitude, position.coords.longitude);
+        console.log("✅ Location found:", position.coords.latitude, position.coords.longitude);
         const { latitude, longitude } = position.coords;
-        setUserLocation([latitude, longitude]);
+        const location: [number, number] = [latitude, longitude];
+        setUserLocation(location);
         
         toast({
-          title: "Location Found",
-          description: `Located at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+          title: "Location Access Granted",
+          description: `Found your location at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
         });
         
         fetchNearbyServices(latitude, longitude);
       },
       (error) => {
-        console.error("Geolocation error:", error.code, error.message);
+        console.error("❌ Geolocation error:", error.code, error.message);
         
         let errorMessage = "Unable to get your location. ";
+        let actionMessage = "";
+        
         switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage += "Permission denied. Please allow location access.";
+          case 1: // PERMISSION_DENIED
+            errorMessage = "Location permission denied. ";
+            actionMessage = "Please click the location icon in your browser's address bar and allow location access, then try again.";
             break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage += "Location information unavailable.";
+          case 2: // POSITION_UNAVAILABLE
+            errorMessage = "Location information unavailable. ";
+            actionMessage = "Please check your device's location settings.";
             break;
-          case error.TIMEOUT:
-            errorMessage += "Location request timed out.";
+          case 3: // TIMEOUT
+            errorMessage = "Location request timed out. ";
+            actionMessage = "Please try again.";
             break;
           default:
-            errorMessage += "Unknown error occurred.";
+            errorMessage = "Unknown error occurred.";
         }
         
         toast({
           title: "Location Error",
-          description: errorMessage + " Using Delhi as default.",
+          description: errorMessage + actionMessage + " Using Delhi as default.",
           variant: "destructive",
+          duration: 8000,
         });
         
         // Default to Delhi
@@ -85,10 +99,64 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0
       }
     );
+  };
+
+  const showRoute = (service: EmergencyService) => {
+    if (!mapInstanceRef.current || !userLocation) {
+      toast({
+        title: "Cannot Show Route",
+        description: "User location not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("🗺️ Showing route to:", service.name);
+
+    // Remove existing routing control
+    if (routingControlRef.current) {
+      mapInstanceRef.current.removeControl(routingControlRef.current);
+      routingControlRef.current = null;
+    }
+
+    // Create routing control
+    const routingControl = (L as any).Routing.control({
+      waypoints: [
+        L.latLng(userLocation[0], userLocation[1]),
+        L.latLng(service.lat, service.lng)
+      ],
+      routeWhileDragging: false,
+      showAlternatives: false,
+      lineOptions: {
+        styles: [{ color: '#3b82f6', weight: 5, opacity: 0.8 }]
+      },
+      createMarker: () => null, // Don't create default markers
+      addWaypoints: false,
+      draggableWaypoints: false,
+      fitSelectedRoutes: true,
+    }).addTo(mapInstanceRef.current);
+
+    routingControlRef.current = routingControl;
+    setSelectedService(service);
+    setShowingRoute(true);
+
+    toast({
+      title: "Route Calculated",
+      description: `Showing directions to ${service.name}`,
+    });
+  };
+
+  const clearRoute = () => {
+    if (routingControlRef.current && mapInstanceRef.current) {
+      mapInstanceRef.current.removeControl(routingControlRef.current);
+      routingControlRef.current = null;
+    }
+    setSelectedService(null);
+    setShowingRoute(false);
   };
 
   const fetchNearbyServices = async (lat: number, lng: number) => {
@@ -300,7 +368,17 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
             </div>
           )}
           {!loading && services.map((service) => (
-            <Card key={service.id} className="p-3 hover:bg-accent cursor-pointer">
+            <Card 
+              key={service.id} 
+              className={`p-3 hover:bg-accent cursor-pointer transition-all ${
+                selectedService?.id === service.id ? 'ring-2 ring-primary' : ''
+              }`}
+              onClick={() => {
+                if (mapInstanceRef.current) {
+                  mapInstanceRef.current.setView([service.lat, service.lng], 15);
+                }
+              }}
+            >
               <div className="flex items-start gap-2">
                 {getServiceIcon(service.type)}
                 <div className="flex-1">
@@ -313,6 +391,18 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
                       {service.address}
                     </p>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      showRoute(service);
+                    }}
+                  >
+                    <Navigation className="w-3 h-3 mr-1" />
+                    Get Directions
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -321,8 +411,43 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       </div>
 
       {/* Map */}
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <div ref={mapRef} className="h-full w-full" />
+        
+        {/* Route Info Panel */}
+        {showingRoute && selectedService && (
+          <div className="absolute top-4 right-4 bg-card border rounded-lg shadow-lg p-4 max-w-sm">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h3 className="font-semibold text-sm">Navigating to</h3>
+                <p className="text-sm text-foreground mt-1">{selectedService.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedService.distance.toFixed(2)} km away
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearRoute}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Follow the blue route on the map for turn-by-turn directions
+            </p>
+          </div>
+        )}
+        
+        {/* Location Status */}
+        {userLocation && (
+          <div className="absolute bottom-4 left-4 bg-card border rounded-lg shadow-lg px-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              📍 Your location: {userLocation[0].toFixed(4)}, {userLocation[1].toFixed(4)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
