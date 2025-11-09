@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import { DisasterEvent } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface HeatmapOverviewProps {
   disasters: DisasterEvent[];
@@ -16,10 +18,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+type RiskLevel = 'low' | 'medium' | 'high';
+
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<any>(null);
+  const [activeFilters, setActiveFilters] = useState<Set<RiskLevel>>(
+    new Set(['low', 'medium', 'high'])
+  );
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -46,6 +53,24 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     };
   }, []);
 
+  const toggleFilter = (level: RiskLevel) => {
+    setActiveFilters(prev => {
+      const newFilters = new Set(prev);
+      if (newFilters.has(level)) {
+        newFilters.delete(level);
+      } else {
+        newFilters.add(level);
+      }
+      return newFilters;
+    });
+  };
+
+  const getIntensityRange = (intensity: number): RiskLevel => {
+    if (intensity >= 0.7) return 'high';
+    if (intensity >= 0.5) return 'medium';
+    return 'low';
+  };
+
   useEffect(() => {
     if (!mapInstanceRef.current) {
       console.log('⚠️ Map instance not ready yet');
@@ -54,7 +79,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
     console.log('🔥 Preparing heatmap data...', { 
       disastersCount: disasters.length,
-      hasHeatLayer: !!(L as any).heatLayer 
+      hasHeatLayer: !!(L as any).heatLayer,
+      activeFilters: Array.from(activeFilters)
     });
 
     // Remove existing heat layer
@@ -104,17 +130,25 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     ];
 
     const allHeatData = [...heatData, ...sampleHotspots];
-    console.log('📊 Total heat points:', allHeatData.length);
+
+    // Filter heat data based on active filters
+    const filteredHeatData = allHeatData.filter(point => {
+      const intensity = point[2] as number;
+      const level = getIntensityRange(intensity);
+      return activeFilters.has(level);
+    });
+
+    console.log('📊 Total heat points:', allHeatData.length, 'Filtered:', filteredHeatData.length);
 
     // Create heat layer
     if ((L as any).heatLayer) {
-      if (allHeatData.length === 0) {
-        console.warn('⚠️ No heat data to display');
+      if (filteredHeatData.length === 0) {
+        console.warn('⚠️ No heat data to display after filtering');
         return;
       }
 
       try {
-        const heatLayer = (L as any).heatLayer(allHeatData, {
+        const heatLayer = (L as any).heatLayer(filteredHeatData, {
           radius: 25,
           blur: 15,
           maxZoom: 17,
@@ -142,29 +176,64 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     } else {
       console.error('❌ leaflet.heat library not loaded! Check if "leaflet.heat" is imported correctly.');
     }
-  }, [disasters]);
+  }, [disasters, activeFilters]);
 
   return (
     <div className="h-full w-full relative">
       <div ref={mapRef} className="h-full w-full" />
       
-      {/* Legend */}
-      <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg">
-        <h3 className="text-sm font-semibold mb-2 text-foreground">Disaster Risk Intensity</h3>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
-            <span className="text-xs text-muted-foreground">Low Risk</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-500 to-orange-400"></div>
-            <span className="text-xs text-muted-foreground">Medium Risk</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-600 to-red-800"></div>
-            <span className="text-xs text-muted-foreground">High Risk</span>
-          </div>
+      {/* Interactive Legend */}
+      <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg backdrop-blur-md border border-border/20">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-foreground">Risk Filter</h3>
+          <Badge variant="outline" className="text-xs">
+            {activeFilters.size}/3 Active
+          </Badge>
         </div>
+        <div className="space-y-2">
+          <Button
+            variant={activeFilters.has('low') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => toggleFilter('low')}
+            className={`w-full justify-start gap-2 transition-all ${
+              activeFilters.has('low') 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white' 
+                : 'opacity-50 hover:opacity-100'
+            }`}
+          >
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+            <span className="text-xs font-medium">Low Risk</span>
+          </Button>
+          <Button
+            variant={activeFilters.has('medium') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => toggleFilter('medium')}
+            className={`w-full justify-start gap-2 transition-all ${
+              activeFilters.has('medium') 
+                ? 'bg-gradient-to-r from-yellow-500 to-orange-400 hover:from-yellow-600 hover:to-orange-500 text-white' 
+                : 'opacity-50 hover:opacity-100'
+            }`}
+          >
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-500 to-orange-400"></div>
+            <span className="text-xs font-medium">Medium Risk</span>
+          </Button>
+          <Button
+            variant={activeFilters.has('high') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => toggleFilter('high')}
+            className={`w-full justify-start gap-2 transition-all ${
+              activeFilters.has('high') 
+                ? 'bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white' 
+                : 'opacity-50 hover:opacity-100'
+            }`}
+          >
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-600 to-red-800"></div>
+            <span className="text-xs font-medium">High Risk</span>
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/20">
+          Click to toggle risk levels
+        </p>
       </div>
     </div>
   );
