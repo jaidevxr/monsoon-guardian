@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardNavbar from '@/components/DashboardNavbar';
 import WeatherWidget from '@/components/WeatherWidget';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import DisasterList from '@/components/DisasterList';
 import CopilotChat from '@/components/CopilotChat';
 import DisasterGuidelines from '@/components/DisasterGuidelines';
@@ -178,8 +179,10 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar />
+    <div className="min-h-screen bg-background relative">
+      <AnimatedBackground />
+      <div className="relative z-10">
+        <DashboardNavbar />
       
       <div className="flex h-[calc(100vh-73px)]">
         <DashboardSidebar
@@ -222,6 +225,7 @@ const Dashboard: React.FC = () => {
             {renderTabContent()}
           </div>
         </main>
+      </div>
       </div>
     </div>
   );
