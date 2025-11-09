@@ -23,9 +23,10 @@ interface WeatherWidgetProps {
   weather: WeatherData | null;
   loading?: boolean;
   onLocationChange?: (location: Location) => void;
+  userLocation?: Location | null;
 }
 
-const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocationChange }) => {
+const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocationChange, userLocation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Location[]>([]);
@@ -114,56 +115,64 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
     <div className="space-y-6">
       {/* City Search */}
       <Card className="glass p-4">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-              <Input
-                type="text"
-                placeholder="Search for a city to view weather..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setOpen(true);
-                }}
-                onFocus={() => setOpen(true)}
-                className="pl-10 glass border-border/30 focus:border-primary/50"
-              />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-              )}
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0 bg-card border-border" align="start">
-            <Command>
-              <CommandList>
-                {searchQuery.trim() && !isSearching && searchResults.length === 0 ? (
-                  <CommandEmpty>No cities found.</CommandEmpty>
-                ) : (
-                  <CommandGroup>
-                    {searchResults.map((result, index) => (
-                      <CommandItem
-                        key={index}
-                        onSelect={() => handleSelectLocation(result)}
-                        className="cursor-pointer"
-                      >
-                        <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{result.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+        <div className="space-y-3">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search city to view weather..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setOpen(true);
+                  }}
+                  onFocus={() => setOpen(true)}
+                  className="pl-10 glass border-border/30 focus:border-primary/50"
+                />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
                 )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0 bg-card border-border" align="start">
+              <Command>
+                <CommandList>
+                  {searchQuery.trim() && !isSearching && searchResults.length === 0 ? (
+                    <CommandEmpty>No cities found.</CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {searchResults.map((result, index) => (
+                        <CommandItem
+                          key={index}
+                          onSelect={() => handleSelectLocation(result)}
+                          className="cursor-pointer"
+                        >
+                          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{result.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+          
+          {userLocation && weather && (
+            <p className="text-xs text-muted-foreground text-center">
+              Showing weather for: {weather.location.name || `${weather.location.lat.toFixed(4)}, ${weather.location.lng.toFixed(4)}`}
+            </p>
+          )}
+        </div>
       </Card>
 
       {/* Current Weather */}

@@ -134,6 +134,7 @@ const Dashboard: React.FC = () => {
               weather={weather} 
               loading={loading.weather}
               onLocationChange={handleLocationSearch}
+              userLocation={userLocation}
             />
           </div>
         );

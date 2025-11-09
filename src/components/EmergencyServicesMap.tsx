@@ -4,13 +4,27 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 // @ts-ignore
 import 'leaflet-routing-machine';
-import { EmergencyService } from '@/types';
+import { EmergencyService, Location } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { searchLocation } from '@/utils/api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Hospital, Shield, Flame, Navigation, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Hospital, Shield, Flame, Navigation, X, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface EmergencyServicesMapProps {
   onFacilityClick?: (facility: EmergencyService) => void;
@@ -27,7 +41,50 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["hospital", "police", "fire_station"]);
   const [selectedService, setSelectedService] = useState<EmergencyService | null>(null);
   const [showingRoute, setShowingRoute] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Location[]>([]);
+  const [open, setOpen] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  // Debounced search for city suggestions
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchLocation(searchQuery);
+        setSearchResults(results.slice(0, 5));
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const handleSelectLocation = (location: Location) => {
+    setUserLocation([location.lat, location.lng]);
+    fetchNearbyServices(location.lat, location.lng);
+    setSearchQuery('');
+    setSearchResults([]);
+    setOpen(false);
+  };
 
   const getUserLocation = () => {
     setLoading(true);
@@ -311,11 +368,64 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
     <div className="flex h-full">
       {/* Sidebar */}
       <div className="w-96 bg-card border-r p-4 overflow-y-auto">
+        {/* City Search */}
         <div className="mb-4">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative mb-2">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search city for services..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setOpen(true);
+                  }}
+                  onFocus={() => setOpen(true)}
+                  className="pl-10 glass border-border/30 focus:border-primary/50"
+                />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0 bg-card border-border" align="start">
+              <Command>
+                <CommandList>
+                  {searchQuery.trim() && !isSearching && searchResults.length === 0 ? (
+                    <CommandEmpty>No cities found.</CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {searchResults.map((result, index) => (
+                        <CommandItem
+                          key={index}
+                          onSelect={() => handleSelectLocation(result)}
+                          className="cursor-pointer"
+                        >
+                          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{result.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           <Button
             onClick={getUserLocation}
             disabled={loading}
             className="w-full"
+            variant="outline"
           >
             {loading ? (
               <>
@@ -324,8 +434,8 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
               </>
             ) : (
               <>
-                <Hospital className="w-4 h-4 mr-2" />
-                Find Nearby Services
+                <Navigation className="w-4 h-4 mr-2" />
+                Use My Current Location
               </>
             )}
           </Button>
