@@ -95,7 +95,7 @@ When users ask about conditions "here" or "my location", use the provided locati
 Always be concise, helpful, and prioritize safety information.`
     };
 
-    // Call Groq API
+    // Call Groq API with updated model
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -103,7 +103,7 @@ Always be concise, helpful, and prioritize safety information.`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
+        model: 'llama-3.3-70b-versatile',
         messages: [systemMessage, ...messages],
         tools: tools,
         tool_choice: "auto",
@@ -114,6 +114,15 @@ Always be concise, helpful, and prioritize safety information.`
 
     const data = await response.json();
     console.log('Groq response:', JSON.stringify(data));
+
+    // Check for API errors
+    if (data.error) {
+      throw new Error(`Groq API error: ${data.error.message}`);
+    }
+
+    if (!data.choices || !data.choices[0]) {
+      throw new Error('Invalid response from Groq API');
+    }
 
     // Check if the model wants to call tools
     if (data.choices[0].message.tool_calls) {
@@ -172,7 +181,7 @@ Always be concise, helpful, and prioritize safety information.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-70b-versatile',
+          model: 'llama-3.3-70b-versatile',
           messages: [
             systemMessage,
             ...messages,
@@ -186,6 +195,15 @@ Always be concise, helpful, and prioritize safety information.`
 
       const finalData = await finalResponse.json();
       console.log('Final response:', JSON.stringify(finalData));
+
+      // Check for errors in final response
+      if (finalData.error) {
+        throw new Error(`Groq API error: ${finalData.error.message}`);
+      }
+
+      if (!finalData.choices || !finalData.choices[0]) {
+        throw new Error('Invalid final response from Groq API');
+      }
 
       return new Response(JSON.stringify({ 
         message: finalData.choices[0].message.content 
