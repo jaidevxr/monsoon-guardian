@@ -27,6 +27,86 @@ export const getCurrentLocation = (): Promise<Location> => {
   });
 };
 
+// Check if coordinates are within India's boundaries (more precise)
+const isInIndia = (lat: number, lng: number): boolean => {
+  // More precise boundaries to exclude Nepal, Pakistan, Bangladesh, Myanmar, etc.
+  // India mainland: roughly 8°N to 35°N latitude, 68°E to 97°E longitude
+  // Excluding border regions more strictly
+  
+  // Exclude Nepal (north of ~27.5°N and east of 80°E)
+  if (lat > 27.5 && lng > 80 && lng < 88.2 && lat < 30.5) return false;
+  
+  // Exclude Pakistan (west of 74°E for northern regions)
+  if (lng < 74 && lat > 30) return false;
+  
+  // Exclude Bangladesh (east of 89°E and north of 22°N)
+  if (lng > 88.5 && lat > 22 && lat < 26.5 && lng < 92.5) return false;
+  
+  // Exclude Myanmar (east of 94°E)
+  if (lng > 94) return false;
+  
+  // Exclude Sri Lanka (south of 10°N)
+  if (lat < 8.5 && lng > 79 && lng < 82) return false;
+  
+  // Main India boundaries (more conservative)
+  return lat >= 8 && lat <= 35.5 && lng >= 68.5 && lng <= 97.5;
+};
+
+// Get Indian state from coordinates
+const getIndianState = (lat: number, lng: number, placeName: string = ''): string => {
+  // Check place name first for accurate state detection
+  const indianStates = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 
+    'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 
+    'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 
+    'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 
+    'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir', 
+    'Ladakh', 'Puducherry', 'Chandigarh', 'Andaman and Nicobar', 'Lakshadweep'
+  ];
+  
+  // Try to match state from place name
+  for (const state of indianStates) {
+    if (placeName.toLowerCase().includes(state.toLowerCase())) {
+      return state;
+    }
+  }
+  
+  // Rough state boundaries based on coordinates
+  if (lat >= 32 && lat <= 36.5 && lng >= 74 && lng <= 80) return 'Jammu and Kashmir';
+  if (lat >= 30.5 && lat <= 33 && lng >= 75 && lng <= 77) return 'Himachal Pradesh';
+  if (lat >= 28.5 && lat <= 31.5 && lng >= 77 && lng <= 81) return 'Uttarakhand';
+  if (lat >= 30 && lat <= 32.5 && lng >= 74 && lng <= 76.5) return 'Punjab';
+  if (lat >= 28 && lat <= 31 && lng >= 74.5 && lng <= 77.5) return 'Haryana';
+  if (lat >= 28.4 && lat <= 28.9 && lng >= 76.8 && lng <= 77.4) return 'Delhi';
+  if (lat >= 24 && lat <= 30.5 && lng >= 68 && lng <= 78) return 'Rajasthan';
+  if (lat >= 23.5 && lat <= 30.5 && lng >= 78 && lng <= 84.5) return 'Uttar Pradesh';
+  if (lat >= 21.5 && lat <= 27 && lng >= 82 && lng <= 88.5) return 'Bihar';
+  if (lat >= 24 && lat <= 27.5 && lng >= 85 && lng <= 88) return 'Jharkhand';
+  if (lat >= 21.5 && lat <= 27.5 && lng >= 88 && lng <= 92.5) return 'West Bengal';
+  if (lat >= 21 && lat <= 26.5 && lng >= 69 && lng <= 74.5) return 'Gujarat';
+  if (lat >= 21.5 && lat <= 27 && lng >= 73.5 && lng <= 82) return 'Madhya Pradesh';
+  if (lat >= 15.5 && lat <= 23 && lng >= 73 && lng <= 80.5) return 'Maharashtra';
+  if (lat >= 17 && lat <= 22.5 && lng >= 80.5 && lng <= 84.5) return 'Chhattisgarh';
+  if (lat >= 17.5 && lat <= 22.5 && lng >= 81.5 && lng <= 87.5) return 'Odisha';
+  if (lat >= 13 && lat <= 19.5 && lng >= 76 && lng <= 81) return 'Telangana';
+  if (lat >= 12.5 && lat <= 19.5 && lng >= 77 && lng <= 85) return 'Andhra Pradesh';
+  if (lat >= 11.5 && lat <= 18.5 && lng >= 74 && lng <= 78.5) return 'Karnataka';
+  if (lat >= 14.5 && lat <= 20 && lng >= 72.5 && lng <= 78.5) return 'Goa';
+  if (lat >= 8 && lat <= 13 && lng >= 74.5 && lng <= 77.5) return 'Kerala';
+  if (lat >= 8 && lat <= 13.5 && lng >= 76.5 && lng <= 80.5) return 'Tamil Nadu';
+  if (lat >= 23.5 && lat <= 28.5 && lng >= 89.5 && lng <= 94) return 'Assam';
+  if (lat >= 23 && lat <= 28 && lng >= 90.5 && lng <= 93.5) return 'Meghalaya';
+  if (lat >= 22 && lat <= 24.5 && lng >= 91 && lng <= 93) return 'Tripura';
+  if (lat >= 23 && lat <= 27.5 && lng >= 92 && lng <= 94.5) return 'Mizoram';
+  if (lat >= 24.5 && lat <= 27.5 && lng >= 93 && lng <= 95.5) return 'Manipur';
+  if (lat >= 25 && lat <= 27.5 && lng >= 93.5 && lng <= 95.5) return 'Nagaland';
+  if (lat >= 27 && lat <= 29.5 && lng >= 88 && lng <= 89.5) return 'Sikkim';
+  if (lat >= 26.5 && lat <= 29.5 && lng >= 91.5 && lng <= 97.5) return 'Arunachal Pradesh';
+  if (lat >= 6 && lat <= 14 && lng >= 92 && lng <= 94) return 'Andaman and Nicobar';
+  
+  return 'India';
+};
+
 // Fetch comprehensive disaster data from multiple sources for India
 export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
   const allDisasters: DisasterEvent[] = [];
@@ -42,10 +122,10 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
       starttime: thirtyDaysAgo,
       endtime: today,
       minmagnitude: '2.5',
-      minlatitude: '6',
-      maxlatitude: '37',
-      minlongitude: '68',
-      maxlongitude: '97',
+      minlatitude: '8',
+      maxlatitude: '35.5',
+      minlongitude: '68.5',
+      maxlongitude: '97.5',
       orderby: 'time-asc'
     });
 
@@ -55,10 +135,26 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
     earthquakes.forEach((feature: any) => {
       const coords = feature.geometry.coordinates;
       const props = feature.properties;
+      const lat = coords[1];
+      const lng = coords[0];
+      
+      // Strict India boundary check
+      if (!isInIndia(lat, lng)) return;
+      
+      // Filter out events with Nepal, Pakistan, Bangladesh, Myanmar, China in the name
+      const place = (props.place || '').toLowerCase();
+      if (place.includes('nepal') || place.includes('pakistan') || 
+          place.includes('bangladesh') || place.includes('myanmar') || 
+          place.includes('china') || place.includes('bhutan') ||
+          place.includes('tibet') || place.includes('sri lanka')) {
+        return;
+      }
       
       let severity: 'low' | 'medium' | 'high' = 'low';
       if (props.mag >= 6.0) severity = 'high';
       else if (props.mag >= 4.5) severity = 'medium';
+
+      const stateName = getIndianState(lat, lng, props.place || '');
 
       allDisasters.push({
         id: feature.id,
@@ -66,18 +162,18 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
         severity,
         magnitude: props.mag,
         location: { 
-          lat: coords[1], 
-          lng: coords[0],
-          name: props.place || 'India'
+          lat,
+          lng,
+          name: stateName
         },
         time: new Date(props.time).toISOString(),
-        title: props.title || `Magnitude ${props.mag} Earthquake`,
-        description: `${props.place || 'Unknown location'} - Depth: ${coords[2]?.toFixed(1) || 'N/A'} km`,
+        title: `Magnitude ${props.mag} Earthquake - ${stateName}`,
+        description: `Detected in ${stateName}, India - Depth: ${coords[2]?.toFixed(1) || 'N/A'} km`,
         url: props.url,
       });
     });
 
-    console.log(`Fetched ${earthquakes.length} earthquakes from USGS`);
+    console.log(`Fetched ${allDisasters.length} earthquakes from USGS (India only)`);
 
   } catch (error) {
     console.error('Error fetching earthquake data:', error);
@@ -103,10 +199,14 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
       const lng = coords[0];
       const lat = coords[1];
       
-      // Filter for Indian region
-      if (lat < 6 || lat > 37 || lng < 68 || lng > 97) return;
+      // Strict India boundary check
+      if (!isInIndia(lat, lng)) return;
       
+      // Only include if country is India
       const props = event.properties;
+      const country = (props.country || '').toLowerCase();
+      if (country && country !== 'india') return;
+      
       let disasterType: 'earthquake' | 'flood' | 'cyclone' | 'fire' | 'landslide' = 'earthquake';
       const eventType = (props.eventtype || '').toLowerCase();
       
@@ -120,6 +220,8 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
       if (alertLevel.includes('red')) severity = 'high';
       else if (alertLevel.includes('orange')) severity = 'medium';
 
+      const stateName = getIndianState(lat, lng, props.name || '');
+
       allDisasters.push({
         id: `gdacs-${props.eventid || Math.random()}`,
         type: disasterType,
@@ -128,19 +230,20 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
         location: { 
           lat, 
           lng,
-          name: props.country || 'India'
+          name: stateName
         },
         time: props.fromdate || new Date().toISOString(),
-        title: props.name || `${disasterType} Alert`,
-        description: props.htmldescription || props.description || `GDACS ${severity} alert`,
+        title: `${props.name || disasterType} - ${stateName}`,
+        description: props.htmldescription || props.description || `GDACS ${severity} alert in ${stateName}`,
         url: `https://www.gdacs.org/report.aspx?eventid=${props.eventid}&eventtype=${props.eventtype}`,
       });
     });
 
-    console.log(`Fetched ${gdacsEvents.filter((e: any) => {
+    const indiaGdacsCount = gdacsEvents.filter((e: any) => {
       const c = e.geometry?.coordinates;
-      return c && c[1] >= 6 && c[1] <= 37 && c[0] >= 68 && c[0] <= 97;
-    }).length} GDACS events for India`);
+      return c && isInIndia(c[1], c[0]);
+    }).length;
+    console.log(`Fetched ${indiaGdacsCount} GDACS events for India`);
 
   } catch (error) {
     console.error('Error fetching GDACS data:', error);
