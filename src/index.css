@@ -8,49 +8,62 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Nature-inspired disaster dashboard theme */
-    --background: 146 50% 97%;
-    --foreground: 147 25% 15%;
+    /* Modern Predict Aid theme with vibrant gradients */
+    --background: 220 25% 98%;
+    --foreground: 220 20% 10%;
 
-    --card: 0 0% 100% / 0.8;
-    --card-foreground: 147 25% 15%;
+    --card: 0 0% 100% / 0.95;
+    --card-foreground: 220 20% 10%;
 
-    --popover: 0 0% 100% / 0.95;
-    --popover-foreground: 147 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
 
-    /* Forest Green Primary */
-    --primary: 147 60% 35%;
+    /* Vibrant Primary - Blue-Purple */
+    --primary: 250 90% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 147 70% 55%;
+    --primary-glow: 250 95% 70%;
+    --primary-dark: 250 85% 45%;
 
-    /* Ocean Blue Secondary */
-    --secondary: 200 70% 85%;
-    --secondary-foreground: 200 40% 25%;
-    --ocean-blue: 200 85% 45%;
-    --ocean-blue-deep: 200 90% 25%;
+    /* Electric Secondary - Cyan */
+    --secondary: 190 95% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 190 100% 65%;
 
-    /* Earth tones */
-    --muted: 45 30% 92%;
-    --muted-foreground: 45 15% 45%;
-    --earth-warm: 30 40% 65%;
-    --earth-deep: 25 50% 35%;
+    /* Accent - Purple */
+    --accent: 280 85% 65%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 280 90% 75%;
 
-    --accent: 147 50% 88%;
-    --accent-foreground: 147 60% 25%;
+    /* Muted */
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 15% 45%;
 
     /* Disaster severity colors */
-    --destructive: 0 84% 60%;
+    --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 40 95% 55%;
-    --warning-foreground: 40 30% 15%;
-    --success: 147 70% 45%;
+    --warning: 35 92% 55%;
+    --warning-foreground: 35 30% 10%;
+    --success: 145 75% 50%;
     --success-foreground: 0 0% 100%;
 
-    --border: 147 20% 88%;
-    --input: 0 0% 100% / 0.9;
-    --ring: 147 60% 35%;
+    --border: 220 20% 90%;
+    --input: 0 0% 100%;
+    --ring: 250 90% 60%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(250 90% 60%), hsl(280 85% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(190 95% 55%), hsl(210 90% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(250 90% 60% / 0.1), hsl(190 95% 55% / 0.1));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.95), hsl(220 25% 98% / 0.95));
+    
+    /* Shadows */
+    --shadow-glow: 0 8px 32px -8px hsl(250 90% 60% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(220 20% 30% / 0.1);
+    --shadow-elevated: 0 12px 40px -12px hsl(220 20% 30% / 0.15);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -70,42 +83,52 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 147 15% 8%;
-    --foreground: 147 25% 90%;
+    --background: 220 30% 8%;
+    --foreground: 220 15% 95%;
 
-    --card: 147 20% 10% / 0.9;
-    --card-foreground: 147 25% 90%;
+    --card: 220 25% 12% / 0.95;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 147 20% 10% / 0.95;
-    --popover-foreground: 147 25% 90%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 147 70% 55%;
-    --primary-foreground: 147 15% 8%;
-    --primary-glow: 147 80% 65%;
+    --primary: 250 95% 70%;
+    --primary-foreground: 220 30% 8%;
+    --primary-glow: 250 100% 80%;
+    --primary-dark: 250 90% 55%;
 
-    --secondary: 200 20% 20%;
-    --secondary-foreground: 200 50% 85%;
-    --ocean-blue: 200 85% 65%;
-    --ocean-blue-deep: 200 90% 45%;
+    --secondary: 190 100% 65%;
+    --secondary-foreground: 220 30% 8%;
+    --secondary-glow: 190 100% 75%;
 
-    --muted: 147 10% 15%;
-    --muted-foreground: 147 15% 65%;
-    --earth-warm: 30 35% 55%;
-    --earth-deep: 25 45% 25%;
+    --accent: 280 90% 75%;
+    --accent-foreground: 220 30% 8%;
+    --accent-glow: 280 95% 85%;
 
-    --accent: 147 30% 25%;
-    --accent-foreground: 147 70% 85%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 15% 65%;
 
-    --destructive: 0 84% 70%;
-    --destructive-foreground: 0 0% 10%;
-    --warning: 40 95% 65%;
-    --warning-foreground: 40 30% 10%;
-    --success: 147 70% 65%;
-    --success-foreground: 0 0% 10%;
+    --destructive: 0 85% 70%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 35 92% 65%;
+    --warning-foreground: 35 30% 10%;
+    --success: 145 75% 60%;
+    --success-foreground: 0 0% 100%;
 
-    --border: 147 15% 20%;
-    --input: 147 20% 15% / 0.9;
-    --ring: 147 70% 55%;
+    --border: 220 20% 20%;
+    --input: 220 25% 15%;
+    --ring: 250 95% 70%;
+    
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(250 95% 70%), hsl(280 90% 75%));
+    --gradient-secondary: linear-gradient(135deg, hsl(190 100% 65%), hsl(210 95% 70%));
+    --gradient-hero: linear-gradient(135deg, hsl(250 95% 70% / 0.15), hsl(190 100% 65% / 0.15));
+    --gradient-card: linear-gradient(135deg, hsl(220 25% 12% / 0.95), hsl(220 30% 10% / 0.95));
+    
+    /* Dark mode shadows with glow */
+    --shadow-glow: 0 8px 32px -8px hsl(250 95% 70% / 0.4);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
+    --shadow-elevated: 0 12px 40px -12px hsl(0 0% 0% / 0.6);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -123,46 +146,84 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply font-bold;
   }
 
-  /* Glassmorphism utilities */
+  /* Enhanced Glassmorphism */
   .glass {
-    @apply backdrop-blur-md bg-card border border-border/20 shadow-lg;
+    @apply backdrop-blur-xl bg-card/90 border border-border/30 rounded-2xl;
+    box-shadow: var(--shadow-card);
   }
 
   .glass-strong {
-    @apply backdrop-blur-xl bg-card/95 border border-border/30 shadow-xl;
+    @apply backdrop-blur-2xl bg-card border border-border/40 rounded-2xl;
+    box-shadow: var(--shadow-elevated);
+  }
+  
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
   }
 
-  /* Disaster severity indicators */
+  /* Disaster severity indicators with glow */
   .severity-low {
-    @apply bg-success/10 border-success/30 text-success-foreground;
+    @apply bg-success/10 border-success/40 text-success;
+    box-shadow: 0 4px 16px -4px hsl(var(--success) / 0.2);
   }
 
   .severity-medium {
-    @apply bg-warning/10 border-warning/30 text-warning-foreground;
+    @apply bg-warning/10 border-warning/40 text-warning;
+    box-shadow: 0 4px 16px -4px hsl(var(--warning) / 0.2);
   }
 
   .severity-high {
-    @apply bg-destructive/10 border-destructive/30 text-destructive-foreground;
+    @apply bg-destructive/10 border-destructive/40 text-destructive;
+    box-shadow: 0 4px 16px -4px hsl(var(--destructive) / 0.2);
   }
 
   /* Smooth transitions */
   .transition-smooth {
     @apply transition-all duration-300 ease-out;
   }
+  
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-elevated);
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+  }
 
   /* Map styles */
   .leaflet-container {
     height: 100%;
     width: 100%;
-    border-radius: 1rem;
+    @apply rounded-2xl;
   }
 
-  /* Pulse animation for user location marker */
+  /* Animations */
   @keyframes pulse {
-    0% {
+    0%, 100% {
       transform: scale(1);
       opacity: 1;
     }
@@ -170,9 +231,38 @@ All colors MUST be HSL.
       transform: scale(1.2);
       opacity: 0.7;
     }
-    100% {
-      transform: scale(1);
-      opacity: 1;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
     }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 3s infinite linear;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
   }
 }
