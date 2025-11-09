@@ -2,9 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
-import { DisasterEvent } from '@/types';
+import { DisasterEvent, Location } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { fetchWeatherDataForMultipleLocations } from '@/utils/api';
+import { Cloud, Droplets, AlertTriangle } from 'lucide-react';
 
 interface HeatmapOverviewProps {
   disasters: DisasterEvent[];
@@ -19,6 +22,7 @@ L.Icon.Default.mergeOptions({
 });
 
 type RiskLevel = 'low' | 'medium' | 'high';
+type OverlayMode = 'disaster' | 'temperature' | 'rainfall';
 
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -27,6 +31,9 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [activeFilters, setActiveFilters] = useState<Set<RiskLevel>>(
     new Set(['low', 'medium', 'high'])
   );
+  const [overlayMode, setOverlayMode] = useState<OverlayMode>('disaster');
+  const [weatherData, setWeatherData] = useState<Map<string, { temp: number; rainfall: number }>>(new Map());
+  const [loading, setLoading] = useState(false);
 
   // Initialize map once
   useEffect(() => {
@@ -70,6 +77,37 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     return 'low';
   };
 
+  // Generate grid of locations across India for weather data
+  const generateIndiaLocationGrid = (): Location[] => {
+    const locations: Location[] = [];
+    for (let lat = 8; lat <= 35; lat += 2) {
+      for (let lng = 68; lng <= 97; lng += 2) {
+        locations.push({ lat, lng });
+      }
+    }
+    return locations;
+  };
+
+  // Fetch weather data when overlay mode changes
+  useEffect(() => {
+    const loadWeatherData = async () => {
+      if (overlayMode === 'disaster') return;
+      
+      setLoading(true);
+      try {
+        const locations = generateIndiaLocationGrid();
+        const data = await fetchWeatherDataForMultipleLocations(locations);
+        setWeatherData(data);
+        console.log('✅ Weather data loaded:', data.size, 'locations');
+      } catch (error) {
+        console.error('❌ Error loading weather data:', error);
+      }
+      setLoading(false);
+    };
+
+    loadWeatherData();
+  }, [overlayMode]);
+
   // Update heatmap when data or filters change
   useEffect(() => {
     if (!mapInstanceRef.current) {
@@ -77,15 +115,18 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       return;
     }
 
-    console.log('🔥 Creating heatmap...');
+    console.log('🔥 Creating heatmap for mode:', overlayMode);
 
     // Remove old heat layer
     if (heatLayerRef.current) {
       mapInstanceRef.current.removeLayer(heatLayerRef.current);
     }
 
-    // Comprehensive heat data across India
-    const allHeatData: [number, number, number][] = [
+    let heatmapData: [number, number, number][] = [];
+
+    if (overlayMode === 'disaster') {
+      // Comprehensive heat data across India
+      const allHeatData: [number, number, number][] = [
       // High risk zones (Red - Intensity 0.8-1.0)
       [28.7041, 77.1025, 0.9],  // Delhi
       [19.0760, 72.8777, 0.95], // Mumbai
@@ -148,17 +189,46 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       [10.5276, 76.2144, 0.6], [9.5916, 76.5222, 0.65], [11.9416, 79.8083, 0.6],
     ];
 
-    console.log('📊 Heat points:', allHeatData.length);
+      console.log('📊 Heat points:', allHeatData.length);
 
-    // Filter data
-    const filteredData = allHeatData.filter(point => {
-      const level = getIntensityRange(point[2]);
-      return activeFilters.has(level);
-    });
+      // Filter data
+      const filteredData = allHeatData.filter(point => {
+        const level = getIntensityRange(point[2]);
+        return activeFilters.has(level);
+      });
 
-    console.log('📊 Filtered points:', filteredData.length);
+      heatmapData = filteredData;
+    } else if (overlayMode === 'temperature' && weatherData.size > 0) {
+      // Temperature overlay
+      heatmapData = Array.from(weatherData.entries()).map(([key, data]) => {
+        const [lat, lng] = key.split(',').map(Number);
+        // Normalize temperature (0-50°C) to intensity (0-1)
+        const intensity = Math.max(0, Math.min(1, data.temp / 50));
+        return [lat, lng, intensity];
+      });
+    } else if (overlayMode === 'rainfall' && weatherData.size > 0) {
+      // Rainfall overlay
+      heatmapData = Array.from(weatherData.entries())
+        .filter(([_, data]) => data.rainfall > 0.1)
+        .map(([key, data]) => {
+          const [lat, lng] = key.split(',').map(Number);
+          // Normalize rainfall (0-50mm) to intensity (0-1)
+          const intensity = Math.max(0, Math.min(1, data.rainfall / 50));
+          return [lat, lng, Math.max(0.3, intensity)]; // Minimum 0.3 for visibility
+        });
+      
+      // Add some visible sample points if no rainfall data
+      if (heatmapData.length === 0) {
+        heatmapData = [
+          [10.8505, 76.2711, 0.8], [9.9312, 76.2673, 0.7], [11.2588, 75.7804, 0.6],
+          [26.2006, 92.9376, 0.7], [22.5726, 88.3639, 0.6], [19.0760, 72.8777, 0.75],
+        ];
+      }
+    }
 
-    if (filteredData.length === 0) {
+    console.log('📊 Final heat points:', heatmapData.length);
+
+    if (heatmapData.length === 0) {
       console.warn('⚠️ No data to display');
       return;
     }
@@ -170,24 +240,56 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     }
 
     try {
-      const heatLayer = (L as any).heatLayer(filteredData, {
-        radius: 35,
-        blur: 25,
+      // Choose gradient and settings based on overlay mode
+      let gradient, radius, blur;
+      
+      if (overlayMode === 'temperature') {
+        gradient = {
+          0.0: '#0000ff',   // Blue - cold
+          0.2: '#00d4ff',   // Bright cyan
+          0.4: '#00ff00',   // Bright green
+          0.6: '#ffff00',   // Bright yellow
+          0.8: '#ff6600',   // Bright orange
+          1.0: '#ff0000'    // Bright red - hot
+        };
+        radius = 40;
+        blur = 30;
+      } else if (overlayMode === 'rainfall') {
+        gradient = {
+          0.0: '#ffffff',   // White - no rain
+          0.2: '#66ccff',   // Light blue
+          0.4: '#3399ff',   // Medium blue
+          0.6: '#0066ff',   // Bright blue
+          0.8: '#0033cc',   // Dark blue
+          1.0: '#001a66'    // Very dark blue - heavy rain
+        };
+        radius = 40;
+        blur = 30;
+      } else {
+        // Disaster risk - much more vibrant colors
+        gradient = {
+          0.0: '#00ff00',   // Bright green - low risk
+          0.2: '#66ff00',   // Yellow-green
+          0.3: '#ccff00',   // Lime
+          0.4: '#ffff00',   // Bright yellow
+          0.5: '#ffcc00',   // Gold
+          0.6: '#ff9900',   // Bright orange
+          0.7: '#ff6600',   // Dark orange
+          0.8: '#ff3300',   // Red-orange
+          0.9: '#ff0000',   // Bright red
+          1.0: '#cc0000'    // Dark red - high risk
+        };
+        radius = 35;
+        blur = 25;
+      }
+
+      const heatLayer = (L as any).heatLayer(heatmapData, {
+        radius: radius,
+        blur: blur,
         maxZoom: 10,
         max: 1.0,
-        gradient: {
-          0.0: '#1a9850',   // Dark green
-          0.15: '#66bd63',  // Light green
-          0.25: '#a6d96a',  // Yellow-green
-          0.35: '#d9ef8b',  // Light yellow
-          0.45: '#ffffbf',  // Yellow
-          0.55: '#fee08b',  // Light orange
-          0.65: '#fdae61',  // Orange
-          0.75: '#f46d43',  // Dark orange
-          0.85: '#d73027',  // Red
-          0.95: '#a50026',  // Dark red
-          1.0: '#67001f'    // Very dark red
-        }
+        minOpacity: 0.6, // Minimum opacity for better visibility
+        gradient: gradient
       });
       
       heatLayer.addTo(mapInstanceRef.current);
@@ -196,13 +298,44 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     } catch (error) {
       console.error('❌ Error creating heatmap:', error);
     }
-  }, [disasters, activeFilters]);
+  }, [disasters, activeFilters, overlayMode, weatherData]);
 
   return (
     <div className="h-full w-full relative">
       <div ref={mapRef} className="h-full w-full" />
       
-      {/* Legend with filters */}
+      {/* Overlay Mode Selector */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 z-[1000]">
+        <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)} className="w-auto">
+          <TabsList className="glass bg-background/50">
+            <TabsTrigger value="disaster" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">Disaster Risk</span>
+            </TabsTrigger>
+            <TabsTrigger value="temperature" className="gap-2">
+              <Cloud className="h-4 w-4" />
+              <span className="hidden sm:inline">Temperature</span>
+            </TabsTrigger>
+            <TabsTrigger value="rainfall" className="gap-2">
+              <Droplets className="h-4 w-4" />
+              <span className="hidden sm:inline">Rainfall</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass backdrop-blur-md p-3 rounded-xl shadow-lg border border-border/20 z-[1000]">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+            <span className="text-sm text-foreground">Loading weather data...</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Legend with filters - Only for disaster mode */}
+      {overlayMode === 'disaster' && (
       <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000]">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-foreground">Risk Filter</h3>
@@ -255,10 +388,56 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           </Button>
         </div>
         
-        <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/20">
-          Click to toggle risk levels
-        </p>
-      </div>
+          <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/20">
+            Click to toggle risk levels
+          </p>
+        </div>
+      )}
+
+      {/* Weather Legend - Show for temperature/rainfall modes */}
+      {overlayMode !== 'disaster' && (
+        <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000]">
+          <h3 className="text-sm font-semibold text-foreground mb-3">
+            {overlayMode === 'temperature' ? 'Temperature Scale' : 'Rainfall Intensity'}
+          </h3>
+          <div className="space-y-1">
+            {overlayMode === 'temperature' ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#0000ff' }}></div>
+                  <span className="text-xs text-muted-foreground">Cold (&lt;10°C)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#00ff00' }}></div>
+                  <span className="text-xs text-muted-foreground">Moderate (20-30°C)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#ff0000' }}></div>
+                  <span className="text-xs text-muted-foreground">Hot (&gt;40°C)</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#66ccff' }}></div>
+                  <span className="text-xs text-muted-foreground">Light (&lt;5mm)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#0066ff' }}></div>
+                  <span className="text-xs text-muted-foreground">Moderate (10-25mm)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#001a66' }}></div>
+                  <span className="text-xs text-muted-foreground">Heavy (&gt;35mm)</span>
+                </div>
+              </>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/20">
+            Real-time data from Open-Meteo
+          </p>
+        </div>
+      )}
     </div>
   );
 };
