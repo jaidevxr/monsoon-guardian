@@ -32,6 +32,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('disaster');
   const [weatherData, setWeatherData] = useState<Map<string, { temp: number; aqi: number }>>(new Map());
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
 
   // Initialize map with state boundaries
   useEffect(() => {
@@ -183,7 +184,11 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       try {
         const cities = getIndianCities();
-        console.log('Starting to load data for', cities.length, 'cities');
+        const totalCities = cities.length;
+        setLoadingProgress({ current: 0, total: totalCities });
+        console.log('Starting to load data for', totalCities, 'cities');
+        
+        let loadedCount = 0;
         
         // Process cities one by one with delays
         for (const { lat, lng } of cities) {
@@ -220,7 +225,9 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             }
             
             dataMap.set(`${lat},${lng}`, { temp, aqi });
-            console.log(`Loaded ${lat},${lng}: temp=${temp}, aqi=${aqi}`);
+            loadedCount++;
+            setLoadingProgress({ current: loadedCount, total: totalCities });
+            console.log(`Loaded ${loadedCount}/${totalCities}: ${lat},${lng} - temp=${temp}, aqi=${aqi}`);
             
             // Update state progressively
             setWeatherData(new Map(dataMap));
@@ -229,6 +236,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             await new Promise(resolve => setTimeout(resolve, 300));
           } catch (error) {
             console.error(`Error fetching data for ${lat},${lng}:`, error);
+            loadedCount++;
+            setLoadingProgress({ current: loadedCount, total: totalCities });
           }
         }
         
@@ -238,6 +247,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       }
       
       setLoading(false);
+      setLoadingProgress({ current: 0, total: 0 });
     };
 
     loadData();
@@ -300,7 +310,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         const level = getIntensityRange(risk);
         if (!activeFilters.has(level)) return;
 
-        // Only large glow circle with hover popup
+        // Only large glow circle with hover tooltip
         const glowCircle = L.circleMarker([lat, lng], {
           radius: 60,
           fillColor: getColor(risk, 'disaster', 0.25),
@@ -308,16 +318,30 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           weight: 0,
           fillOpacity: 1,
           className: 'heatmap-glow'
-        }).bindPopup(`
-          <div style="font-size: 12px;">
+        });
+        
+        // Invisible interactive layer for hover
+        const hoverCircle = L.circleMarker([lat, lng], {
+          radius: 30,
+          fillColor: 'transparent',
+          color: 'transparent',
+          weight: 0,
+          fillOpacity: 0,
+        }).bindTooltip(`
+          <div style="font-size: 11px; padding: 4px;">
             <strong>Disaster Risk</strong><br/>
-            Level: ${level.toUpperCase()}<br/>
-            Intensity: ${(risk * 100).toFixed(0)}%
+            Level: <strong>${level.toUpperCase()}</strong><br/>
+            Intensity: <strong>${(risk * 100).toFixed(0)}%</strong>
           </div>
-        `);
+        `, { 
+          permanent: false, 
+          direction: 'top',
+          className: 'custom-tooltip'
+        });
         
         glowCircle.addTo(mapInstanceRef.current!);
-        markersRef.current.push(glowCircle);
+        hoverCircle.addTo(mapInstanceRef.current!);
+        markersRef.current.push(glowCircle, hoverCircle);
       });
     } else if (weatherData.size > 0) {
       // Show weather/pollution data with heatmap glow effect
@@ -335,19 +359,23 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           className: 'heatmap-glow'
         });
         
-        // Small center point with popup
+        // Small center point with hover tooltip
         const centerCircle = L.circleMarker([lat, lng], {
           radius: 2.5,
           fillColor: getColor(value, overlayMode, 0.7),
           color: getColor(value, overlayMode, 0.9),
           weight: 1,
           fillOpacity: 0.8,
-        }).bindPopup(`
-          <div style="font-size: 12px;">
-            <strong>${overlayMode === 'temperature' ? 'Temperature' : 'Air Quality (AQI)'}</strong><br/>
-            ${overlayMode === 'temperature' ? `${data.temp.toFixed(1)}°C` : `AQI: ${data.aqi.toFixed(0)}`}
+        }).bindTooltip(`
+          <div style="font-size: 11px; padding: 4px;">
+            <strong>${overlayMode === 'temperature' ? 'Temperature' : 'Air Quality'}</strong><br/>
+            ${overlayMode === 'temperature' ? `<strong>${data.temp.toFixed(1)}°C</strong>` : `AQI: <strong>${data.aqi.toFixed(0)}</strong>`}
           </div>
-        `);
+        `, {
+          permanent: false,
+          direction: 'top',
+          className: 'custom-tooltip'
+        });
         
         glowCircle.addTo(mapInstanceRef.current!);
         centerCircle.addTo(mapInstanceRef.current!);
@@ -362,6 +390,17 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         .heatmap-glow {
           filter: blur(35px);
           opacity: 0.7;
+        }
+        .custom-tooltip {
+          background: rgba(0, 0, 0, 0.8) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          border-radius: 8px !important;
+          padding: 4px 8px !important;
+          color: white !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+        .custom-tooltip::before {
+          border-top-color: rgba(0, 0, 0, 0.8) !important;
         }
       `}</style>
       <div ref={mapRef} className="h-full w-full" />
@@ -387,10 +426,25 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {loading && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass backdrop-blur-md p-3 rounded-xl border border-border/20 z-[1000]">
-          <div className="flex items-center gap-2">
-            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-            <span className="text-sm">Loading...</span>
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass backdrop-blur-md p-4 rounded-xl border border-border/20 z-[1000] min-w-[200px]">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 justify-center">
+              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+              <span className="text-sm font-medium">Loading data...</span>
+            </div>
+            {loadingProgress.total > 0 && (
+              <>
+                <div className="text-xs text-center text-muted-foreground">
+                  Loaded {loadingProgress.current}/{loadingProgress.total} cities
+                </div>
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-primary h-full transition-all duration-300 rounded-full"
+                    style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
+                  ></div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
