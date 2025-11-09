@@ -16,13 +16,17 @@ export const getCurrentLocation = (): Promise<Location> => {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log("✅ Current location detected:", position.coords.latitude, position.coords.longitude);
         resolve({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
       },
-      (error) => reject(error),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      (error) => {
+        console.error("❌ Geolocation error:", error.code, error.message);
+        reject(error);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   });
 };
