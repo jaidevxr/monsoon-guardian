@@ -24,10 +24,45 @@ L.Icon.Default.mergeOptions({
 type RiskLevel = 'low' | 'medium' | 'high';
 type OverlayMode = 'disaster' | 'temperature' | 'rainfall';
 
+// Indian states data with boundaries for click zoom
+const indianStates = [
+  { name: 'Jammu and Kashmir', center: [34.0, 75.5], zoom: 7 },
+  { name: 'Himachal Pradesh', center: [31.1, 77.2], zoom: 8 },
+  { name: 'Punjab', center: [31.1, 75.3], zoom: 8 },
+  { name: 'Uttarakhand', center: [30.1, 79.0], zoom: 8 },
+  { name: 'Haryana', center: [29.1, 76.1], zoom: 8 },
+  { name: 'Delhi', center: [28.7, 77.1], zoom: 11 },
+  { name: 'Rajasthan', center: [27.0, 74.2], zoom: 7 },
+  { name: 'Uttar Pradesh', center: [26.8, 80.9], zoom: 7 },
+  { name: 'Bihar', center: [25.1, 85.3], zoom: 8 },
+  { name: 'Sikkim', center: [27.5, 88.5], zoom: 9 },
+  { name: 'Arunachal Pradesh', center: [28.2, 94.7], zoom: 7 },
+  { name: 'Nagaland', center: [26.2, 94.6], zoom: 8 },
+  { name: 'Manipur', center: [24.7, 93.9], zoom: 8 },
+  { name: 'Mizoram', center: [23.2, 92.9], zoom: 8 },
+  { name: 'Tripura', center: [23.9, 91.9], zoom: 9 },
+  { name: 'Meghalaya', center: [25.5, 91.4], zoom: 8 },
+  { name: 'Assam', center: [26.2, 92.9], zoom: 7 },
+  { name: 'West Bengal', center: [22.6, 88.4], zoom: 7 },
+  { name: 'Jharkhand', center: [23.6, 85.3], zoom: 8 },
+  { name: 'Odisha', center: [20.9, 85.1], zoom: 7 },
+  { name: 'Chhattisgarh', center: [21.3, 81.9], zoom: 7 },
+  { name: 'Madhya Pradesh', center: [23.3, 77.4], zoom: 7 },
+  { name: 'Gujarat', center: [22.3, 71.2], zoom: 7 },
+  { name: 'Maharashtra', center: [19.8, 75.8], zoom: 7 },
+  { name: 'Andhra Pradesh', center: [15.9, 79.7], zoom: 7 },
+  { name: 'Telangana', center: [18.1, 79.0], zoom: 8 },
+  { name: 'Karnataka', center: [15.3, 75.7], zoom: 7 },
+  { name: 'Goa', center: [15.3, 74.1], zoom: 10 },
+  { name: 'Kerala', center: [10.8, 76.3], zoom: 8 },
+  { name: 'Tamil Nadu', center: [11.1, 78.7], zoom: 7 },
+];
+
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<any>(null);
+  const stateMarkersRef = useRef<L.Marker[]>([]);
   const [activeFilters, setActiveFilters] = useState<Set<RiskLevel>>(
     new Set(['low', 'medium', 'high'])
   );
@@ -49,7 +84,22 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       maxZoom: 18,
     }).addTo(map);
 
-    console.log('✅ Map initialized');
+    // Add state markers for clicking
+    indianStates.forEach(state => {
+      const marker = L.marker([state.center[0], state.center[1]], {
+        opacity: 0,
+        interactive: true
+      }).addTo(map);
+      
+      marker.on('click', () => {
+        map.setView([state.center[0], state.center[1]], state.zoom);
+        console.log('📍 Zoomed to:', state.name);
+      });
+      
+      stateMarkersRef.current.push(marker);
+    });
+
+    console.log('✅ Map initialized with', indianStates.length, 'clickable states');
 
     return () => {
       if (mapInstanceRef.current) {
@@ -77,12 +127,16 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     return 'low';
   };
 
-  // Generate grid of locations across India for weather data
+  // Generate comprehensive grid across India with jitter
   const generateIndiaLocationGrid = (): Location[] => {
     const locations: Location[] = [];
-    for (let lat = 8; lat <= 35; lat += 2) {
-      for (let lng = 68; lng <= 97; lng += 2) {
-        locations.push({ lat, lng });
+    // Denser grid with jitter for natural look
+    for (let lat = 8; lat <= 36; lat += 1.5) {
+      for (let lng = 68; lng <= 97; lng += 1.5) {
+        // Add small random offset to avoid grid pattern
+        const jitterLat = lat + (Math.random() - 0.5) * 0.5;
+        const jitterLng = lng + (Math.random() - 0.5) * 0.5;
+        locations.push({ lat: jitterLat, lng: jitterLng });
       }
     }
     return locations;
@@ -108,6 +162,61 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     loadWeatherData();
   }, [overlayMode]);
 
+  // Calculate disaster risk based on historical data, geography, and vulnerability
+  const generateDisasterRiskData = (): [number, number, number][] => {
+    const riskData: [number, number, number][] = [];
+    
+    // High risk coastal cyclone zones (Odisha, Andhra, Tamil Nadu, West Bengal)
+    const cycloneZones: [number, number, number][] = [
+      [20.95, 85.10, 0.95], [19.82, 85.83, 0.9], [20.30, 85.82, 0.92], [21.50, 84.03, 0.88],
+      [17.69, 83.22, 0.85], [16.99, 82.25, 0.83], [16.51, 80.65, 0.8], [15.91, 79.74, 0.78],
+      [13.08, 80.27, 0.85], [11.13, 79.83, 0.8], [10.79, 79.14, 0.75], [11.75, 79.77, 0.78],
+      [22.57, 88.36, 0.82], [21.64, 87.85, 0.8], [22.35, 88.26, 0.8],
+    ];
+    
+    // High risk flood zones (Bihar, Assam, UP, Kerala)
+    const floodZones: [number, number, number][] = [
+      [25.10, 85.31, 0.95], [26.12, 85.52, 0.92], [25.59, 85.14, 0.9], [26.45, 87.33, 0.88],
+      [26.20, 92.94, 0.93], [26.14, 91.74, 0.9], [27.47, 94.91, 0.88], [25.61, 91.99, 0.85],
+      [26.85, 80.95, 0.85], [25.44, 81.85, 0.83], [27.18, 78.01, 0.8], [26.20, 78.18, 0.78],
+      [10.85, 76.27, 0.9], [9.93, 76.27, 0.88], [11.26, 75.78, 0.85], [8.52, 76.94, 0.83],
+    ];
+    
+    // High risk earthquake zones (Himalayas, Gujarat, Northeast)
+    const earthquakeZones: [number, number, number][] = [
+      [34.08, 74.80, 0.88], [32.73, 74.86, 0.85], [31.10, 77.17, 0.83], [32.24, 77.19, 0.8],
+      [30.07, 79.02, 0.85], [29.38, 79.46, 0.83], [30.73, 79.62, 0.8], [30.32, 78.03, 0.78],
+      [23.02, 72.57, 0.88], [22.26, 71.19, 0.85], [23.02, 69.67, 0.8], [21.17, 72.83, 0.83],
+      [24.66, 93.91, 0.83], [25.67, 94.11, 0.8], [26.16, 94.56, 0.78],
+    ];
+    
+    // High risk drought zones (Rajasthan, Maharashtra, Karnataka)
+    const droughtZones: [number, number, number][] = [
+      [27.02, 74.22, 0.92], [26.91, 75.79, 0.9], [28.02, 73.31, 0.88], [26.45, 74.64, 0.85],
+      [25.21, 75.86, 0.88], [26.24, 73.02, 0.85], [24.59, 73.71, 0.83], [27.39, 73.43, 0.8],
+      [19.08, 72.88, 0.88], [18.52, 73.86, 0.85], [19.22, 72.98, 0.83], [19.00, 74.77, 0.8],
+      [17.39, 78.49, 0.8], [16.71, 74.24, 0.78], [15.32, 75.71, 0.75],
+    ];
+    
+    // Medium risk zones across other areas
+    const mediumRiskZones: [number, number, number][] = [
+      [28.70, 77.10, 0.72], [31.63, 74.87, 0.68], [30.90, 75.86, 0.65], [29.06, 76.09, 0.68],
+      [22.72, 75.86, 0.65], [23.26, 77.41, 0.68], [21.15, 79.09, 0.65], [23.18, 79.94, 0.63],
+      [21.28, 81.87, 0.65], [22.08, 82.14, 0.63], [12.97, 77.59, 0.68], [13.34, 74.74, 0.65],
+      [15.85, 74.50, 0.63], [23.61, 85.28, 0.65], [22.80, 86.20, 0.63], [23.58, 87.31, 0.63],
+    ];
+    
+    // Low risk zones
+    const lowRiskZones: [number, number, number][] = [
+      [31.33, 75.58, 0.45], [30.20, 74.95, 0.42], [32.08, 77.57, 0.48], [31.89, 77.06, 0.45],
+      [27.89, 78.09, 0.48], [26.45, 80.33, 0.45], [20.75, 78.74, 0.42], [19.88, 75.34, 0.45],
+      [18.11, 76.10, 0.42], [12.30, 76.64, 0.45], [10.53, 76.21, 0.48], [9.59, 76.52, 0.45],
+      [11.94, 79.81, 0.42], [10.37, 77.94, 0.45], [24.63, 84.99, 0.42],
+    ];
+    
+    return [...cycloneZones, ...floodZones, ...earthquakeZones, ...droughtZones, ...mediumRiskZones, ...lowRiskZones];
+  };
+
   // Update heatmap when data or filters change
   useEffect(() => {
     if (!mapInstanceRef.current) {
@@ -125,108 +234,38 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     let heatmapData: [number, number, number][] = [];
 
     if (overlayMode === 'disaster') {
-      // Comprehensive heat data across India
-      const allHeatData: [number, number, number][] = [
-      // High risk zones (Red - Intensity 0.8-1.0)
-      [28.7041, 77.1025, 0.9],  // Delhi
-      [19.0760, 72.8777, 0.95], // Mumbai
-      [25.0961, 85.3131, 1.0],  // Bihar
-      [20.9517, 85.0985, 0.95], // Odisha coast
-      [26.2006, 92.9376, 0.9],  // Assam
-      [10.8505, 76.2711, 0.9],  // Kerala
-      [27.0238, 74.2179, 0.95], // Rajasthan
+      const allHeatData = generateDisasterRiskData();
       
-      // Medium-high risk (Orange - 0.6-0.8)
-      [26.8467, 80.9462, 0.75], // Lucknow
-      [22.5726, 88.3639, 0.8],  // Kolkata
-      [13.0827, 80.2707, 0.75], // Chennai
-      [17.3850, 78.4867, 0.7],  // Hyderabad
-      [12.9716, 77.5946, 0.7],  // Bangalore
-      [23.0225, 72.5714, 0.8],  // Ahmedabad
-      [18.5204, 73.8567, 0.75], // Pune
-      
-      // Medium risk zones (Yellow-Orange - 0.4-0.6)
-      [30.7333, 76.7794, 0.6],  // Chandigarh
-      [26.9124, 75.7873, 0.65], // Jaipur
-      [23.2599, 77.4126, 0.6],  // Bhopal
-      [21.1458, 79.0882, 0.55], // Nagpur
-      [15.3173, 75.7139, 0.6],  // Karnataka inland
-      
-      // Additional high-density coverage
-      // North India
-      [31.1048, 77.1734, 0.7], [32.2432, 77.1892, 0.65], [30.0668, 79.0193, 0.75],
-      [29.3803, 79.4636, 0.7], [28.4595, 77.0266, 0.85], [29.0588, 76.0856, 0.7],
-      
-      // Eastern states
-      [25.5940, 85.1376, 0.85], [26.1197, 85.5210, 0.9], [23.6102, 85.2799, 0.65],
-      [22.9868, 87.8550, 0.75], [26.7271, 88.3953, 0.7], [24.6340, 87.8492, 0.75],
-      
-      // Northeast
-      [26.1445, 91.7362, 0.85], [27.4728, 94.9120, 0.8], [25.4670, 91.3662, 0.75],
-      [24.6637, 93.9063, 0.7], [25.6747, 94.1086, 0.75],
-      
-      // Western states
-      [23.0225, 69.6669, 0.75], [21.1702, 72.8311, 0.85], [22.3072, 73.1812, 0.75],
-      [26.4499, 74.6399, 0.8], [25.2138, 75.8648, 0.85], [24.5854, 73.7125, 0.7],
-      
-      // Central India
-      [22.7196, 75.8577, 0.65], [21.2787, 81.8661, 0.7], [23.1765, 79.9369, 0.65],
-      
-      // Southern states
-      [16.5062, 80.6480, 0.75], [14.4426, 79.9865, 0.7], [11.1271, 78.6569, 0.75],
-      [10.7905, 78.7047, 0.7], [9.9312, 76.2673, 0.85], [8.5241, 76.9366, 0.8],
-      [11.2588, 75.7804, 0.75], [13.3409, 74.7421, 0.75], [15.8497, 74.4977, 0.7],
-      
-      // Coastal regions (high cyclone risk)
-      [19.8135, 85.8312, 0.9], [20.2961, 85.8245, 0.9], [21.9497, 86.1126, 0.8],
-      [17.6868, 83.2185, 0.8], [16.9891, 82.2475, 0.75], [11.7480, 92.6586, 0.7],
-      [21.6417, 69.6293, 0.75], [15.3173, 73.9572, 0.75],
-      
-      // Low-medium risk (Green-Yellow - 0.3-0.5)
-      [31.6340, 74.8723, 0.5], [30.9010, 75.8573, 0.45], [32.0840, 77.5671, 0.5],
-      [27.8974, 78.0880, 0.55], [26.2006, 78.1778, 0.5], [20.7515, 78.7431, 0.55],
-      [19.9975, 73.7898, 0.6], [18.5912, 75.7139, 0.55], [12.2958, 76.6394, 0.5],
-      [10.5276, 76.2144, 0.6], [9.5916, 76.5222, 0.65], [11.9416, 79.8083, 0.6],
-    ];
-
-      console.log('📊 Heat points:', allHeatData.length);
-
-      // Filter data
-      const filteredData = allHeatData.filter(point => {
+      // Filter by active risk levels
+      heatmapData = allHeatData.filter(point => {
         const level = getIntensityRange(point[2]);
         return activeFilters.has(level);
       });
-
-      heatmapData = filteredData;
+      
+      console.log('📊 Disaster risk points:', heatmapData.length);
     } else if (overlayMode === 'temperature' && weatherData.size > 0) {
-      // Temperature overlay
+      // Temperature overlay with all data points
       heatmapData = Array.from(weatherData.entries()).map(([key, data]) => {
         const [lat, lng] = key.split(',').map(Number);
-        // Normalize temperature (0-50°C) to intensity (0-1)
-        const intensity = Math.max(0, Math.min(1, data.temp / 50));
+        // Normalize temperature (0-50°C) to intensity
+        const intensity = Math.max(0.2, Math.min(1, data.temp / 50));
         return [lat, lng, intensity];
       });
-    } else if (overlayMode === 'rainfall' && weatherData.size > 0) {
-      // Rainfall overlay
-      heatmapData = Array.from(weatherData.entries())
-        .filter(([_, data]) => data.rainfall > 0.1)
-        .map(([key, data]) => {
-          const [lat, lng] = key.split(',').map(Number);
-          // Normalize rainfall (0-50mm) to intensity (0-1)
-          const intensity = Math.max(0, Math.min(1, data.rainfall / 50));
-          return [lat, lng, Math.max(0.3, intensity)]; // Minimum 0.3 for visibility
-        });
       
-      // Add some visible sample points if no rainfall data
-      if (heatmapData.length === 0) {
-        heatmapData = [
-          [10.8505, 76.2711, 0.8], [9.9312, 76.2673, 0.7], [11.2588, 75.7804, 0.6],
-          [26.2006, 92.9376, 0.7], [22.5726, 88.3639, 0.6], [19.0760, 72.8777, 0.75],
-        ];
-      }
+      console.log('🌡️ Temperature points:', heatmapData.length);
+    } else if (overlayMode === 'rainfall' && weatherData.size > 0) {
+      // Rainfall overlay - show all points with any data
+      heatmapData = Array.from(weatherData.entries()).map(([key, data]) => {
+        const [lat, lng] = key.split(',').map(Number);
+        // Even 0 rainfall shows as very light
+        const intensity = data.rainfall > 0 
+          ? Math.max(0.3, Math.min(1, data.rainfall / 30))
+          : 0.15;
+        return [lat, lng, intensity];
+      });
+      
+      console.log('💧 Rainfall points:', heatmapData.length);
     }
-
-    console.log('📊 Final heat points:', heatmapData.length);
 
     if (heatmapData.length === 0) {
       console.warn('⚠️ No data to display');
@@ -240,47 +279,48 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     }
 
     try {
-      // Choose gradient and settings based on overlay mode
-      let gradient, radius, blur;
+      let gradient, radius, blur, minOpacity;
       
       if (overlayMode === 'temperature') {
         gradient = {
-          0.0: '#0000ff',   // Blue - cold
-          0.2: '#00d4ff',   // Bright cyan
-          0.4: '#00ff00',   // Bright green
-          0.6: '#ffff00',   // Bright yellow
-          0.8: '#ff6600',   // Bright orange
-          1.0: '#ff0000'    // Bright red - hot
+          0.0: '#0033ff',   // Deep blue - very cold
+          0.3: '#00ccff',   // Cyan - cold
+          0.5: '#00ff00',   // Green - moderate
+          0.7: '#ffff00',   // Yellow - warm
+          0.9: '#ff0000',   // Red - hot
+          1.0: '#990000'    // Dark red - very hot
         };
-        radius = 40;
-        blur = 30;
+        radius = 50;
+        blur = 40;
+        minOpacity = 0.4;
       } else if (overlayMode === 'rainfall') {
         gradient = {
-          0.0: '#ffffff',   // White - no rain
-          0.2: '#66ccff',   // Light blue
-          0.4: '#3399ff',   // Medium blue
-          0.6: '#0066ff',   // Bright blue
-          0.8: '#0033cc',   // Dark blue
-          1.0: '#001a66'    // Very dark blue - heavy rain
+          0.0: '#f0f0f0',   // Very light gray
+          0.2: '#b3d9ff',   // Light blue
+          0.4: '#66b3ff',   // Medium blue  
+          0.6: '#3399ff',   // Blue
+          0.8: '#0066cc',   // Dark blue
+          1.0: '#003d7a'    // Very dark blue
         };
-        radius = 40;
-        blur = 30;
+        radius = 50;
+        blur = 40;
+        minOpacity = 0.3;
       } else {
-        // Disaster risk - much more vibrant colors
+        // Disaster risk - vibrant colors
         gradient = {
-          0.0: '#00ff00',   // Bright green - low risk
-          0.2: '#66ff00',   // Yellow-green
-          0.3: '#ccff00',   // Lime
-          0.4: '#ffff00',   // Bright yellow
+          0.0: '#00ff00',   // Bright green - safe
+          0.3: '#99ff00',   // Yellow-green
+          0.4: '#ffff00',   // Bright yellow  
           0.5: '#ffcc00',   // Gold
-          0.6: '#ff9900',   // Bright orange
+          0.6: '#ff9900',   // Orange
           0.7: '#ff6600',   // Dark orange
           0.8: '#ff3300',   // Red-orange
           0.9: '#ff0000',   // Bright red
-          1.0: '#cc0000'    // Dark red - high risk
+          1.0: '#cc0000'    // Dark red - extreme risk
         };
-        radius = 35;
-        blur = 25;
+        radius = 40;
+        blur = 30;
+        minOpacity = 0.5;
       }
 
       const heatLayer = (L as any).heatLayer(heatmapData, {
@@ -288,13 +328,13 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         blur: blur,
         maxZoom: 10,
         max: 1.0,
-        minOpacity: 0.6, // Minimum opacity for better visibility
+        minOpacity: minOpacity,
         gradient: gradient
       });
       
       heatLayer.addTo(mapInstanceRef.current);
       heatLayerRef.current = heatLayer;
-      console.log('✅ Heatmap added!');
+      console.log('✅ Heatmap rendered successfully!');
     } catch (error) {
       console.error('❌ Error creating heatmap:', error);
     }
@@ -324,6 +364,13 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         </Tabs>
       </div>
 
+      {/* Info badge */}
+      <div className="absolute top-4 left-4 glass backdrop-blur-md p-2 px-3 rounded-lg border border-border/20 z-[1000]">
+        <p className="text-xs text-foreground">
+          💡 Click anywhere on map to zoom into states
+        </p>
+      </div>
+
       {/* Loading Indicator */}
       {loading && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 glass backdrop-blur-md p-3 rounded-xl shadow-lg border border-border/20 z-[1000]">
@@ -334,77 +381,81 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         </div>
       )}
       
-      {/* Legend with filters - Only for disaster mode */}
+      {/* Disaster Risk Legend with filters */}
       {overlayMode === 'disaster' && (
-      <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000]">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-foreground">Risk Filter</h3>
-          <Badge variant="outline" className="text-xs">
-            {activeFilters.size}/3 Active
-          </Badge>
-        </div>
-        
-        <div className="space-y-2">
-          <Button
-            variant={activeFilters.has('low') ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => toggleFilter('low')}
-            className={`w-full justify-start gap-2 transition-all ${
-              activeFilters.has('low') 
-                ? 'bg-gradient-to-r from-green-600 to-green-400 hover:from-green-700 hover:to-green-500 text-white' 
-                : 'opacity-50 hover:opacity-100'
-            }`}
-          >
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-600 to-green-400"></div>
-            <span className="text-xs font-medium">Low Risk</span>
-          </Button>
+        <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Disaster Risk</h3>
+            <Badge variant="outline" className="text-xs">
+              {activeFilters.size}/3 Active
+            </Badge>
+          </div>
           
-          <Button
-            variant={activeFilters.has('medium') ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => toggleFilter('medium')}
-            className={`w-full justify-start gap-2 transition-all ${
-              activeFilters.has('medium') 
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-400 hover:from-yellow-600 hover:to-orange-500 text-white' 
-                : 'opacity-50 hover:opacity-100'
-            }`}
-          >
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-500 to-orange-400"></div>
-            <span className="text-xs font-medium">Medium Risk</span>
-          </Button>
+          <p className="text-xs text-muted-foreground mb-3">
+            Based on: Cyclones, Floods, Earthquakes, Droughts
+          </p>
           
-          <Button
-            variant={activeFilters.has('high') ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => toggleFilter('high')}
-            className={`w-full justify-start gap-2 transition-all ${
-              activeFilters.has('high') 
-                ? 'bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white' 
-                : 'opacity-50 hover:opacity-100'
-            }`}
-          >
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-600 to-red-800"></div>
-            <span className="text-xs font-medium">High Risk</span>
-          </Button>
-        </div>
-        
+          <div className="space-y-2">
+            <Button
+              variant={activeFilters.has('low') ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleFilter('low')}
+              className={`w-full justify-start gap-2 transition-all ${
+                activeFilters.has('low') 
+                  ? 'bg-gradient-to-r from-green-500 to-green-400 hover:from-green-600 hover:to-green-500 text-white' 
+                  : 'opacity-50 hover:opacity-100'
+              }`}
+            >
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-400"></div>
+              <span className="text-xs font-medium">Low Risk</span>
+            </Button>
+            
+            <Button
+              variant={activeFilters.has('medium') ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleFilter('medium')}
+              className={`w-full justify-start gap-2 transition-all ${
+                activeFilters.has('medium') 
+                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white' 
+                  : 'opacity-50 hover:opacity-100'
+              }`}
+            >
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500"></div>
+              <span className="text-xs font-medium">Medium Risk</span>
+            </Button>
+            
+            <Button
+              variant={activeFilters.has('high') ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleFilter('high')}
+              className={`w-full justify-start gap-2 transition-all ${
+                activeFilters.has('high') 
+                  ? 'bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white' 
+                  : 'opacity-50 hover:opacity-100'
+              }`}
+            >
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-700"></div>
+              <span className="text-xs font-medium">High Risk</span>
+            </Button>
+          </div>
+          
           <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/20">
             Click to toggle risk levels
           </p>
         </div>
       )}
 
-      {/* Weather Legend - Show for temperature/rainfall modes */}
+      {/* Weather Legends */}
       {overlayMode !== 'disaster' && (
         <div className="absolute bottom-4 right-4 glass p-4 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000]">
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            {overlayMode === 'temperature' ? 'Temperature Scale' : 'Rainfall Intensity'}
+            {overlayMode === 'temperature' ? 'Temperature' : 'Rainfall Intensity'}
           </h3>
           <div className="space-y-1">
             {overlayMode === 'temperature' ? (
               <>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full" style={{ background: '#0000ff' }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#0033ff' }}></div>
                   <span className="text-xs text-muted-foreground">Cold (&lt;10°C)</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -419,22 +470,22 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full" style={{ background: '#66ccff' }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#b3d9ff' }}></div>
                   <span className="text-xs text-muted-foreground">Light (&lt;5mm)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full" style={{ background: '#0066ff' }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#3399ff' }}></div>
                   <span className="text-xs text-muted-foreground">Moderate (10-25mm)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full" style={{ background: '#001a66' }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ background: '#003d7a' }}></div>
                   <span className="text-xs text-muted-foreground">Heavy (&gt;35mm)</span>
                 </div>
               </>
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/20">
-            Real-time data from Open-Meteo
+            Live data: Open-Meteo API
           </p>
         </div>
       )}
