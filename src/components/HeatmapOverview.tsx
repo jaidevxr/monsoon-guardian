@@ -71,27 +71,79 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     return 'low';
   };
 
-  // Sparse grid for control points
-  const generateControlPoints = (): Location[] => {
-    const locations: Location[] = [];
-    // 2 degree spacing for visible control points
-    for (let lat = 8; lat <= 36; lat += 2) {
-      for (let lng = 68; lng <= 97; lng += 2) {
-        locations.push({ lat, lng });
-      }
-    }
-    return locations;
+  // Major Indian cities for weather data
+  const getIndianCities = (): Location[] => {
+    return [
+      // North
+      { lat: 28.7041, lng: 77.1025 }, // Delhi
+      { lat: 26.9124, lng: 75.7873 }, // Jaipur
+      { lat: 30.7333, lng: 76.7794 }, // Chandigarh
+      { lat: 31.1048, lng: 77.1734 }, // Shimla
+      { lat: 32.7266, lng: 74.8570 }, // Jammu
+      { lat: 27.1767, lng: 78.0081 }, // Agra
+      { lat: 25.3176, lng: 82.9739 }, // Varanasi
+      { lat: 26.8467, lng: 80.9462 }, // Lucknow
+      { lat: 28.3949, lng: 79.4222 }, // Bareilly
+      { lat: 29.3803, lng: 79.4636 }, // Haldwani
+      // Northeast
+      { lat: 26.1445, lng: 91.7362 }, // Guwahati
+      { lat: 27.4728, lng: 94.9120 }, // Dibrugarh
+      { lat: 25.5788, lng: 91.8933 }, // Shillong
+      { lat: 23.8315, lng: 91.2868 }, // Agartala
+      { lat: 24.6158, lng: 93.9368 }, // Imphal
+      // East
+      { lat: 22.5726, lng: 88.3639 }, // Kolkata
+      { lat: 23.3441, lng: 85.3096 }, // Ranchi
+      { lat: 25.5941, lng: 85.1376 }, // Patna
+      { lat: 26.4499, lng: 87.2677 }, // Muzaffarpur
+      { lat: 20.2961, lng: 85.8245 }, // Bhubaneswar
+      { lat: 19.8135, lng: 85.8312 }, // Puri
+      // West
+      { lat: 19.0760, lng: 72.8777 }, // Mumbai
+      { lat: 18.5204, lng: 73.8567 }, // Pune
+      { lat: 21.1702, lng: 72.8311 }, // Surat
+      { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
+      { lat: 22.3072, lng: 73.1812 }, // Vadodara
+      { lat: 15.2993, lng: 74.1240 }, // Goa
+      // South
+      { lat: 12.9716, lng: 77.5946 }, // Bangalore
+      { lat: 13.0827, lng: 80.2707 }, // Chennai
+      { lat: 17.3850, lng: 78.4867 }, // Hyderabad
+      { lat: 8.5241, lng: 76.9366 }, // Trivandrum
+      { lat: 9.9312, lng: 76.2673 }, // Kochi
+      { lat: 11.0168, lng: 76.9558 }, // Coimbatore
+      { lat: 12.2958, lng: 76.6394 }, // Mysore
+      { lat: 15.3173, lng: 75.7139 }, // Hubli
+      { lat: 16.5062, lng: 80.6480 }, // Vijayawada
+      { lat: 14.6819, lng: 77.6003 }, // Anantapur
+      // Central
+      { lat: 23.2599, lng: 77.4126 }, // Bhopal
+      { lat: 22.7196, lng: 75.8577 }, // Indore
+      { lat: 21.1458, lng: 79.0882 }, // Nagpur
+      { lat: 26.2389, lng: 73.0243 }, // Jodhpur
+      { lat: 24.5854, lng: 73.7125 }, // Udaipur
+      { lat: 19.9975, lng: 73.7898 }, // Nashik
+      // Additional coverage
+      { lat: 27.5706, lng: 95.3240 }, // Lakhimpur
+      { lat: 24.7914, lng: 93.9381 }, // Imphal
+      { lat: 10.8505, lng: 76.2711 }, // Palakkad
+      { lat: 9.5916, lng: 76.5222 }, // Alappuzha
+      { lat: 11.9416, lng: 79.8083 }, // Pondicherry
+      { lat: 13.6288, lng: 79.4192 }, // Tirupati
+      { lat: 18.1124, lng: 79.0193 }, // Warangal
+      { lat: 22.5645, lng: 88.3968 }, // South Kolkata
+    ];
   };
 
-  // Fetch weather data
+  // Fetch weather data for cities
   useEffect(() => {
     const loadWeatherData = async () => {
       if (overlayMode === 'disaster') return;
       
       setLoading(true);
       try {
-        const locations = generateControlPoints();
-        const data = await fetchWeatherDataForMultipleLocations(locations);
+        const cities = getIndianCities();
+        const data = await fetchWeatherDataForMultipleLocations(cities);
         setWeatherData(data);
       } catch (error) {
         console.error('Error loading weather:', error);
@@ -102,27 +154,27 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     loadWeatherData();
   }, [overlayMode]);
 
-  // Get color based on value
-  const getColor = (value: number, mode: OverlayMode): string => {
+  // Get color based on value with better opacity for heatmap effect
+  const getColor = (value: number, mode: OverlayMode, opacity: number = 0.6): string => {
     if (mode === 'temperature') {
       // Temperature: 15-40°C
-      if (value < 20) return 'rgba(46, 90, 158, 0.3)'; // Cool blue
-      if (value < 25) return 'rgba(110, 201, 182, 0.3)'; // Cyan
-      if (value < 30) return 'rgba(168, 217, 110, 0.3)'; // Light green
-      if (value < 35) return 'rgba(249, 229, 71, 0.3)'; // Yellow
-      return 'rgba(249, 87, 56, 0.3)'; // Hot red-orange
+      if (value < 20) return `rgba(46, 90, 158, ${opacity})`; // Cool blue
+      if (value < 25) return `rgba(110, 201, 182, ${opacity})`; // Cyan
+      if (value < 30) return `rgba(168, 217, 110, ${opacity})`; // Light green
+      if (value < 35) return `rgba(249, 229, 71, ${opacity})`; // Yellow
+      return `rgba(249, 87, 56, ${opacity})`; // Hot red-orange
     } else if (mode === 'rainfall') {
       // Rainfall: 0-20mm
-      if (value < 2) return 'rgba(245, 245, 245, 0.3)'; // Very light
-      if (value < 5) return 'rgba(168, 206, 241, 0.3)'; // Light blue
-      if (value < 10) return 'rgba(125, 184, 234, 0.3)'; // Medium blue
-      if (value < 15) return 'rgba(81, 149, 211, 0.3)'; // Blue
-      return 'rgba(46, 107, 166, 0.3)'; // Dark blue
+      if (value < 2) return `rgba(245, 245, 245, ${opacity})`; // Very light
+      if (value < 5) return `rgba(168, 206, 241, ${opacity})`; // Light blue
+      if (value < 10) return `rgba(125, 184, 234, ${opacity})`; // Medium blue
+      if (value < 15) return `rgba(81, 149, 211, ${opacity})`; // Blue
+      return `rgba(46, 107, 166, ${opacity})`; // Dark blue
     } else {
       // Disaster risk
-      if (value < 0.45) return 'rgba(0, 255, 0, 0.3)'; // Green (low)
-      if (value < 0.65) return 'rgba(255, 255, 0, 0.3)'; // Yellow (medium)
-      return 'rgba(255, 0, 0, 0.3)'; // Red (high)
+      if (value < 0.45) return `rgba(0, 255, 0, ${opacity})`; // Green (low)
+      if (value < 0.65) return `rgba(255, 255, 0, ${opacity})`; // Yellow (medium)
+      return `rgba(255, 0, 0, ${opacity})`; // Red (high)
     }
   };
 
@@ -137,12 +189,12 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     markersRef.current = [];
 
     if (overlayMode === 'disaster') {
-      // Show disaster risk points
-      const points = generateControlPoints();
-      points.forEach(({ lat, lng }) => {
+      // Show disaster risk for Indian cities
+      const cities = getIndianCities();
+      cities.forEach(({ lat, lng }) => {
         // Calculate risk based on location
         let risk = 0.3;
-        if ((lng > 79 && lng < 87 && lat > 15 && lat < 24) || // East coast
+        if ((lng > 79 && lng < 87 && lat > 15 && lat < 24) || // East coast cyclone
             (lng < 77 && lat > 8 && lat < 22)) { // West coast
           risk = 0.85;
         } else if ((lng > 83 && lng < 92 && lat > 24 && lat < 27) || // Flood zones
@@ -157,29 +209,52 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         const level = getIntensityRange(risk);
         if (!activeFilters.has(level)) return;
 
-        const circle = L.circleMarker([lat, lng], {
-          radius: 4,
-          fillColor: getColor(risk, 'disaster'),
-          color: getColor(risk, 'disaster').replace('0.3', '0.6'),
-          weight: 1,
-          fillOpacity: 0.5,
+        // Large glow circle for heatmap effect
+        const glowCircle = L.circleMarker([lat, lng], {
+          radius: 45,
+          fillColor: getColor(risk, 'disaster', 0.15),
+          color: 'transparent',
+          weight: 0,
+          fillOpacity: 1,
+          className: 'heatmap-glow'
         });
         
-        circle.addTo(mapInstanceRef.current!);
-        markersRef.current.push(circle);
+        // Small center point
+        const centerCircle = L.circleMarker([lat, lng], {
+          radius: 3,
+          fillColor: getColor(risk, 'disaster', 0.9),
+          color: getColor(risk, 'disaster', 1),
+          weight: 1,
+          fillOpacity: 1,
+        });
+        
+        glowCircle.addTo(mapInstanceRef.current!);
+        centerCircle.addTo(mapInstanceRef.current!);
+        markersRef.current.push(glowCircle, centerCircle);
       });
     } else if (weatherData.size > 0) {
-      // Show weather data points
+      // Show weather data with heatmap glow effect
       weatherData.forEach((data, key) => {
         const [lat, lng] = key.split(',').map(Number);
         const value = overlayMode === 'temperature' ? data.temp : data.rainfall;
         
-        const circle = L.circleMarker([lat, lng], {
-          radius: 4,
-          fillColor: getColor(value, overlayMode),
-          color: getColor(value, overlayMode).replace('0.3', '0.6'),
+        // Large glow circle for heatmap effect
+        const glowCircle = L.circleMarker([lat, lng], {
+          radius: 45,
+          fillColor: getColor(value, overlayMode, 0.15),
+          color: 'transparent',
+          weight: 0,
+          fillOpacity: 1,
+          className: 'heatmap-glow'
+        });
+        
+        // Small center point with popup
+        const centerCircle = L.circleMarker([lat, lng], {
+          radius: 3,
+          fillColor: getColor(value, overlayMode, 0.9),
+          color: getColor(value, overlayMode, 1),
           weight: 1,
-          fillOpacity: 0.5,
+          fillOpacity: 1,
         }).bindPopup(`
           <div style="font-size: 12px;">
             <strong>${overlayMode === 'temperature' ? 'Temperature' : 'Rainfall'}</strong><br/>
@@ -187,14 +262,20 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           </div>
         `);
         
-        circle.addTo(mapInstanceRef.current!);
-        markersRef.current.push(circle);
+        glowCircle.addTo(mapInstanceRef.current!);
+        centerCircle.addTo(mapInstanceRef.current!);
+        markersRef.current.push(glowCircle, centerCircle);
       });
     }
   }, [overlayMode, weatherData, activeFilters]);
 
   return (
     <div className="h-full w-full relative">
+      <style>{`
+        .heatmap-glow {
+          filter: blur(20px);
+        }
+      `}</style>
       <div ref={mapRef} className="h-full w-full" />
       
       {/* Mode Selector */}
