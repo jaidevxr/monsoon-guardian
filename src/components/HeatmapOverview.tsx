@@ -71,71 +71,34 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     return 'low';
   };
 
-  // Major Indian cities for weather data
+  // Major Indian cities for weather data (reduced list for API limits)
   const getIndianCities = (): Location[] => {
     return [
-      // North
+      // Major metros and state capitals only
       { lat: 28.7041, lng: 77.1025 }, // Delhi
-      { lat: 26.9124, lng: 75.7873 }, // Jaipur
-      { lat: 30.7333, lng: 76.7794 }, // Chandigarh
-      { lat: 31.1048, lng: 77.1734 }, // Shimla
-      { lat: 32.7266, lng: 74.8570 }, // Jammu
-      { lat: 27.1767, lng: 78.0081 }, // Agra
-      { lat: 25.3176, lng: 82.9739 }, // Varanasi
-      { lat: 26.8467, lng: 80.9462 }, // Lucknow
-      { lat: 28.3949, lng: 79.4222 }, // Bareilly
-      { lat: 29.3803, lng: 79.4636 }, // Haldwani
-      // Northeast
-      { lat: 26.1445, lng: 91.7362 }, // Guwahati
-      { lat: 27.4728, lng: 94.9120 }, // Dibrugarh
-      { lat: 25.5788, lng: 91.8933 }, // Shillong
-      { lat: 23.8315, lng: 91.2868 }, // Agartala
-      { lat: 24.6158, lng: 93.9368 }, // Imphal
-      // East
-      { lat: 22.5726, lng: 88.3639 }, // Kolkata
-      { lat: 23.3441, lng: 85.3096 }, // Ranchi
-      { lat: 25.5941, lng: 85.1376 }, // Patna
-      { lat: 26.4499, lng: 87.2677 }, // Muzaffarpur
-      { lat: 20.2961, lng: 85.8245 }, // Bhubaneswar
-      { lat: 19.8135, lng: 85.8312 }, // Puri
-      // West
       { lat: 19.0760, lng: 72.8777 }, // Mumbai
-      { lat: 18.5204, lng: 73.8567 }, // Pune
-      { lat: 21.1702, lng: 72.8311 }, // Surat
-      { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
-      { lat: 22.3072, lng: 73.1812 }, // Vadodara
-      { lat: 15.2993, lng: 74.1240 }, // Goa
-      // South
-      { lat: 12.9716, lng: 77.5946 }, // Bangalore
+      { lat: 22.5726, lng: 88.3639 }, // Kolkata
       { lat: 13.0827, lng: 80.2707 }, // Chennai
+      { lat: 12.9716, lng: 77.5946 }, // Bangalore
       { lat: 17.3850, lng: 78.4867 }, // Hyderabad
-      { lat: 8.5241, lng: 76.9366 }, // Trivandrum
-      { lat: 9.9312, lng: 76.2673 }, // Kochi
-      { lat: 11.0168, lng: 76.9558 }, // Coimbatore
-      { lat: 12.2958, lng: 76.6394 }, // Mysore
-      { lat: 15.3173, lng: 75.7139 }, // Hubli
-      { lat: 16.5062, lng: 80.6480 }, // Vijayawada
-      { lat: 14.6819, lng: 77.6003 }, // Anantapur
-      // Central
-      { lat: 23.2599, lng: 77.4126 }, // Bhopal
+      { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
+      { lat: 18.5204, lng: 73.8567 }, // Pune
+      { lat: 26.9124, lng: 75.7873 }, // Jaipur
+      { lat: 26.8467, lng: 80.9462 }, // Lucknow
       { lat: 22.7196, lng: 75.8577 }, // Indore
-      { lat: 21.1458, lng: 79.0882 }, // Nagpur
-      { lat: 26.2389, lng: 73.0243 }, // Jodhpur
-      { lat: 24.5854, lng: 73.7125 }, // Udaipur
-      { lat: 19.9975, lng: 73.7898 }, // Nashik
-      // Additional coverage
-      { lat: 27.5706, lng: 95.3240 }, // Lakhimpur
-      { lat: 24.7914, lng: 93.9381 }, // Imphal
-      { lat: 10.8505, lng: 76.2711 }, // Palakkad
-      { lat: 9.5916, lng: 76.5222 }, // Alappuzha
-      { lat: 11.9416, lng: 79.8083 }, // Pondicherry
-      { lat: 13.6288, lng: 79.4192 }, // Tirupati
-      { lat: 18.1124, lng: 79.0193 }, // Warangal
-      { lat: 22.5645, lng: 88.3968 }, // South Kolkata
+      { lat: 23.2599, lng: 77.4126 }, // Bhopal
+      { lat: 30.7333, lng: 76.7794 }, // Chandigarh
+      { lat: 26.1445, lng: 91.7362 }, // Guwahati
+      { lat: 20.2961, lng: 85.8245 }, // Bhubaneswar
+      { lat: 25.5941, lng: 85.1376 }, // Patna
+      { lat: 8.5241, lng: 76.9366 }, // Trivandrum
+      { lat: 11.0168, lng: 76.9558 }, // Coimbatore
+      { lat: 15.2993, lng: 74.1240 }, // Goa
+      { lat: 23.3441, lng: 85.3096 }, // Ranchi
     ];
   };
 
-  // Fetch weather and pollution data
+  // Fetch weather and pollution data with rate limiting
   useEffect(() => {
     const loadData = async () => {
       if (overlayMode === 'disaster') return;
@@ -145,31 +108,64 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         const cities = getIndianCities();
         const dataMap = new Map<string, { temp: number; aqi: number }>();
         
-        // Fetch data for each city
-        const promises = cities.map(async ({ lat, lng }) => {
-          try {
-            // Fetch temperature
-            const weatherResponse = await fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`
-            );
-            const weatherData = await weatherResponse.json();
-            const temp = weatherData.current?.temperature_2m || 25;
-            
-            // Fetch AQI
-            const aqiResponse = await fetch(
-              `https://api.waqi.info/feed/geo:${lat};${lng}/?token=d148749b9e7bc2b5013c0c4cb1b3c9942197fa95`
-            );
-            const aqiData = await aqiResponse.json();
-            const aqi = aqiData.data?.aqi || 50;
-            
-            dataMap.set(`${lat},${lng}`, { temp, aqi });
-          } catch (error) {
-            console.error(`Error fetching data for ${lat},${lng}:`, error);
+        // Process in batches with delays to avoid rate limits
+        const batchSize = 5;
+        for (let i = 0; i < cities.length; i += batchSize) {
+          const batch = cities.slice(i, i + batchSize);
+          
+          const batchPromises = batch.map(async ({ lat, lng }) => {
+            try {
+              // Fetch temperature
+              const weatherResponse = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`
+              );
+              
+              if (!weatherResponse.ok) {
+                console.warn(`Weather API error for ${lat},${lng}:`, weatherResponse.status);
+                return null;
+              }
+              
+              const weatherData = await weatherResponse.json();
+              const temp = weatherData.current?.temperature_2m || 25;
+              
+              // Small delay between requests
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              // Fetch AQI
+              const aqiResponse = await fetch(
+                `https://api.waqi.info/feed/geo:${lat};${lng}/?token=d148749b9e7bc2b5013c0c4cb1b3c9942197fa95`
+              );
+              
+              if (!aqiResponse.ok) {
+                console.warn(`AQI API error for ${lat},${lng}:`, aqiResponse.status);
+                return { lat, lng, temp, aqi: 50 };
+              }
+              
+              const aqiData = await aqiResponse.json();
+              const aqi = aqiData.data?.aqi || 50;
+              
+              return { lat, lng, temp, aqi };
+            } catch (error) {
+              console.error(`Error fetching data for ${lat},${lng}:`, error);
+              return null;
+            }
+          });
+          
+          const results = await Promise.all(batchPromises);
+          results.forEach(result => {
+            if (result) {
+              dataMap.set(`${result.lat},${result.lng}`, { temp: result.temp, aqi: result.aqi });
+            }
+          });
+          
+          // Delay between batches
+          if (i + batchSize < cities.length) {
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
-        });
+        }
         
-        await Promise.all(promises);
         setWeatherData(dataMap);
+        console.log('Loaded data for', dataMap.size, 'cities');
       } catch (error) {
         console.error('Error loading data:', error);
       }
