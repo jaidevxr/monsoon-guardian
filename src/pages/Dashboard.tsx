@@ -6,6 +6,7 @@ import DisasterList from '@/components/DisasterList';
 import CopilotChat from '@/components/CopilotChat';
 import DisasterGuidelines from '@/components/DisasterGuidelines';
 import HeatmapOverview from '@/components/HeatmapOverview';
+import EmergencyServicesMap from '@/components/EmergencyServicesMap';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -137,6 +138,13 @@ const Dashboard: React.FC = () => {
               loading={loading.disasters}
               userLocation={userLocation}
             />
+          </div>
+        );
+
+      case 'emergency-services':
+        return (
+          <div className="h-full">
+            <EmergencyServicesMap onFacilityClick={handleFacilityClick} />
           </div>
         );
 
