@@ -25,34 +25,89 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
 
   const getUserLocation = () => {
     setLoading(true);
+    
+    if (!navigator.geolocation) {
+      console.error("Geolocation is not supported by this browser");
+      toast({
+        title: "Location Not Supported",
+        description: "Your browser doesn't support geolocation. Using default location.",
+        variant: "destructive",
+      });
+      const defaultLoc: [number, number] = [28.6139, 77.2090];
+      setUserLocation(defaultLoc);
+      fetchNearbyServices(defaultLoc[0], defaultLoc[1]);
+      return;
+    }
+
+    console.log("Requesting geolocation...");
+    
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log("Location found:", position.coords.latitude, position.coords.longitude);
         const { latitude, longitude } = position.coords;
         setUserLocation([latitude, longitude]);
+        
+        toast({
+          title: "Location Found",
+          description: `Located at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+        });
+        
         fetchNearbyServices(latitude, longitude);
       },
       (error) => {
-        console.error("Geolocation error:", error);
+        console.error("Geolocation error:", error.code, error.message);
+        
+        let errorMessage = "Unable to get your location. ";
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Permission denied. Please allow location access.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out.";
+            break;
+          default:
+            errorMessage += "Unknown error occurred.";
+        }
+        
         toast({
           title: "Location Error",
-          description: "Unable to get your location. Using default location.",
+          description: errorMessage + " Using Delhi as default.",
           variant: "destructive",
         });
+        
         // Default to Delhi
         const defaultLoc: [number, number] = [28.6139, 77.2090];
         setUserLocation(defaultLoc);
         fetchNearbyServices(defaultLoc[0], defaultLoc[1]);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     );
   };
 
   const fetchNearbyServices = async (lat: number, lng: number) => {
+    console.log(`Fetching services for location: ${lat}, ${lng}`);
+    console.log(`Selected types: ${selectedTypes.join(',')}`);
+    
     try {
       const { data, error } = await supabase.functions.invoke("nearby", {
         body: { lat, lng, types: selectedTypes.join(",") },
       });
 
-      if (error) throw error;
+      console.log("Supabase response:", { data, error });
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log(`Received ${data.services?.length || 0} services`);
       setServices(data.services || []);
       
       toast({
@@ -63,7 +118,7 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       console.error("Error fetching services:", error);
       toast({
         title: "Error",
-        description: "Failed to load emergency services",
+        description: error.message || "Failed to load emergency services",
         variant: "destructive",
       });
     } finally {
