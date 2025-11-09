@@ -27,67 +27,140 @@ export const getCurrentLocation = (): Promise<Location> => {
   });
 };
 
-// Fetch disaster data from GDACS (Global Disaster Alert and Coordination System)
+// Fetch comprehensive disaster data from multiple sources for India
 export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
+  const allDisasters: DisasterEvent[] = [];
+
   try {
-    // GDACS RSS feed for recent disasters
-    const response = await axios.get('https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH', {
+    // 1. Fetch earthquakes from USGS (last 30 days, magnitude 2.5+)
+    const earthquakeUrl = 'https://earthquake.usgs.gov/fdsnws/event/1/query';
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    
+    const earthquakeParams = new URLSearchParams({
+      format: 'geojson',
+      starttime: thirtyDaysAgo,
+      endtime: today,
+      minmagnitude: '2.5',
+      minlatitude: '6',
+      maxlatitude: '37',
+      minlongitude: '68',
+      maxlongitude: '97',
+      orderby: 'time-asc'
+    });
+
+    const earthquakeResponse = await axios.get(`${earthquakeUrl}?${earthquakeParams}`);
+    const earthquakes = earthquakeResponse.data.features || [];
+
+    earthquakes.forEach((feature: any) => {
+      const coords = feature.geometry.coordinates;
+      const props = feature.properties;
+      
+      let severity: 'low' | 'medium' | 'high' = 'low';
+      if (props.mag >= 6.0) severity = 'high';
+      else if (props.mag >= 4.5) severity = 'medium';
+
+      allDisasters.push({
+        id: feature.id,
+        type: 'earthquake',
+        severity,
+        magnitude: props.mag,
+        location: { 
+          lat: coords[1], 
+          lng: coords[0],
+          name: props.place || 'India'
+        },
+        time: new Date(props.time).toISOString(),
+        title: props.title || `Magnitude ${props.mag} Earthquake`,
+        description: `${props.place || 'Unknown location'} - Depth: ${coords[2]?.toFixed(1) || 'N/A'} km`,
+        url: props.url,
+      });
+    });
+
+    console.log(`Fetched ${earthquakes.length} earthquakes from USGS`);
+
+  } catch (error) {
+    console.error('Error fetching earthquake data:', error);
+  }
+
+  try {
+    // 2. Fetch from GDACS (all disaster types)
+    const gdacsUrl = 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH';
+    const gdacsResponse = await axios.get(gdacsUrl, {
       params: {
-        fromdate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        todate: new Date().toISOString().split('T')[0],
-        alertlevel: 'ALL',
+        fromDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        toDate: new Date().toISOString().split('T')[0],
+        alertlevel: 'Orange;Red',
       }
     });
 
-    const events = response.data.features || [];
+    const gdacsEvents = gdacsResponse.data.features || [];
     
-    const disasters: DisasterEvent[] = events
-      .filter((event: any) => {
-        // Filter for Indian region
-        const coords = event.geometry?.coordinates;
-        if (!coords) return false;
-        const lng = coords[0];
-        const lat = coords[1];
-        return lat >= 6 && lat <= 37 && lng >= 68 && lng <= 97;
-      })
-      .map((event: any) => {
-        const coords = event.geometry.coordinates;
-        const props = event.properties;
-        
-        let disasterType: 'earthquake' | 'flood' | 'cyclone' | 'fire' | 'landslide' = 'earthquake';
-        const eventType = props.eventtype?.toLowerCase() || '';
-        if (eventType.includes('fl')) disasterType = 'flood';
-        else if (eventType.includes('tc') || eventType.includes('storm')) disasterType = 'cyclone';
-        else if (eventType.includes('vo')) disasterType = 'fire';
-        else if (eventType.includes('dr')) disasterType = 'landslide';
+    gdacsEvents.forEach((event: any) => {
+      const coords = event.geometry?.coordinates;
+      if (!coords) return;
+      
+      const lng = coords[0];
+      const lat = coords[1];
+      
+      // Filter for Indian region
+      if (lat < 6 || lat > 37 || lng < 68 || lng > 97) return;
+      
+      const props = event.properties;
+      let disasterType: 'earthquake' | 'flood' | 'cyclone' | 'fire' | 'landslide' = 'earthquake';
+      const eventType = (props.eventtype || '').toLowerCase();
+      
+      if (eventType.includes('fl')) disasterType = 'flood';
+      else if (eventType.includes('tc') || eventType.includes('storm')) disasterType = 'cyclone';
+      else if (eventType.includes('vo')) disasterType = 'fire';
+      else if (eventType.includes('dr')) disasterType = 'landslide';
 
-        let severity: 'low' | 'medium' | 'high' = 'low';
-        const alertLevel = props.alertlevel?.toLowerCase() || '';
-        if (alertLevel.includes('red')) severity = 'high';
-        else if (alertLevel.includes('orange')) severity = 'medium';
+      let severity: 'low' | 'medium' | 'high' = 'medium';
+      const alertLevel = (props.alertlevel || '').toLowerCase();
+      if (alertLevel.includes('red')) severity = 'high';
+      else if (alertLevel.includes('orange')) severity = 'medium';
 
-        return {
-          id: props.eventid || String(Math.random()),
-          type: disasterType,
-          severity,
-          magnitude: props.severity?.value || props.magnitude,
-          location: { 
-            lat: coords[1], 
-            lng: coords[0],
-            name: props.country || 'India'
-          },
-          time: props.fromdate || new Date().toISOString(),
-          title: props.name || props.eventname || `${disasterType} event`,
-          description: props.description || `${severity} severity ${disasterType} detected`,
-          url: props.url || `https://www.gdacs.org/report.aspx?eventid=${props.eventid}`,
-        };
+      allDisasters.push({
+        id: `gdacs-${props.eventid || Math.random()}`,
+        type: disasterType,
+        severity,
+        magnitude: props.severity?.value,
+        location: { 
+          lat, 
+          lng,
+          name: props.country || 'India'
+        },
+        time: props.fromdate || new Date().toISOString(),
+        title: props.name || `${disasterType} Alert`,
+        description: props.htmldescription || props.description || `GDACS ${severity} alert`,
+        url: `https://www.gdacs.org/report.aspx?eventid=${props.eventid}&eventtype=${props.eventtype}`,
       });
+    });
 
-    return disasters;
+    console.log(`Fetched ${gdacsEvents.filter((e: any) => {
+      const c = e.geometry?.coordinates;
+      return c && c[1] >= 6 && c[1] <= 37 && c[0] >= 68 && c[0] <= 97;
+    }).length} GDACS events for India`);
+
   } catch (error) {
-    console.error('Error fetching GDACS disaster data:', error);
-    return [];
+    console.error('Error fetching GDACS data:', error);
   }
+
+  // Remove duplicates based on coordinates and time (within 1 hour)
+  const uniqueDisasters = allDisasters.filter((disaster, index, self) => {
+    return index === self.findIndex((d) => {
+      const timeDiff = Math.abs(new Date(d.time).getTime() - new Date(disaster.time).getTime());
+      const coordMatch = Math.abs(d.location.lat - disaster.location.lat) < 0.1 && 
+                         Math.abs(d.location.lng - disaster.location.lng) < 0.1;
+      return coordMatch && timeDiff < 3600000; // 1 hour
+    });
+  });
+
+  // Sort by time (most recent first)
+  uniqueDisasters.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+  console.log(`Total unique disasters: ${uniqueDisasters.length}`);
+  return uniqueDisasters;
 };
 
 // Legacy function for backward compatibility
