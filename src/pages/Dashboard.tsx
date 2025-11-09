@@ -4,7 +4,7 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import SimpleMap from '@/components/SimpleMap';
 import WeatherWidget from '@/components/WeatherWidget';
 import DisasterList from '@/components/DisasterList';
-import AIChat from '@/components/AIChat';
+import CopilotChat from '@/components/CopilotChat';
 import GovernmentDisasterData from '@/components/GovernmentDisasterData';
 import HeatmapOverview from '@/components/HeatmapOverview';
 import EmergencyServicesMap from '@/components/EmergencyServicesMap';
@@ -140,11 +140,8 @@ const Dashboard: React.FC = () => {
 
       case 'ai-insights':
         return (
-          <div className="h-full p-6">
-            <AIChat 
-              userLocation={userLocation}
-              nearestFacilities={facilities}
-            />
+          <div className="h-full">
+            <CopilotChat userLocation={userLocation} />
           </div>
         );
 

@@ -34,8 +34,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     { id: 'weather', label: 'Weather', icon: Cloud },
     { id: 'disasters', label: 'Disasters', icon: AlertTriangle },
     { id: 'government-alerts', label: 'Gov Alerts', icon: Shield },
-    { id: 'ai-insights', label: 'AI Insights', icon: Bot },
-    { id: 'copilot', label: 'AI Copilot', icon: Bot, isExternal: true },
+    { id: 'ai-insights', label: 'AI Copilot', icon: Bot },
   ];
 
   useEffect(() => {
@@ -116,24 +115,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       <div className="p-4 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          
-          if (item.isExternal) {
-            return (
-              <a
-                key={item.id}
-                href="/copilot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-full flex items-center justify-start px-3 py-2 rounded-md transition-smooth hover:bg-accent hover:text-accent-foreground ${
-                  isCollapsed ? 'px-2' : ''
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {!isCollapsed && <span className="ml-2">{item.label}</span>}
-              </a>
-            );
-          }
-          
           return (
             <Button
               key={item.id}
