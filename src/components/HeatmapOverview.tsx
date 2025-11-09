@@ -33,7 +33,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [weatherData, setWeatherData] = useState<Map<string, { temp: number; aqi: number }>>(new Map());
   const [loading, setLoading] = useState(false);
 
-  // Initialize map
+  // Initialize map with state boundaries
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -44,6 +44,21 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       attribution: '© OpenStreetMap',
       maxZoom: 18,
     }).addTo(map);
+
+    // Add India state boundaries
+    fetch('https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States')
+      .then(response => response.json())
+      .then(geojsonData => {
+        L.geoJSON(geojsonData, {
+          style: {
+            color: '#3388ff',
+            weight: 2,
+            opacity: 0.5,
+            fillOpacity: 0.05
+          }
+        }).addTo(map);
+      })
+      .catch(error => console.error('Error loading state boundaries:', error));
 
     return () => {
       if (mapInstanceRef.current) {
@@ -104,71 +119,64 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       if (overlayMode === 'disaster') return;
       
       setLoading(true);
+      const dataMap = new Map<string, { temp: number; aqi: number }>();
+      
       try {
         const cities = getIndianCities();
-        const dataMap = new Map<string, { temp: number; aqi: number }>();
+        console.log('Starting to load data for', cities.length, 'cities');
         
-        // Process in batches with delays to avoid rate limits
-        const batchSize = 5;
-        for (let i = 0; i < cities.length; i += batchSize) {
-          const batch = cities.slice(i, i + batchSize);
-          
-          const batchPromises = batch.map(async ({ lat, lng }) => {
-            try {
-              // Fetch temperature
-              const weatherResponse = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`
-              );
-              
-              if (!weatherResponse.ok) {
-                console.warn(`Weather API error for ${lat},${lng}:`, weatherResponse.status);
-                return null;
-              }
-              
+        // Process cities one by one with delays
+        for (const { lat, lng } of cities) {
+          try {
+            // Fetch temperature
+            const weatherResponse = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`
+            );
+            
+            let temp = 25; // default
+            if (weatherResponse.ok) {
               const weatherData = await weatherResponse.json();
-              const temp = weatherData.current?.temperature_2m || 25;
-              
-              // Small delay between requests
-              await new Promise(resolve => setTimeout(resolve, 100));
-              
-              // Fetch AQI
-              const aqiResponse = await fetch(
-                `https://api.waqi.info/feed/geo:${lat};${lng}/?token=d148749b9e7bc2b5013c0c4cb1b3c9942197fa95`
-              );
-              
-              if (!aqiResponse.ok) {
-                console.warn(`AQI API error for ${lat},${lng}:`, aqiResponse.status);
-                return { lat, lng, temp, aqi: 50 };
-              }
-              
+              temp = weatherData.current?.temperature_2m || 25;
+            } else {
+              console.warn(`Weather API error for ${lat},${lng}:`, weatherResponse.status);
+            }
+            
+            // Small delay
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Fetch AQI
+            const aqiResponse = await fetch(
+              `https://api.waqi.info/feed/geo:${lat};${lng}/?token=d148749b9e7bc2b5013c0c4cb1b3c9942197fa95`
+            );
+            
+            let aqi = 50; // default
+            if (aqiResponse.ok) {
               const aqiData = await aqiResponse.json();
-              const aqi = aqiData.data?.aqi || 50;
-              
-              return { lat, lng, temp, aqi };
-            } catch (error) {
-              console.error(`Error fetching data for ${lat},${lng}:`, error);
-              return null;
+              if (aqiData.status === 'ok' && aqiData.data) {
+                aqi = aqiData.data.aqi || 50;
+              }
+            } else {
+              console.warn(`AQI API error for ${lat},${lng}:`, aqiResponse.status);
             }
-          });
-          
-          const results = await Promise.all(batchPromises);
-          results.forEach(result => {
-            if (result) {
-              dataMap.set(`${result.lat},${result.lng}`, { temp: result.temp, aqi: result.aqi });
-            }
-          });
-          
-          // Delay between batches
-          if (i + batchSize < cities.length) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            dataMap.set(`${lat},${lng}`, { temp, aqi });
+            console.log(`Loaded ${lat},${lng}: temp=${temp}, aqi=${aqi}`);
+            
+            // Update state progressively
+            setWeatherData(new Map(dataMap));
+            
+            // Delay before next city
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (error) {
+            console.error(`Error fetching data for ${lat},${lng}:`, error);
           }
         }
         
-        setWeatherData(dataMap);
-        console.log('Loaded data for', dataMap.size, 'cities');
+        console.log('Finished loading data for', dataMap.size, 'cities');
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error in loadData:', error);
       }
+      
       setLoading(false);
     };
 
@@ -212,7 +220,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     markersRef.current = [];
 
     if (overlayMode === 'disaster') {
-      // Show disaster risk for Indian cities
+      // Show disaster risk - only glow, no center points
       const cities = getIndianCities();
       cities.forEach(({ lat, lng }) => {
         // Calculate risk based on location
@@ -232,7 +240,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         const level = getIntensityRange(risk);
         if (!activeFilters.has(level)) return;
 
-        // Large glow circle for heatmap effect
+        // Only large glow circle with hover popup
         const glowCircle = L.circleMarker([lat, lng], {
           radius: 60,
           fillColor: getColor(risk, 'disaster', 0.25),
@@ -240,20 +248,16 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           weight: 0,
           fillOpacity: 1,
           className: 'heatmap-glow'
-        });
-        
-        // Small center point
-        const centerCircle = L.circleMarker([lat, lng], {
-          radius: 2.5,
-          fillColor: getColor(risk, 'disaster', 0.7),
-          color: getColor(risk, 'disaster', 0.9),
-          weight: 1,
-          fillOpacity: 0.8,
-        });
+        }).bindPopup(`
+          <div style="font-size: 12px;">
+            <strong>Disaster Risk</strong><br/>
+            Level: ${level.toUpperCase()}<br/>
+            Intensity: ${(risk * 100).toFixed(0)}%
+          </div>
+        `);
         
         glowCircle.addTo(mapInstanceRef.current!);
-        centerCircle.addTo(mapInstanceRef.current!);
-        markersRef.current.push(glowCircle, centerCircle);
+        markersRef.current.push(glowCircle);
       });
     } else if (weatherData.size > 0) {
       // Show weather/pollution data with heatmap glow effect
