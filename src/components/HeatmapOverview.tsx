@@ -24,6 +24,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
+    console.log('🗺️ Initializing heatmap...');
+
     // Initialize map
     const map = L.map(mapRef.current).setView([20.5937, 78.9629], 5);
     mapInstanceRef.current = map;
@@ -34,6 +36,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       maxZoom: 18,
     }).addTo(map);
 
+    console.log('✅ Map initialized with tile layer');
+
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -43,14 +47,23 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   }, []);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || !disasters.length) return;
+    if (!mapInstanceRef.current) {
+      console.log('⚠️ Map instance not ready yet');
+      return;
+    }
+
+    console.log('🔥 Preparing heatmap data...', { 
+      disastersCount: disasters.length,
+      hasHeatLayer: !!(L as any).heatLayer 
+    });
 
     // Remove existing heat layer
     if (heatLayerRef.current) {
       mapInstanceRef.current.removeLayer(heatLayerRef.current);
+      console.log('🗑️ Removed old heat layer');
     }
 
-    // Prepare heat data
+    // Prepare heat data from disasters
     const heatData = disasters.map(disaster => {
       let intensity = 0.5; // Default intensity
       
@@ -91,30 +104,43 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     ];
 
     const allHeatData = [...heatData, ...sampleHotspots];
+    console.log('📊 Total heat points:', allHeatData.length);
 
     // Create heat layer
-    if ((L as any).heatLayer && allHeatData.length > 0) {
-      const heatLayer = (L as any).heatLayer(allHeatData, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 17,
-        gradient: {
-          0.0: '#313695',
-          0.1: '#4575b4', 
-          0.2: '#74add1',
-          0.3: '#abd9e9',
-          0.4: '#e0f3f8',
-          0.5: '#ffffcc',
-          0.6: '#fee090',
-          0.7: '#fdae61',
-          0.8: '#f46d43',
-          0.9: '#d73027',
-          1.0: '#a50026'
-        }
-      });
-      
-      heatLayer.addTo(mapInstanceRef.current);
-      heatLayerRef.current = heatLayer;
+    if ((L as any).heatLayer) {
+      if (allHeatData.length === 0) {
+        console.warn('⚠️ No heat data to display');
+        return;
+      }
+
+      try {
+        const heatLayer = (L as any).heatLayer(allHeatData, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 17,
+          gradient: {
+            0.0: '#313695',
+            0.1: '#4575b4', 
+            0.2: '#74add1',
+            0.3: '#abd9e9',
+            0.4: '#e0f3f8',
+            0.5: '#ffffcc',
+            0.6: '#fee090',
+            0.7: '#fdae61',
+            0.8: '#f46d43',
+            0.9: '#d73027',
+            1.0: '#a50026'
+          }
+        });
+        
+        heatLayer.addTo(mapInstanceRef.current);
+        heatLayerRef.current = heatLayer;
+        console.log('✅ Heatmap layer added successfully!');
+      } catch (error) {
+        console.error('❌ Error creating heat layer:', error);
+      }
+    } else {
+      console.error('❌ leaflet.heat library not loaded! Check if "leaflet.heat" is imported correctly.');
     }
   }, [disasters]);
 
