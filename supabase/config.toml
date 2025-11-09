@@ -1,1 +1,4 @@
 project_id = "ziqqqkzxakejqdixevng"
+
+[functions.copilot-chat]
+verify_jwt = false
