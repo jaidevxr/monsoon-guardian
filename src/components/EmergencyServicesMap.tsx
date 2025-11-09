@@ -13,18 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Hospital, Shield, Flame, Navigation, X, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 
 interface EmergencyServicesMapProps {
   onFacilityClick?: (facility: EmergencyService) => void;
@@ -44,9 +32,22 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Location[]>([]);
-  const [open, setOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Debounced search for city suggestions
   useEffect(() => {
@@ -56,6 +57,7 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
 
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setShowDropdown(false);
       return;
     }
 
@@ -64,9 +66,11 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       try {
         const results = await searchLocation(searchQuery);
         setSearchResults(results.slice(0, 5));
+        setShowDropdown(results.length > 0);
       } catch (error) {
         console.error('Search error:', error);
         setSearchResults([]);
+        setShowDropdown(false);
       }
       setIsSearching(false);
     }, 300);
@@ -83,7 +87,7 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
     fetchNearbyServices(location.lat, location.lng);
     setSearchQuery('');
     setSearchResults([]);
-    setOpen(false);
+    setShowDropdown(false);
   };
 
   const getUserLocation = () => {
@@ -369,57 +373,49 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       {/* Sidebar */}
       <div className="w-96 bg-card border-r p-4 overflow-y-auto">
         {/* City Search */}
-        <div className="mb-4">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <div className="relative mb-2">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Input
-                  type="text"
-                  placeholder="Search city for services..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setOpen(true);
-                  }}
-                  onFocus={() => setOpen(true)}
-                  className="pl-10 glass border-border/30 focus:border-primary/50"
-                />
-                {isSearching && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                  </div>
-                )}
+        <div className="mb-4 space-y-2">
+          <div ref={searchContainerRef} className="relative">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search city for services..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 glass border-border/30 focus:border-primary/50"
+            />
+            {isSearching && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
               </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0 bg-card border-border" align="start">
-              <Command>
-                <CommandList>
-                  {searchQuery.trim() && !isSearching && searchResults.length === 0 ? (
-                    <CommandEmpty>No cities found.</CommandEmpty>
-                  ) : (
-                    <CommandGroup>
-                      {searchResults.map((result, index) => (
-                        <CommandItem
-                          key={index}
-                          onSelect={() => handleSelectLocation(result)}
-                          className="cursor-pointer"
-                        >
-                          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{result.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+            )}
+            
+            {/* Dropdown Results */}
+            {showDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {searchResults.map((result, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleSelectLocation(result)}
+                    className="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer transition-colors border-b border-border last:border-0"
+                  >
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{result.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {searchQuery.trim() && !isSearching && searchResults.length === 0 && showDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 p-3">
+                <p className="text-sm text-muted-foreground text-center">No cities found</p>
+              </div>
+            )}
+          </div>
 
           <Button
             onClick={getUserLocation}
