@@ -65,7 +65,65 @@ export const fetchEarthquakeData = async (): Promise<DisasterEvent[]> => {
   }
 };
 
-// Fetch weather data from OpenWeatherMap
+// Fetch weather data for multiple locations (for heatmap overlay)
+export const fetchWeatherDataForMultipleLocations = async (
+  locations: Location[]
+): Promise<Map<string, { temp: number; rainfall: number }>> => {
+  const weatherMap = new Map<string, { temp: number; rainfall: number }>();
+  
+  // Batch requests to avoid overwhelming the API
+  const batchSize = 10;
+  for (let i = 0; i < locations.length; i += batchSize) {
+    const batch = locations.slice(i, i + batchSize);
+    
+    const promises = batch.map(async (location) => {
+      try {
+        const params = new URLSearchParams({
+          latitude: location.lat.toString(),
+          longitude: location.lng.toString(),
+          current: 'temperature_2m,precipitation',
+          timezone: 'auto',
+        });
+
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?${params}`
+        );
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        const key = `${location.lat.toFixed(2)},${location.lng.toFixed(2)}`;
+        
+        return {
+          key,
+          data: {
+            temp: data.current?.temperature_2m || 0,
+            rainfall: data.current?.precipitation || 0,
+          }
+        };
+      } catch (error) {
+        console.error('Error fetching weather for location:', location, error);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    results.forEach(result => {
+      if (result) {
+        weatherMap.set(result.key, result.data);
+      }
+    });
+    
+    // Small delay between batches to be respectful to the API
+    if (i + batchSize < locations.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  
+  return weatherMap;
+};
+
+// Fetch weather data for OpenWeatherMap
 export const fetchWeatherData = async (location: Location): Promise<WeatherData | null> => {
   try {
     // Use Open-Meteo (no API key required) for reliable, real weather data
