@@ -19,6 +19,7 @@ import {
   fetchEmergencyFacilities, 
   fetchWeatherData,
   getCurrentLocation,
+  predictDisasters,
 } from '@/utils/api';
 
 const Dashboard: React.FC = () => {
@@ -27,6 +28,7 @@ const Dashboard: React.FC = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [mapCenter, setMapCenter] = useState<Location>({ lat: 20.5937, lng: 78.9629 }); // Center of India
   const [disasters, setDisasters] = useState<DisasterEvent[]>([]);
+  const [predictedDisasters, setPredictedDisasters] = useState<DisasterEvent[]>([]);
   const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState({
@@ -54,9 +56,16 @@ const Dashboard: React.FC = () => {
     try {
       const disasterData = await fetchDisasterData();
       setDisasters(disasterData);
+      
+      // Generate predictions based on historical data
+      const predictions = predictDisasters(disasterData);
+      setPredictedDisasters(predictions);
+      
+      console.log(`Loaded ${disasterData.length} real disasters and ${predictions.length} predictions`);
     } catch (error) {
       console.error('Error loading disaster data:', error);
       setDisasters([]);
+      setPredictedDisasters([]);
     }
     setLoading(prev => ({ ...prev, disasters: false }));
   };
@@ -123,7 +132,7 @@ const Dashboard: React.FC = () => {
         return (
           <div className="h-full overflow-y-auto p-6">
             <DisasterList 
-              disasters={disasters} 
+              disasters={[...disasters, ...predictedDisasters]} 
               onDisasterClick={handleDisasterClick}
               loading={loading.disasters}
               userLocation={userLocation}

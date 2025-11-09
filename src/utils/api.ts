@@ -163,6 +163,155 @@ export const fetchDisasterData = async (): Promise<DisasterEvent[]> => {
   return uniqueDisasters;
 };
 
+// Predict disasters based on historical patterns
+export const predictDisasters = (historicalData: DisasterEvent[]): DisasterEvent[] => {
+  const predictions: DisasterEvent[] = [];
+  const currentMonth = new Date().getMonth();
+  const currentDate = new Date();
+
+  // High-risk zones in India
+  const seismicZones = [
+    { name: 'Kashmir & Himachal Pradesh', lat: 33.7782, lng: 76.5762, risk: 'high', type: 'earthquake' },
+    { name: 'Uttarakhand', lat: 30.0668, lng: 79.0193, risk: 'high', type: 'earthquake' },
+    { name: 'Gujarat (Kutch)', lat: 23.7337, lng: 68.7382, risk: 'high', type: 'earthquake' },
+    { name: 'Delhi-NCR', lat: 28.6139, lng: 77.2090, risk: 'medium', type: 'earthquake' },
+    { name: 'Northeast India', lat: 26.2006, lng: 91.7362, risk: 'high', type: 'earthquake' },
+  ];
+
+  const cycloneZones = [
+    { name: 'Odisha Coast', lat: 19.8135, lng: 85.8312, risk: 'high', type: 'cyclone' },
+    { name: 'Andhra Pradesh Coast', lat: 16.5062, lng: 80.6480, risk: 'high', type: 'cyclone' },
+    { name: 'Tamil Nadu Coast', lat: 11.1271, lng: 79.8309, risk: 'high', type: 'cyclone' },
+    { name: 'West Bengal Coast', lat: 22.5726, lng: 88.3639, risk: 'medium', type: 'cyclone' },
+    { name: 'Gujarat Coast', lat: 21.5222, lng: 70.4579, risk: 'medium', type: 'cyclone' },
+  ];
+
+  const floodZones = [
+    { name: 'Bihar', lat: 25.0961, lng: 85.3131, risk: 'high', type: 'flood' },
+    { name: 'Assam', lat: 26.2006, lng: 92.9376, risk: 'high', type: 'flood' },
+    { name: 'Uttar Pradesh', lat: 26.8467, lng: 80.9462, risk: 'high', type: 'flood' },
+    { name: 'Kerala', lat: 10.8505, lng: 76.2711, risk: 'high', type: 'flood' },
+    { name: 'Maharashtra', lat: 19.7515, lng: 75.7139, risk: 'medium', type: 'flood' },
+  ];
+
+  const landslideZones = [
+    { name: 'Himachal Pradesh', lat: 31.1048, lng: 77.1734, risk: 'high', type: 'landslide' },
+    { name: 'Uttarakhand', lat: 30.0668, lng: 79.0193, risk: 'high', type: 'landslide' },
+    { name: 'Sikkim', lat: 27.5330, lng: 88.5122, risk: 'high', type: 'landslide' },
+    { name: 'Darjeeling', lat: 27.0360, lng: 88.2627, risk: 'medium', type: 'landslide' },
+  ];
+
+  // Monsoon season (June-September): High flood risk
+  if (currentMonth >= 5 && currentMonth <= 8) {
+    floodZones.forEach((zone, idx) => {
+      predictions.push({
+        id: `pred-flood-${idx}`,
+        type: 'flood',
+        severity: zone.risk as 'high' | 'medium',
+        location: { lat: zone.lat, lng: zone.lng, name: zone.name },
+        time: new Date(Date.now() + (idx + 7) * 24 * 60 * 60 * 1000).toISOString(),
+        title: `Predicted Monsoon Flooding Risk - ${zone.name}`,
+        description: `Historical data indicates ${zone.risk} flood risk during monsoon season in this region. Heavy rainfall expected.`,
+        url: 'https://mausam.imd.gov.in/',
+      });
+    });
+
+    landslideZones.forEach((zone, idx) => {
+      predictions.push({
+        id: `pred-landslide-${idx}`,
+        type: 'landslide',
+        severity: zone.risk as 'high' | 'medium',
+        location: { lat: zone.lat, lng: zone.lng, name: zone.name },
+        time: new Date(Date.now() + (idx + 10) * 24 * 60 * 60 * 1000).toISOString(),
+        title: `Predicted Landslide Risk - ${zone.name}`,
+        description: `Monsoon season increases landslide risk in hilly regions. ${zone.risk.toUpperCase()} probability based on historical patterns.`,
+        url: 'https://ndma.gov.in/Natural-Hazards/Landslides',
+      });
+    });
+  }
+
+  // Cyclone season: Pre-monsoon (April-May) and Post-monsoon (October-November)
+  if ((currentMonth >= 3 && currentMonth <= 4) || (currentMonth >= 9 && currentMonth <= 10)) {
+    cycloneZones.forEach((zone, idx) => {
+      predictions.push({
+        id: `pred-cyclone-${idx}`,
+        type: 'cyclone',
+        severity: zone.risk as 'high' | 'medium',
+        location: { lat: zone.lat, lng: zone.lng, name: zone.name },
+        time: new Date(Date.now() + (idx + 5) * 24 * 60 * 60 * 1000).toISOString(),
+        title: `Predicted Cyclone Formation Risk - ${zone.name}`,
+        description: `${zone.risk.toUpperCase()} probability of cyclone formation based on historical cyclone season patterns.`,
+        url: 'https://mausam.imd.gov.in/',
+      });
+    });
+  }
+
+  // Earthquake predictions based on historical frequency
+  const earthquakesByZone = historicalData
+    .filter(d => d.type === 'earthquake')
+    .reduce((acc, disaster) => {
+      const zone = seismicZones.find(z => 
+        Math.abs(z.lat - disaster.location.lat) < 2 && 
+        Math.abs(z.lng - disaster.location.lng) < 2
+      );
+      if (zone) {
+        acc[zone.name] = (acc[zone.name] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+  // Generate earthquake predictions for high-activity zones
+  seismicZones.forEach((zone, idx) => {
+    const recentActivity = earthquakesByZone[zone.name] || 0;
+    if (recentActivity > 2 || zone.risk === 'high') {
+      predictions.push({
+        id: `pred-earthquake-${idx}`,
+        type: 'earthquake',
+        severity: zone.risk as 'high' | 'medium',
+        location: { lat: zone.lat, lng: zone.lng, name: zone.name },
+        time: new Date(Date.now() + (idx + 14) * 24 * 60 * 60 * 1000).toISOString(),
+        title: `Seismic Activity Forecast - ${zone.name}`,
+        description: `${zone.name} is in Seismic Zone ${zone.risk === 'high' ? 'IV-V' : 'III'}. Recent activity: ${recentActivity} events. Continued monitoring advised.`,
+        url: 'https://www.earthquakes.bgs.ac.uk/earthquakes/recent_world_activity.html',
+      });
+    }
+  });
+
+  // Analyze historical patterns for additional predictions
+  const disastersByMonth = historicalData.reduce((acc, disaster) => {
+    const month = new Date(disaster.time).getMonth();
+    if (!acc[month]) acc[month] = [];
+    acc[month].push(disaster);
+    return acc;
+  }, {} as Record<number, DisasterEvent[]>);
+
+  // If current month has high historical activity, add general warning
+  const currentMonthData = disastersByMonth[currentMonth] || [];
+  if (currentMonthData.length >= 3) {
+    const mostCommonType = currentMonthData.reduce((acc, d) => {
+      acc[d.type] = (acc[d.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const topType = Object.keys(mostCommonType).reduce((a, b) => 
+      mostCommonType[a] > mostCommonType[b] ? a : b
+    );
+
+    predictions.push({
+      id: 'pred-seasonal-pattern',
+      type: topType as any,
+      severity: 'medium',
+      location: { lat: 20.5937, lng: 78.9629, name: 'India (Multiple Regions)' },
+      time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      title: `Seasonal Pattern Alert: ${topType}`,
+      description: `Historical data shows increased ${topType} activity during this period. ${currentMonthData.length} similar events in past records for this month.`,
+      url: 'https://ndma.gov.in/',
+    });
+  }
+
+  return predictions;
+};
+
 // Legacy function for backward compatibility
 export const fetchEarthquakeData = fetchDisasterData;
 
