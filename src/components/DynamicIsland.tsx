@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, MapPin, Cloud, CloudRain, CloudSnow, Wind } from 'lucide-react';
+import { Sun, Moon, MapPin, Cloud, CloudRain, CloudSnow, Wind, CloudMoon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Location } from '@/types';
 
@@ -11,6 +11,7 @@ interface WeatherData {
   temperature: number;
   weatherCode: number;
   description: string;
+  isDay: number;
 }
 
 const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
@@ -18,7 +19,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
-  const [cityName, setCityName] = useState<string>('Locating...');
+  const [cityName, setCityName] = useState<string>('Detecting...');
   const [isExpanded, setIsExpanded] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
@@ -33,6 +34,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
   }, [isDark]);
 
   useEffect(() => {
+    console.log('🏝️ Dynamic Island - userLocation:', userLocation);
     if (userLocation) {
       // Reverse geocoding to get city name
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
@@ -61,10 +63,12 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           if (data.current) {
             const weatherCode = data.current.weather_code;
             const description = getWeatherDescription(weatherCode);
+            const isDay = data.current.is_day ?? 1; // Default to day if not provided
             setWeather({
               temperature: Math.round(data.current.temperature_2m),
               weatherCode,
-              description
+              description,
+              isDay
             });
             console.log('🌤️ Real-time weather:', { 
               temp: data.current.temperature_2m,
@@ -91,11 +95,24 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
     return 'Unknown';
   };
 
-  const getWeatherIcon = (code: number) => {
-    if (code === 0) return <Sun className="h-4 w-4 text-amber-400" />;
-    if (code <= 3) return <Cloud className="h-4 w-4 text-foreground" />;
-    if (code <= 67) return <CloudRain className="h-4 w-4 text-primary" />;
-    if (code <= 77) return <CloudSnow className="h-4 w-4 text-primary" />;
+  const getWeatherIcon = (code: number, isDay: number) => {
+    // Clear sky - show sun for day, moon for night
+    if (code === 0) {
+      return isDay === 1 
+        ? <Sun className="h-4 w-4 text-amber-400" /> 
+        : <Moon className="h-4 w-4 text-blue-300" />;
+    }
+    // Partly cloudy - show cloud with sun/moon
+    if (code <= 3) {
+      return isDay === 1 
+        ? <Cloud className="h-4 w-4 text-foreground" /> 
+        : <CloudMoon className="h-4 w-4 text-blue-300" />;
+    }
+    // Rainy
+    if (code <= 67) return <CloudRain className="h-4 w-4 text-blue-400" />;
+    // Snowy
+    if (code <= 77) return <CloudSnow className="h-4 w-4 text-blue-200" />;
+    // Windy/stormy
     return <Wind className="h-4 w-4 text-foreground" />;
   };
 
@@ -103,7 +120,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
 
   return (
     <div 
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[1001]"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
@@ -112,7 +129,8 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           glass-strong border border-border/30 rounded-full 
           transition-all duration-300 ease-in-out
           will-change-[padding]
-          ${isExpanded ? 'px-6 py-3' : 'px-4 py-2'}
+          shadow-lg backdrop-blur-xl
+          ${isExpanded ? 'px-6 py-3' : 'px-4 py-2.5'}
         `}
       >
         <div className="flex items-center gap-3">
@@ -152,9 +170,9 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <div className="flex flex-col min-w-0">
               <span className="font-medium text-foreground truncate">
-                {cityName === 'Locating...' ? 'Detecting location...' : cityName}
+                {cityName}
               </span>
-              {userLocation && cityName !== 'Locating...' && (
+              {userLocation && cityName !== 'Detecting...' && (
                 <span className="text-xs text-muted-foreground truncate">
                   {userLocation.lat.toFixed(4)}°, {userLocation.lng.toFixed(4)}°
                 </span>
@@ -162,11 +180,11 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
             </div>
 
             {/* Weather Info */}
-            {weather && cityName !== 'Locating...' && (
+            {weather && cityName !== 'Detecting...' && (
               <>
                 <div className="h-6 w-px bg-border/30" />
                 <div className="flex items-center gap-1.5">
-                  {getWeatherIcon(weather.weatherCode)}
+                  {getWeatherIcon(weather.weatherCode, weather.isDay)}
                   <div className="flex flex-col">
                     <span className="font-semibold text-foreground">{weather.temperature}°C</span>
                     <span className="text-xs text-muted-foreground">{weather.description}</span>
@@ -185,9 +203,14 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
               ${isExpanded ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}
             `}
           >
+            {weather && cityName !== 'Detecting...' && (
+              <div className="flex items-center gap-1">
+                {getWeatherIcon(weather.weatherCode, weather.isDay)}
+              </div>
+            )}
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-medium text-foreground truncate">
-              {cityName === 'Locating...' ? 'Detecting...' : cityName}
+              {cityName}
             </span>
           </div>
         </div>
