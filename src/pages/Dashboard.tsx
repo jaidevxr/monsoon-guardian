@@ -7,7 +7,6 @@ import CopilotChat from '@/components/CopilotChat';
 import DisasterGuidelines from '@/components/DisasterGuidelines';
 import HeatmapOverview from '@/components/HeatmapOverview';
 import EmergencyServicesMap from '@/components/EmergencyServicesMap';
-import DynamicIsland from '@/components/DynamicIsland';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -191,7 +190,6 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <AnimatedBackground />
-      <DynamicIsland userLocation={userLocation} />
       <div className="relative z-10 h-screen flex">
         <DashboardSidebar
           activeTab={activeTab}

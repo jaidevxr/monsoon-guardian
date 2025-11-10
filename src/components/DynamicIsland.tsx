@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, MapPin, Cloud, CloudRain, CloudSnow, Wind, CloudMoon } from 'lucide-react';
+import { Sun, Moon, MapPin, Cloud, CloudRain, CloudSnow, Wind } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Location } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -109,11 +109,9 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
         ? <Sun className="h-4 w-4 text-amber-400" /> 
         : <Moon className="h-4 w-4 text-blue-300" />;
     }
-    // Partly cloudy - show cloud with sun/moon
+    // Partly cloudy - show cloud
     if (code <= 3) {
-      return isDay === 1 
-        ? <Cloud className="h-4 w-4 text-foreground" /> 
-        : <CloudMoon className="h-4 w-4 text-blue-300" />;
+      return <Cloud className="h-4 w-4 text-foreground" />;
     }
     // Fog/Mist
     if (code <= 48) return <Cloud className="h-4 w-4 text-muted-foreground" />;
