@@ -78,26 +78,21 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
     setExpandedItems(newExpanded);
   };
 
-  const isPredicted = (id: string) => id.startsWith('pred-');
-
-  const getDisasterIcon = (type: string, predicted: boolean = false) => {
-    const baseIcon = (() => {
-      switch (type) {
-        case 'earthquake':
-          return '⚡';
-        case 'flood':
-          return '🌊';
-        case 'cyclone':
-          return '🌀';
-        case 'fire':
-          return '🔥';
-        case 'landslide':
-          return '⛰️';
-        default:
-          return '⚠️';
-      }
-    })();
-    return predicted ? `🔮 ${baseIcon}` : baseIcon;
+  const getDisasterIcon = (type: string) => {
+    switch (type) {
+      case 'earthquake':
+        return '⚡';
+      case 'flood':
+        return '🌊';
+      case 'cyclone':
+        return '🌀';
+      case 'fire':
+        return '🔥';
+      case 'landslide':
+        return '⛰️';
+      default:
+        return '⚠️';
+    }
   };
 
   const getSeverityColor = (severity: string) => {
@@ -150,7 +145,6 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
           <div className="space-y-3">
             {typeDisasters.map((disaster) => {
               const isExpanded = expandedItems.has(disaster.id);
-              const predicted = isPredicted(disaster.id);
               const distance = userLocation 
                 ? calculateDistance(userLocation.lat, userLocation.lng, disaster.location.lat, disaster.location.lng)
                 : null;
@@ -158,23 +152,18 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
               return (
                 <Card 
                   key={disaster.id} 
-                  className={`glass-strong p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated cursor-pointer border-2 ${getSeverityColor(disaster.severity)} ${predicted ? 'border-l-4 border-l-warning animate-pulse-subtle' : ''} backdrop-blur-lg`}
+                  className={`glass-strong p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated cursor-pointer border-2 ${getSeverityColor(disaster.severity)} backdrop-blur-lg`}
                 >
                   <div className="space-y-4">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4 flex-1">
                         <div className={`p-3 rounded-xl text-2xl ${getSeverityColor(disaster.severity)}`}>
-                          {getDisasterIcon(disaster.type, predicted)}
+                          {getDisasterIcon(disaster.type)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-semibold text-base">{disaster.title}</h4>
-                            {predicted && (
-                              <Badge variant="outline" className="text-xs bg-warning/10 text-warning-foreground border-warning">
-                                PREDICTED
-                              </Badge>
-                            )}
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {disaster.description}
@@ -258,10 +247,10 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
                             asChild
                             className="border-2 hover:border-primary hover:bg-primary/10 transition-all duration-300"
                           >
-                            <a href={disaster.url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-3 w-3 mr-2" />
-                              {predicted ? 'View Source Data' : 'Full Report'}
-                            </a>
+                          <a href={disaster.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3 w-3 mr-2" />
+                            Full Report
+                          </a>
                           </Button>
                         )}
                         </div>
