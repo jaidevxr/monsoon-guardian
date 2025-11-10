@@ -141,23 +141,28 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`relative h-full flex flex-col transition-all duration-300 ease-out overflow-hidden bg-background/60 border-r border-border/30 backdrop-blur-sm ${
-        isCollapsed ? 'w-20' : 'w-72'
+      className={`fixed left-4 top-4 bottom-4 z-50 flex flex-col transition-all duration-300 ease-out overflow-hidden rounded-2xl border border-border/20 shadow-2xl ${
+        isCollapsed ? 'w-16' : 'w-64'
       }`}
+      style={{
+        background: 'rgba(var(--background-rgb, 255, 255, 255), 0.7)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
     >
       {/* Content */}
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="p-4 border-b border-border/30">
+        <div className="p-3">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg border border-primary/20">
-                  <Shield className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg border border-primary/20">
+                  <Shield className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-base">Predict Aid</h2>
-                  <p className="text-xs text-muted-foreground">Dashboard</p>
+                  <h2 className="font-semibold text-sm">Predict Aid</h2>
+                  <p className="text-[10px] text-muted-foreground">Dashboard</p>
                 </div>
               </div>
             )}
@@ -165,15 +170,15 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0 hover:bg-primary/10"
             >
-              {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+              {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-2 space-y-1.5 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -183,21 +188,21 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={`
-                  group w-full rounded-lg transition-all duration-200 border
-                  ${isCollapsed ? 'p-3' : 'p-3'}
+                  group w-full rounded-xl transition-all duration-200 
+                  ${isCollapsed ? 'p-2.5' : 'p-2.5'}
                   ${isActive 
-                    ? 'bg-primary/15 border-primary/30 shadow-sm text-primary' 
-                    : 'hover:bg-muted/60 border-transparent hover:border-border/30'
+                    ? 'bg-primary/20 shadow-md text-primary backdrop-blur-sm' 
+                    : 'hover:bg-muted/40 hover:shadow-sm'
                   }
                 `}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+                <div className="flex items-center gap-2.5">
+                  <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
                   {!isCollapsed && (
                     <div className="flex flex-col items-start">
-                      <span className="font-medium text-sm">{item.label}</span>
+                      <span className="font-medium text-xs">{item.label}</span>
                       {isActive && (
-                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                        <span className="text-[10px] text-muted-foreground">{item.description}</span>
                       )}
                     </div>
                   )}
@@ -209,11 +214,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-border/30">
-            <div className="flex items-center justify-between text-sm">
+          <div className="p-3 border-t border-border/20">
+            <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Status</span>
-              <Badge variant="outline" className="text-success border-success/30">
-                <Activity className="h-3 w-3 mr-1" />
+              <Badge variant="outline" className="text-success border-success/30 text-[10px]">
+                <Activity className="h-2.5 w-2.5 mr-1" />
                 Active
               </Badge>
             </div>

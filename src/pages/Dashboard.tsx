@@ -190,7 +190,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <AnimatedBackground />
-      <div className="relative z-10 h-screen flex">
+      <div className="relative z-10 h-screen">
         <DashboardSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -200,7 +200,7 @@ const Dashboard: React.FC = () => {
           onLocationUpdate={handleLocationUpdate}
         />
         
-        <main className="flex-1 relative h-full">
+        <main className="w-full h-full">
           {/* Tab Content - Full Height */}
           <div className="h-full">
             {renderTabContent()}
