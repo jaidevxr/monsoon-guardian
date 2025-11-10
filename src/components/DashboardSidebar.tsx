@@ -170,8 +170,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
       {/* Navigation Section - Collapsible */}
       <aside 
-        className={`fixed left-4 top-24 bottom-4 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border border-white/[0.08] rounded-3xl shadow-2xl bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] ${
-          isCollapsed ? 'w-0 opacity-0 pointer-events-none' : 'w-56 opacity-100'
+        className={`fixed left-4 top-24 bottom-4 z-[1999] flex flex-col transition-all duration-300 ease-out overflow-hidden border border-white/[0.08] rounded-3xl shadow-2xl bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] ${
+          isCollapsed ? 'w-0 opacity-0 pointer-events-none -translate-x-full' : 'w-56 opacity-100 translate-x-0'
         }`}
         style={{
           WebkitBackdropFilter: 'blur(20px) saturate(150%)',

@@ -205,7 +205,7 @@ const Dashboard: React.FC = () => {
         />
         
         <main 
-          className="w-full h-full"
+          className="w-full h-full pt-20"
         >
           {/* Tab Content - Full Height */}
           <div className="h-full">
