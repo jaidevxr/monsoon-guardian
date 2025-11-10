@@ -42,14 +42,14 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
 
   return (
     <div 
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-out"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 will-change-transform"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
       <div 
         className={`
           glass-strong border border-border/30 rounded-full 
-          transition-all duration-300 ease-out
+          transition-all duration-200 ease-out will-change-[padding,width]
           ${isExpanded ? 'px-6 py-3' : 'px-4 py-2'}
         `}
       >
@@ -75,8 +75,8 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           {/* Location Info */}
           <div 
             className={`
-              flex items-center gap-2 text-sm overflow-hidden
-              transition-all duration-300 ease-out
+              flex items-center gap-2 text-sm overflow-hidden whitespace-nowrap
+              transition-all duration-200 ease-out will-change-[max-width,opacity]
               ${isExpanded ? 'max-w-md opacity-100' : 'max-w-0 opacity-0'}
             `}
           >
@@ -94,8 +94,8 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           {/* Compact Location Indicator */}
           <div 
             className={`
-              flex items-center gap-1
-              transition-all duration-300 ease-out
+              flex items-center gap-1 whitespace-nowrap
+              transition-all duration-200 ease-out will-change-[max-width,opacity]
               ${isExpanded ? 'max-w-0 opacity-0' : 'max-w-md opacity-100'}
             `}
           >

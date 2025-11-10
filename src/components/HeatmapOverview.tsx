@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { DisasterEvent, Location } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Slider } from '@/components/ui/slider';
 import { fetchWeatherDataForMultipleLocations } from '@/utils/api';
 import { Cloud, Droplets, AlertTriangle } from 'lucide-react';
 
@@ -726,46 +727,36 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-foreground flex justify-between mb-2">
+            <label className="text-xs text-foreground flex justify-between mb-3">
               <span className="font-medium">Radius</span>
               <span className="text-primary font-semibold">{heatmapRadius}px</span>
             </label>
-            <div className="relative h-3">
-              <div className="absolute inset-0 rounded-full bg-muted" />
-              <div
-                className="absolute top-1/2 -translate-y-1/2 left-0 h-[2px] bg-foreground rounded-full shadow-sm"
-                style={{ width: `${((heatmapRadius - 30) / (120 - 30)) * 100}%` }}
-              />
-              <input
-                type="range"
-                min="30"
-                max="120"
-                value={heatmapRadius}
-                onChange={(e) => setHeatmapRadius(Number(e.target.value))}
-                className="absolute inset-0 w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-              />
-            </div>
+            <Slider
+              variant="contrast"
+              min={30}
+              max={120}
+              step={1}
+              value={[heatmapRadius]}
+              onValueChange={(value) => setHeatmapRadius(value[0])}
+              aria-label="Heatmap radius"
+              className="cursor-pointer"
+            />
           </div>
           <div>
-            <label className="text-xs text-foreground flex justify-between mb-2">
+            <label className="text-xs text-foreground flex justify-between mb-3">
               <span className="font-medium">Blur</span>
               <span className="text-primary font-semibold">{heatmapBlur}px</span>
             </label>
-            <div className="relative h-3">
-              <div className="absolute inset-0 rounded-full bg-muted" />
-              <div
-                className="absolute top-1/2 -translate-y-1/2 left-0 h-[2px] bg-foreground rounded-full shadow-sm"
-                style={{ width: `${((heatmapBlur - 10) / (80 - 10)) * 100}%` }}
-              />
-              <input
-                type="range"
-                min="10"
-                max="80"
-                value={heatmapBlur}
-                onChange={(e) => setHeatmapBlur(Number(e.target.value))}
-                className="absolute inset-0 w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-              />
-            </div>
+            <Slider
+              variant="contrast"
+              min={10}
+              max={80}
+              step={1}
+              value={[heatmapBlur]}
+              onValueChange={(value) => setHeatmapBlur(value[0])}
+              aria-label="Heatmap blur intensity"
+              className="cursor-pointer"
+            />
           </div>
         </div>
       </div>
