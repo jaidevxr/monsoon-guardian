@@ -42,7 +42,6 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
         .then(res => res.json())
         .then(data => {
-          // Prioritize city, then county, then state district
           const city = data.address?.city || 
                        data.address?.county || 
                        data.address?.state_district || 
@@ -58,24 +57,30 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           setCityName('Location detected');
         });
 
-      // Fetch weather data with current_weather parameter for accurate real-time data including day/night
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lng}&current=temperature_2m,weather_code,is_day&timezone=auto`)
+      // Fetch real-time weather from OpenWeather API via Supabase Edge Function
+      fetch('https://ziqqqkzxakejqdixevng.supabase.co/functions/v1/weather', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppcXFxa3p4YWtlanFkaXhldm5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4Mzk3OTIsImV4cCI6MjA3MzQxNTc5Mn0.PGoeqEUwOgG0gA2lpknAwTsJivKeOeP_Mcc0w6rkA_A'
+        },
+        body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
+      })
         .then(res => res.json())
         .then(data => {
           if (data.current) {
-            const weatherCode = data.current.weather_code;
-            const description = getWeatherDescription(weatherCode);
-            const isDay = data.current.is_day ?? 1; // Default to day if not provided
+            const condition = data.current.condition;
+            const weatherCode = getWeatherCodeFromCondition(condition);
             setWeather({
-              temperature: Math.round(data.current.temperature_2m),
+              temperature: data.current.temperature,
               weatherCode,
-              description,
-              isDay
+              description: data.current.description,
+              isDay: data.current.isDay
             });
-            console.log('🌤️ Real-time weather:', { 
-              temp: data.current.temperature_2m,
-              code: weatherCode, 
-              isDay: data.current.is_day,
+            console.log('🌤️ Real-time OpenWeather:', { 
+              temp: data.current.temperature,
+              condition,
+              isDay: data.current.isDay,
               time: new Date().toLocaleString()
             });
           }
@@ -86,15 +91,15 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
     }
   }, [userLocation]);
 
-  const getWeatherDescription = (code: number): string => {
-    if (code === 0) return 'Clear';
-    if (code <= 3) return 'Partly Cloudy';
-    if (code <= 48) return 'Foggy';
-    if (code <= 67) return 'Rainy';
-    if (code <= 77) return 'Snowy';
-    if (code <= 82) return 'Showers';
-    if (code <= 99) return 'Thunderstorm';
-    return 'Unknown';
+  const getWeatherCodeFromCondition = (condition: string): number => {
+    const conditionLower = condition.toLowerCase();
+    if (conditionLower.includes('clear')) return 0;
+    if (conditionLower.includes('cloud')) return 2;
+    if (conditionLower.includes('mist') || conditionLower.includes('fog') || conditionLower.includes('haze')) return 45;
+    if (conditionLower.includes('rain') || conditionLower.includes('drizzle')) return 61;
+    if (conditionLower.includes('snow')) return 71;
+    if (conditionLower.includes('thunder')) return 95;
+    return 0;
   };
 
   const getWeatherIcon = (code: number, isDay: number) => {
