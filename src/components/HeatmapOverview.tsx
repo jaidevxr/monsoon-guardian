@@ -827,6 +827,54 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
       )}
       
 
+      {/* Risk Legend */}
+      {overlayMode === 'disaster' && (
+        <div className="absolute bottom-6 left-6 glass-strong p-4 rounded-xl shadow-elevated border border-border/30 z-[1000] max-w-[220px] backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Risk Level</h3>
+            <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <div
+              onClick={() => toggleFilter('low')}
+              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
+                activeFilters.has('low') 
+                  ? 'shadow-md border-success/40 bg-success/10' 
+                  : 'opacity-50 hover:opacity-80 hover:bg-muted/30 border-transparent'
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
+              <span className="text-sm font-medium text-foreground">Low Risk</span>
+            </div>
+            
+            <div
+              onClick={() => toggleFilter('medium')}
+              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
+                activeFilters.has('medium') 
+                  ? 'shadow-md border-warning/40 bg-warning/10' 
+                  : 'opacity-50 hover:opacity-80 hover:bg-muted/30 border-transparent'
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
+              <span className="text-sm font-medium text-foreground">Medium Risk</span>
+            </div>
+            
+            <div
+              onClick={() => toggleFilter('high')}
+              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
+                activeFilters.has('high') 
+                  ? 'shadow-md border-destructive/40 bg-destructive/10' 
+                  : 'opacity-50 hover:opacity-80 hover:bg-muted/30 border-transparent'
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
+              <span className="text-sm font-medium text-foreground">High Risk</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
         <div className="absolute bottom-20 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
