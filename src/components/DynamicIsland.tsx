@@ -101,15 +101,14 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
       className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
-      style={{ transform: 'translateZ(0)' }}
     >
       <div 
         className={`
           glass-strong border border-border/30 rounded-full 
-          transition-[padding] duration-150 ease-out
+          transition-all duration-300 ease-in-out
+          will-change-[padding]
           ${isExpanded ? 'px-6 py-3' : 'px-4 py-2'}
         `}
-        style={{ transform: 'translateZ(0)' }}
       >
         <div className="flex items-center gap-3">
           {/* Theme Toggle */}
@@ -117,7 +116,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
             variant="ghost"
             size="sm"
             onClick={toggleTheme}
-            className="h-8 w-8 p-0 rounded-full hover:bg-accent/20"
+            className="h-8 w-8 p-0 rounded-full hover:bg-accent/20 transition-colors duration-200"
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {isDark ? (
@@ -128,16 +127,22 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           </Button>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-border/30" />
+          <div 
+            className={`
+              h-6 w-px bg-border/30 
+              transition-opacity duration-300 ease-in-out
+              ${isExpanded ? 'opacity-100' : 'opacity-0'}
+            `}
+          />
 
           {/* Location Info */}
           <div 
             className={`
               flex items-center gap-3 text-sm overflow-hidden whitespace-nowrap
-              transition-[max-width,opacity] duration-150 ease-out
-              ${isExpanded ? 'max-w-md opacity-100' : 'max-w-0 opacity-0'}
+              transition-all duration-300 ease-in-out
+              will-change-[max-width,opacity]
+              ${isExpanded ? 'max-w-[600px] opacity-100' : 'max-w-0 opacity-0'}
             `}
-            style={{ transform: 'translateZ(0)' }}
           >
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <div className="flex flex-col min-w-0">
@@ -170,10 +175,10 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           <div 
             className={`
               flex items-center gap-1.5 whitespace-nowrap
-              transition-[max-width,opacity] duration-150 ease-out
-              ${isExpanded ? 'max-w-0 opacity-0' : 'max-w-md opacity-100'}
+              transition-all duration-300 ease-in-out
+              will-change-[max-width,opacity]
+              ${isExpanded ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}
             `}
-            style={{ transform: 'translateZ(0)' }}
           >
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-medium text-foreground truncate">
