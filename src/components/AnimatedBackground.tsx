@@ -1,135 +1,66 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 
-interface FloatingGrass {
+interface Particle {
+  id: number;
   x: number;
   y: number;
   size: number;
-  speed: number;
-  rotation: number;
-  rotationSpeed: number;
-  opacity: number;
-  drift: number;
+  duration: number;
+  delay: number;
+  color: string;
 }
 
 const AnimatedBackground: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const floatingGrassRef = useRef<FloatingGrass[]>([]);
-  const animationFrameRef = useRef<number>();
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Create floating grass particles
-    const createFloatingGrass = () => {
-      const particles: FloatingGrass[] = [];
-      const particleCount = 40;
-      
-      for (let i = 0; i < particleCount; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 20 + 10,
-          speed: Math.random() * 0.5 + 0.2,
-          rotation: Math.random() * Math.PI * 2,
-          rotationSpeed: (Math.random() - 0.5) * 0.02,
-          opacity: Math.random() * 0.4 + 0.2,
-          drift: Math.random() * 0.3 - 0.15,
-        });
-      }
-      floatingGrassRef.current = particles;
-    };
-
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      createFloatingGrass();
-    };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Animation loop
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Nature-themed gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, 'rgba(180, 220, 170, 0.15)');
-      gradient.addColorStop(0.5, 'rgba(140, 200, 150, 0.12)');
-      gradient.addColorStop(1, 'rgba(120, 180, 140, 0.18)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw and update floating grass particles
-      floatingGrassRef.current.forEach((particle) => {
-        // Update position
-        particle.y -= particle.speed;
-        particle.x += particle.drift;
-        particle.rotation += particle.rotationSpeed;
-
-        // Reset if out of bounds
-        if (particle.y < -particle.size) {
-          particle.y = canvas.height + particle.size;
-          particle.x = Math.random() * canvas.width;
-        }
-        if (particle.x < -particle.size) particle.x = canvas.width + particle.size;
-        if (particle.x > canvas.width + particle.size) particle.x = -particle.size;
-
-        // Draw floating grass particle
-        ctx.save();
-        ctx.translate(particle.x, particle.y);
-        ctx.rotate(particle.rotation);
-        
-        // Draw grass blade shape
-        ctx.beginPath();
-        ctx.moveTo(0, particle.size / 2);
-        ctx.quadraticCurveTo(
-          particle.size / 4,
-          0,
-          0,
-          -particle.size / 2
-        );
-        
-        const particleGradient = ctx.createLinearGradient(
-          0,
-          particle.size / 2,
-          0,
-          -particle.size / 2
-        );
-        particleGradient.addColorStop(0, `rgba(60, 130, 80, ${particle.opacity})`);
-        particleGradient.addColorStop(1, `rgba(100, 180, 120, ${particle.opacity * 0.6})`);
-        
-        ctx.strokeStyle = particleGradient;
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        
-        ctx.restore();
-      });
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
+  // Generate floating particles with variety of colors
+  const particles = useMemo(() => {
+    const colors = [
+      'bg-primary/30',
+      'bg-accent/30',
+      'bg-secondary/30',
+      'bg-primary-glow/20',
+      'bg-accent-glow/20',
+    ];
+    
+    return Array.from({ length: 15 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 150 + 50,
+      duration: Math.random() * 15 + 15,
+      delay: Math.random() * 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+    }));
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 0 }}
-    />
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-background">
+      {/* Large animated gradient orbs with blur for glassmorphism effect */}
+      <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-[100px] animate-float" />
+      <div className="absolute bottom-20 right-10 w-[600px] h-[600px] bg-gradient-to-tl from-accent/15 to-primary/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-secondary/10 to-primary/5 rounded-full blur-[150px] animate-float" style={{ animationDelay: '2s' }} />
+      
+      {/* Mesh gradient overlay for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(142,76,36,0.03),transparent_50%)] animate-shimmer" />
+      
+      {/* Floating glowing particles */}
+      <div className="absolute inset-0">
+        {particles.map((particle) => (
+          <div
+            key={particle.id}
+            className={`absolute ${particle.color} rounded-full opacity-30 backdrop-blur-sm animate-float`}
+            style={{
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              animationDuration: `${particle.duration}s`,
+              animationDelay: `${particle.delay}s`,
+              boxShadow: '0 0 20px currentColor',
+            }}
+          />
+        ))}
+      </div>
+    </div>
   );
 };
 

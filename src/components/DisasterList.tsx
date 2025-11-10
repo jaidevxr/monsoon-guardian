@@ -158,7 +158,7 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
               return (
                 <Card 
                   key={disaster.id} 
-                  className={`glass p-4 transition-smooth hover:shadow-lg cursor-pointer border ${getSeverityColor(disaster.severity)} ${predicted ? 'border-l-4 border-l-warning' : ''}`}
+                  className={`glass-strong p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated cursor-pointer border-2 ${getSeverityColor(disaster.severity)} ${predicted ? 'border-l-4 border-l-warning animate-pulse-subtle' : ''} backdrop-blur-lg`}
                 >
                   <div className="space-y-4">
                     {/* Header */}
@@ -242,23 +242,28 @@ const DisasterList: React.FC<DisasterListProps> = ({ disasters, onDisasterClick,
                         </div>
 
                         <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => onDisasterClick(disaster)}
+                          className="bg-primary hover:bg-primary-glow transition-all duration-300 hover:scale-105 hover:shadow-glow"
+                        >
+                          <MapPin className="h-3 w-3 mr-2" />
+                          View on Map
+                        </Button>
+                        
+                        {disaster.url && (
                           <Button 
                             size="sm" 
-                            onClick={() => onDisasterClick(disaster)}
-                            className="bg-primary hover:bg-primary-glow"
+                            variant="outline" 
+                            asChild
+                            className="border-2 hover:border-primary hover:bg-primary/10 transition-all duration-300"
                           >
-                            <MapPin className="h-3 w-3 mr-2" />
-                            View on Map
+                            <a href={disaster.url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3 w-3 mr-2" />
+                              {predicted ? 'View Source Data' : 'Full Report'}
+                            </a>
                           </Button>
-                          
-                          {disaster.url && (
-                            <Button size="sm" variant="outline" asChild>
-                              <a href={disaster.url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3 mr-2" />
-                                Full Report
-                              </a>
-                            </Button>
-                          )}
+                        )}
                         </div>
                       </div>
                     )}

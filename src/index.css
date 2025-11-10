@@ -157,14 +157,14 @@ All colors MUST be HSL.
     @apply font-bold;
   }
 
-  /* Solid nature-themed cards */
+  /* Glassmorphism cards with backdrop blur */
   .glass {
-    @apply bg-card border border-border/50 rounded-xl;
+    @apply bg-card/80 backdrop-blur-md border border-border/50 rounded-xl;
     box-shadow: var(--shadow-card);
   }
 
   .glass-strong {
-    @apply bg-card border border-border/60 rounded-xl;
+    @apply bg-card/90 backdrop-blur-xl border border-border/60 rounded-xl;
     box-shadow: var(--shadow-elevated);
   }
   
@@ -267,6 +267,19 @@ All colors MUST be HSL.
   
   .animate-float {
     animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
   }
   
   /* Custom scrollbar */
