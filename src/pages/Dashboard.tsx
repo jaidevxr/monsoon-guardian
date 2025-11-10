@@ -192,8 +192,23 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-background relative">
       <AnimatedBackground />
 
-      {/* Logo stays in place always */}
-      
+      {/* Global Sidebar Toggle - always visible when collapsed */}
+      {sidebarCollapsed && (
+        <Button
+          aria-label="Open sidebar"
+          variant="secondary"
+          size="icon"
+          onClick={() => setSidebarCollapsed(false)}
+          className="fixed left-3 top-3 z-[2500] shadow-lg"
+        >
+          <span className="relative block w-4 h-4"> 
+            <span className="absolute inset-x-0 top-0 h-0.5 bg-foreground rounded" />
+            <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-foreground rounded" />
+            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-foreground rounded" />
+          </span>
+        </Button>
+      )}
+
       <div className="relative z-10 h-screen">
         <DashboardSidebar
           activeTab={activeTab}
@@ -205,7 +220,9 @@ const Dashboard: React.FC = () => {
         />
         
         <main 
-          className={`w-full h-full transition-all duration-300 pt-20 ${sidebarCollapsed ? 'pl-0' : 'pl-64'}`}
+          className={`w-full h-full transition-all duration-300 ${
+            sidebarCollapsed ? 'pl-16' : 'pl-64'
+          }`}
         >
           {/* Tab Content - Full Height */}
           <div className="h-full">

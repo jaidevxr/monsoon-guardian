@@ -140,89 +140,96 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   };
 
   return (
-    <>
-      {/* Fixed Logo/Name Dynamic Island - Never Minimizes */}
-      <div className="fixed left-4 top-4 z-[2001]">
-        <div className="bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] border border-white/[0.08] rounded-3xl p-4 shadow-2xl"
-          style={{ WebkitBackdropFilter: 'blur(20px) saturate(150%)' }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20 flex-shrink-0">
-                <Shield className="h-6 w-6 text-primary" />
+    <aside 
+      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/10 shadow-2xl bg-background/40 backdrop-blur-2xl ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      {/* Glassmorphism layer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-white/0 to-white/5 pointer-events-none" />
+      
+      {/* Simple dot pattern texture */}
+      <div className="absolute inset-0 opacity-[0.15] pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
+        backgroundSize: '16px 16px'
+      }} />
+      
+      {/* Content */}
+      <div className="flex flex-col h-full relative z-10">
+        {/* Header */}
+        <div className="p-3 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg border border-primary/20 backdrop-blur-sm">
+                  <Shield className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-sm text-foreground">Predict Aid</h2>
+                  <p className="text-[10px] text-muted-foreground">Dashboard</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-semibold text-base text-foreground">Predict Aid</h2>
-                <p className="text-xs text-muted-foreground/80">Dashboard</p>
-              </div>
-            </div>
+            )}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={onToggleCollapse}
-              className="h-9 w-9 hover:bg-white/[0.08] transition-all duration-200 rounded-xl flex-shrink-0"
+              className="h-8 w-8 p-0 hover:bg-white/10 transition-all duration-200"
             >
-              <Menu className="h-5 w-5" />
+              {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Navigation Section - Collapsible */}
-      <aside 
-        className={`fixed left-4 top-24 bottom-4 z-[1999] flex flex-col transition-all duration-300 ease-out overflow-hidden border border-white/[0.08] rounded-3xl shadow-2xl bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] ${
-          isCollapsed ? 'w-0 opacity-0 pointer-events-none -translate-x-full' : 'w-56 opacity-100 translate-x-0'
-        }`}
-        style={{
-          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-        }}
-      >
-      {/* Content */}
-      <div className="flex flex-col h-full relative z-10">
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-3 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 p-2 space-y-1.5 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             
             return (
-              <div key={item.id} className="bg-white/[0.08] backdrop-blur-lg rounded-xl border border-white/[0.08] overflow-hidden">
-                <button
-                  onClick={() => onTabChange(item.id)}
-                  className={`
-                    group w-full transition-all duration-200 relative px-3.5 py-3.5
-                    ${isActive 
-                      ? 'bg-white/[0.10] text-foreground' 
-                      : 'hover:bg-white/[0.05]'
-                    }
-                  `}
-                >
-                  <div className="flex items-center gap-3 relative z-10">
-                    <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-                    <div className="flex flex-col items-start gap-0.5">
-                      <span className={`font-medium text-sm whitespace-nowrap ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
-                      <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap">{item.description}</span>
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={`
+                  group w-full rounded-lg transition-all duration-200 relative
+                  ${isCollapsed ? 'p-3' : 'p-3'}
+                  ${isActive 
+                    ? 'bg-white/10 backdrop-blur-sm text-primary shadow-lg' 
+                    : 'hover:bg-white/5 hover:backdrop-blur-sm'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-3 relative z-10">
+                  <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                  {!isCollapsed && (
+                    <div className="flex flex-col items-start">
+                      <span className={`font-medium text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
+                      {isActive && (
+                        <span className="text-[10px] text-muted-foreground">{item.description}</span>
+                      )}
                     </div>
-                  </div>
-                </button>
-              </div>
+                  )}
+                </div>
+              </button>
             );
           })}
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/[0.06]">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="text-muted-foreground/80">Status</span>
-            <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/[0.04]">
-              <Activity className="h-2.5 w-2.5 mr-1 animate-pulse" />
-              Active
-            </Badge>
+        {!isCollapsed && (
+          <div className="p-3 border-t border-white/10 backdrop-blur-sm">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Status</span>
+              <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/5">
+                <Activity className="h-2.5 w-2.5 mr-1 animate-pulse" />
+                Active
+              </Badge>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </aside>
-    </>
   );
 };
 
