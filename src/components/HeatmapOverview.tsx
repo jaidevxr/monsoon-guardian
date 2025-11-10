@@ -224,7 +224,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
           return content;
         };
         
-        const tooltip = layer.bindTooltip(getTooltipContent(), {
+        layer.bindTooltip(getTooltipContent(), {
           permanent: false,
           direction: 'center',
           className: 'state-tooltip'
@@ -232,7 +232,13 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
         
         // Update tooltip on hover to show current overlay data
         layer.on('mouseover', () => {
-          tooltip.setContent(getTooltipContent());
+          // Use Leaflet Layer API to update bound tooltip content safely
+          if ((layer as any).setTooltipContent) {
+            (layer as any).setTooltipContent(getTooltipContent());
+          } else if ((layer as any).getTooltip) {
+            const tt = (layer as any).getTooltip();
+            tt && tt.setContent && tt.setContent(getTooltipContent());
+          }
         });
       }
     }).addTo(mapInstanceRef.current);
