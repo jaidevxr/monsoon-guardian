@@ -115,6 +115,8 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
         ? <Cloud className="h-4 w-4 text-foreground" /> 
         : <CloudMoon className="h-4 w-4 text-blue-300" />;
     }
+    // Fog/Mist
+    if (code <= 48) return <Cloud className="h-4 w-4 text-muted-foreground" />;
     // Rainy
     if (code <= 67) return <CloudRain className="h-4 w-4 text-blue-400" />;
     // Snowy
