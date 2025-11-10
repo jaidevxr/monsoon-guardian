@@ -620,16 +620,16 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
         <div className="glass rounded-xl shadow-lg border border-border/30">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-            <TabsList className="bg-card/80">
-              <TabsTrigger value="disaster" className="gap-2">
+            <TabsList className="bg-primary/10 border border-primary/20">
+              <TabsTrigger value="disaster" className="gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Risk</span>
               </TabsTrigger>
-              <TabsTrigger value="temperature" className="gap-2">
+              <TabsTrigger value="temperature" className="gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                 <Cloud className="h-4 w-4" />
                 <span className="hidden sm:inline">Temp</span>
               </TabsTrigger>
-              <TabsTrigger value="pollution" className="gap-2">
+              <TabsTrigger value="pollution" className="gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                 <Droplets className="h-4 w-4" />
                 <span className="hidden sm:inline">AQI</span>
               </TabsTrigger>
