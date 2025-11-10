@@ -618,9 +618,9 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Mode Selector & Reset */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
-        <div className="glass rounded-xl shadow-lg border border-border/30">
+        <div className="glass rounded-xl shadow-lg border border-border/30 bg-primary/5">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-            <TabsList className="bg-primary/10 border border-primary/20">
+            <TabsList className="bg-transparent">
               <TabsTrigger value="disaster" className="gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Risk</span>
@@ -658,8 +658,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             onClick={() => setMapLayer('default')}
             className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
               mapLayer === 'default' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-secondary hover:bg-secondary/80'
+                ? 'bg-foreground text-background' 
+                : 'bg-muted hover:bg-muted/80 text-foreground'
             }`}
           >
             Default
@@ -668,8 +668,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             onClick={() => setMapLayer('satellite')}
             className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
               mapLayer === 'satellite' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-secondary hover:bg-secondary/80'
+                ? 'bg-foreground text-background' 
+                : 'bg-muted hover:bg-muted/80 text-foreground'
             }`}
           >
             Satellite
@@ -678,8 +678,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             onClick={() => setMapLayer('terrain')}
             className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
               mapLayer === 'terrain' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-secondary hover:bg-secondary/80'
+                ? 'bg-foreground text-background' 
+                : 'bg-muted hover:bg-muted/80 text-foreground'
             }`}
           >
             Terrain
