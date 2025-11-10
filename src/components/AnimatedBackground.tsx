@@ -32,7 +32,7 @@ const AnimatedBackground: React.FC = () => {
       'bg-accent-glow/20',
     ];
     
-    return Array.from({ length: 15 }, (_, i) => ({
+    return Array.from({ length: 24 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -45,7 +45,7 @@ const AnimatedBackground: React.FC = () => {
 
   // Generate floating leaves with natural motion
   const leaves = useMemo(() => {
-    return Array.from({ length: 20 }, (_, i) => ({
+    return Array.from({ length: 28 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: -10 - Math.random() * 20,
@@ -58,7 +58,7 @@ const AnimatedBackground: React.FC = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-background">
+    <div className="fixed inset-0 -z-10 overflow-hidden gradient-hero pointer-events-none">
       {/* Large animated gradient orbs with blur for glassmorphism effect */}
       <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-[100px] animate-float" />
       <div className="absolute bottom-20 right-10 w-[600px] h-[600px] bg-gradient-to-tl from-accent/15 to-primary/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: '1s' }} />

@@ -627,24 +627,24 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
         <div className="glass-strong rounded-xl shadow-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5 backdrop-blur-xl">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-            <TabsList className="bg-transparent">
+            <TabsList className="bg-card/40 backdrop-blur-xl rounded-lg border border-border/30 p-1">
               <TabsTrigger 
                 value="disaster" 
-                className="gap-2 data-[state=active]:bg-card/90 data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:backdrop-blur-sm transition-all duration-300"
+                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow hover:bg-card/70"
               >
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Risk</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="temperature" 
-                className="gap-2 data-[state=active]:bg-card/90 data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:backdrop-blur-sm transition-all duration-300"
+                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow hover:bg-card/70"
               >
                 <Cloud className="h-4 w-4" />
                 <span className="hidden sm:inline">Temp</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="pollution" 
-                className="gap-2 data-[state=active]:bg-card/90 data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:backdrop-blur-sm transition-all duration-300"
+                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow hover:bg-card/70"
               >
                 <Droplets className="h-4 w-4" />
                 <span className="hidden sm:inline">AQI</span>
@@ -778,37 +778,40 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           <div className="space-y-1.5">
             <div
               onClick={() => toggleFilter('low')}
-              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 ${
+              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 border ${
                 activeFilters.has('low') 
-                  ? 'bg-green-500/20 border border-green-500/40 shadow-md' 
-                  : 'opacity-40 hover:opacity-60 hover:bg-card/40'
+                  ? 'shadow-md' 
+                  : 'opacity-60 hover:opacity-80 hover:bg-card/40'
               }`}
+              style={activeFilters.has('low') ? { background: 'hsl(var(--success) / 0.2)', borderColor: 'hsl(var(--success) / 0.4)' } : {}}
             >
-              <div className="w-3 h-3 rounded-full bg-green-400/60 border-2 border-green-600 shadow-sm"></div>
+              <div className="w-3 h-3 rounded-full opacity-60 border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
               <span className="text-xs font-medium">Low</span>
             </div>
             
             <div
               onClick={() => toggleFilter('medium')}
-              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 ${
+              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 border ${
                 activeFilters.has('medium') 
-                  ? 'bg-yellow-500/20 border border-yellow-500/40 shadow-md' 
-                  : 'opacity-40 hover:opacity-60 hover:bg-card/40'
+                  ? 'shadow-md' 
+                  : 'opacity-60 hover:opacity-80 hover:bg-card/40'
               }`}
+              style={activeFilters.has('medium') ? { background: 'hsl(var(--warning) / 0.2)', borderColor: 'hsl(var(--warning) / 0.4)' } : {}}
             >
-              <div className="w-3 h-3 rounded-full bg-yellow-400/60 border-2 border-yellow-600 shadow-sm"></div>
+              <div className="w-3 h-3 rounded-full opacity-60 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
               <span className="text-xs font-medium">Medium</span>
             </div>
             
             <div
               onClick={() => toggleFilter('high')}
-              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 ${
+              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 border ${
                 activeFilters.has('high') 
-                  ? 'bg-red-500/20 border border-red-500/40 shadow-md' 
-                  : 'opacity-40 hover:opacity-60 hover:bg-card/40'
+                  ? 'shadow-md' 
+                  : 'opacity-60 hover:opacity-80 hover:bg-card/40'
               }`}
+              style={activeFilters.has('high') ? { background: 'hsl(var(--destructive) / 0.2)', borderColor: 'hsl(var(--destructive) / 0.4)' } : {}}
             >
-              <div className="w-3 h-3 rounded-full bg-red-500/60 border-2 border-red-600 shadow-sm"></div>
+              <div className="w-3 h-3 rounded-full opacity-60 border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
               <span className="text-xs font-medium">High</span>
             </div>
           </div>
@@ -825,38 +828,38 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             {overlayMode === 'temperature' ? (
               <>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-blue-600/60 border-2 border-blue-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--accent))', borderColor: 'hsl(var(--accent))' }}></div>
                   <span className="text-xs">Cold (&lt;15°C)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-green-500/60 border-2 border-green-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
                   <span className="text-xs">Mild (22-28°C)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/60 border-2 border-yellow-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
                   <span className="text-xs">Warm (28-35°C)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-red-500/60 border-2 border-red-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
                   <span className="text-xs">Hot (&gt;35°C)</span>
                 </div>
               </>
             ) : (
               <>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-green-500/60 border-2 border-green-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
                   <span className="text-xs">Good (0-50)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/60 border-2 border-yellow-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
                   <span className="text-xs">Moderate (50-100)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-orange-500/60 border-2 border-orange-700 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
                   <span className="text-xs">Unhealthy (100-150)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full bg-red-600/60 border-2 border-red-800 shadow-sm"></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
                   <span className="text-xs">Hazardous (&gt;200)</span>
                 </div>
               </>
