@@ -220,7 +220,7 @@ const Dashboard: React.FC = () => {
         />
         
         <main 
-          className={`w-full h-full transition-all duration-300 ${
+          className={`w-full h-full transition-all duration-300 pt-24 ${
             sidebarCollapsed ? 'pl-20' : 'pl-64'
           }`}
         >

@@ -140,14 +140,33 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   };
 
   return (
-    <aside 
-      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}
-      style={{
-        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-      }}
-    >
+    <>
+      {/* Fixed Logo/Name Section - Never Minimizes */}
+      <div className="fixed left-0 top-0 w-64 z-[2001] p-4">
+        <div className="bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] border border-white/[0.08] rounded-2xl p-4 shadow-lg"
+          style={{ WebkitBackdropFilter: 'blur(20px) saturate(150%)' }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20 flex-shrink-0">
+              <Shield className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-base text-foreground">Predict Aid</h2>
+              <p className="text-xs text-muted-foreground/80">Dashboard</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Section - Collapsible */}
+      <aside 
+        className={`fixed left-0 top-24 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] ${
+          isCollapsed ? 'w-20' : 'w-64'
+        }`}
+        style={{
+          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+        }}
+      >
       {/* Apple-style glass overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-white/[0.07] to-white/[0.03] pointer-events-none" />
       
@@ -161,43 +180,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       
       {/* Content */}
       <div className="flex flex-col h-full relative z-10">
-        {/* Logo & Name Dynamic Island - Completely Separate */}
-        <div className="p-4 pb-6">
-          <div className="bg-white/[0.08] backdrop-blur-lg rounded-2xl p-3.5 border border-white/[0.08] shadow-md">
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20 flex-shrink-0">
-                <Shield className="h-5 w-5 text-primary" />
-              </div>
-              <div className={`transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
-                <h2 className="font-semibold text-sm text-foreground whitespace-nowrap">Predict Aid</h2>
-                <p className="text-[9px] text-muted-foreground/80 whitespace-nowrap">Dashboard</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Separator Line */}
-        <div className="px-4 pb-4">
-          <div className="h-px bg-white/[0.06]" />
-        </div>
-
         {/* Toggle Button */}
-        <div className="px-4 pb-4">
-          <div className="bg-white/[0.08] backdrop-blur-lg rounded-2xl border border-white/[0.08] shadow-md overflow-hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleCollapse}
-              className="w-full h-10 hover:bg-white/[0.08] transition-all duration-200 rounded-none"
-            >
-              {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Another Separator Before Navigation */}
-        <div className="px-4 pb-2">
-          <div className="h-px bg-white/[0.06]" />
+        <div className="p-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="w-full h-10 hover:bg-white/[0.08] transition-all duration-200 rounded-xl border border-white/[0.08]"
+          >
+            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+          </Button>
         </div>
 
         {/* Navigation */}
@@ -207,7 +199,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             const isActive = activeTab === item.id;
             
             return (
-              <div key={item.id} className="bg-white/[0.08] backdrop-blur-lg rounded-2xl border border-white/[0.08] shadow-md overflow-hidden">
+              <div key={item.id} className="bg-white/[0.08] backdrop-blur-lg rounded-xl border border-white/[0.08] overflow-hidden">
                 <button
                   onClick={() => onTabChange(item.id)}
                   className={`
@@ -246,6 +238,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         )}
       </div>
     </aside>
+    </>
   );
 };
 
