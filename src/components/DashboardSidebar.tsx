@@ -141,48 +141,63 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/10 shadow-2xl bg-background/40 backdrop-blur-2xl ${
+      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] bg-background/30 backdrop-blur-[40px] backdrop-saturate-[180%] ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}
+      style={{
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+      }}
     >
-      {/* Glassmorphism layer */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-white/0 to-white/5 pointer-events-none" />
+      {/* Apple-style glass overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.07] to-white/[0.03] pointer-events-none" />
       
-      {/* Simple dot pattern texture */}
-      <div className="absolute inset-0 opacity-[0.15] pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
-        backgroundSize: '16px 16px'
-      }} />
+      {/* Noise texture for depth */}
+      <div 
+        className="absolute inset-0 opacity-[0.015] pointer-events-none mix-blend-overlay"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      />
       
       {/* Content */}
       <div className="flex flex-col h-full relative z-10">
-        {/* Header */}
-        <div className="p-3 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg border border-primary/20 backdrop-blur-sm">
-                  <Shield className="h-4 w-4 text-primary" />
+        {/* Dynamic Island Logo Header */}
+        <div className="p-4">
+          {!isCollapsed ? (
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-3 border border-white/[0.08] shadow-lg">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20">
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="font-semibold text-sm text-foreground">Predict Aid</h2>
-                  <p className="text-[10px] text-muted-foreground">Dashboard</p>
+                  <p className="text-[9px] text-muted-foreground/80">Dashboard</p>
                 </div>
               </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleCollapse}
-              className="h-8 w-8 p-0 hover:bg-white/10 transition-all duration-200"
-            >
-              {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Toggle Button */}
+        <div className="px-4 pb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="w-full h-8 hover:bg-white/[0.08] transition-all duration-200 rounded-lg"
+          >
+            {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+          </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1.5 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 px-3 py-2 space-y-2 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -192,22 +207,20 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={`
-                  group w-full rounded-lg transition-all duration-200 relative
-                  ${isCollapsed ? 'p-3' : 'p-3'}
+                  group w-full rounded-xl transition-all duration-200 relative
+                  ${isCollapsed ? 'p-3' : 'px-3 py-3'}
                   ${isActive 
-                    ? 'bg-white/10 backdrop-blur-sm text-primary shadow-lg' 
-                    : 'hover:bg-white/5 hover:backdrop-blur-sm'
+                    ? 'bg-white/[0.12] backdrop-blur-xl text-foreground shadow-lg border border-white/[0.08]' 
+                    : 'hover:bg-white/[0.06] border border-transparent'
                   }
                 `}
               >
                 <div className="flex items-center gap-3 relative z-10">
                   <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
                   {!isCollapsed && (
-                    <div className="flex flex-col items-start">
+                    <div className="flex flex-col items-start gap-0.5">
                       <span className={`font-medium text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
-                      {isActive && (
-                        <span className="text-[10px] text-muted-foreground">{item.description}</span>
-                      )}
+                      <span className="text-[10px] text-muted-foreground/70">{item.description}</span>
                     </div>
                   )}
                 </div>
@@ -218,10 +231,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-3 border-t border-white/10 backdrop-blur-sm">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Status</span>
-              <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/5">
+          <div className="p-4 border-t border-white/[0.08]">
+            <div className="flex items-center justify-between text-xs px-1">
+              <span className="text-muted-foreground/80">Status</span>
+              <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/[0.05] backdrop-blur-sm">
                 <Activity className="h-2.5 w-2.5 mr-1 animate-pulse" />
                 Active
               </Badge>
