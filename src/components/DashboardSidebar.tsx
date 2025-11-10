@@ -141,11 +141,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] bg-background/30 backdrop-blur-[40px] backdrop-saturate-[180%] ${
+      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] bg-background/20 backdrop-blur-[20px] backdrop-saturate-[150%] ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
       style={{
-        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
       }}
     >
       {/* Apple-style glass overlay */}
@@ -161,9 +161,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       
       {/* Content */}
       <div className="flex flex-col h-full relative z-10">
-        {/* Dynamic Island Logo Header - Always Full Size */}
-        <div className="p-4">
-          <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-3 border border-white/[0.08] shadow-lg">
+        {/* Logo & Name Dynamic Island - Completely Separate */}
+        <div className="p-4 pb-6">
+          <div className="bg-white/[0.08] backdrop-blur-lg rounded-2xl p-3.5 border border-white/[0.08] shadow-md">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20 flex-shrink-0">
                 <Shield className="h-5 w-5 text-primary" />
@@ -176,9 +176,14 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           </div>
         </div>
 
-        {/* Toggle Button - Separate Island */}
+        {/* Separator Line */}
         <div className="px-4 pb-4">
-          <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-lg overflow-hidden">
+          <div className="h-px bg-white/[0.06]" />
+        </div>
+
+        {/* Toggle Button */}
+        <div className="px-4 pb-4">
+          <div className="bg-white/[0.08] backdrop-blur-lg rounded-2xl border border-white/[0.08] shadow-md overflow-hidden">
             <Button
               variant="ghost"
               size="sm"
@@ -190,6 +195,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           </div>
         </div>
 
+        {/* Another Separator Before Navigation */}
+        <div className="px-4 pb-2">
+          <div className="h-px bg-white/[0.06]" />
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-3 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
@@ -197,15 +207,15 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             const isActive = activeTab === item.id;
             
             return (
-              <div key={item.id} className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-lg overflow-hidden">
+              <div key={item.id} className="bg-white/[0.08] backdrop-blur-lg rounded-2xl border border-white/[0.08] shadow-md overflow-hidden">
                 <button
                   onClick={() => onTabChange(item.id)}
                   className={`
                     group w-full transition-all duration-200 relative
                     ${isCollapsed ? 'p-3.5' : 'px-3.5 py-3.5'}
                     ${isActive 
-                      ? 'bg-white/[0.12] text-foreground' 
-                      : 'hover:bg-white/[0.06]'
+                      ? 'bg-white/[0.10] text-foreground' 
+                      : 'hover:bg-white/[0.05]'
                     }
                   `}
                 >
@@ -224,10 +234,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-white/[0.08]">
+          <div className="p-4 border-t border-white/[0.06]">
             <div className="flex items-center justify-between text-xs px-1">
               <span className="text-muted-foreground/80">Status</span>
-              <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/[0.05] backdrop-blur-sm">
+              <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/[0.04]">
                 <Activity className="h-2.5 w-2.5 mr-1 animate-pulse" />
                 Active
               </Badge>
