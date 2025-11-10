@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
-import { Shield, Clock, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, Clock, Activity, Sun, Moon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const DashboardNavbar: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark(!isDark);
 
   return (
     <nav className="glass border-b border-border/20 sticky top-0 z-50">
@@ -27,6 +44,20 @@ const DashboardNavbar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="h-9 w-9 p-0"
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? (
+              <Sun className="h-5 w-5 text-warning" />
+            ) : (
+              <Moon className="h-5 w-5 text-primary" />
+            )}
+          </Button>
+
           <Badge variant="outline" className="border-success/30 text-success">
             <Activity className="h-3 w-3 mr-1" />
             Live

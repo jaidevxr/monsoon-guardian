@@ -141,23 +141,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`relative h-full flex flex-col transition-all duration-300 ease-out overflow-hidden bg-nature-sage/30 border-r border-nature-forest/20 backdrop-blur-sm ${
+      className={`relative h-full flex flex-col transition-all duration-300 ease-out overflow-hidden bg-background/60 border-r border-border/30 backdrop-blur-sm ${
         isCollapsed ? 'w-20' : 'w-72'
       }`}
     >
       {/* Content */}
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="p-4 border-b border-nature-forest/20">
+        <div className="p-4 border-b border-border/30">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-nature-forest/20 rounded-lg border border-nature-forest/30">
-                  <Shield className="h-5 w-5 text-nature-forest" />
+                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg border border-primary/20">
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-base text-nature-forest">Predict Aid</h2>
-                  <p className="text-xs text-nature-moss">Dashboard</p>
+                  <h2 className="font-semibold text-base">Predict Aid</h2>
+                  <p className="text-xs text-muted-foreground">Dashboard</p>
                 </div>
               </div>
             )}
@@ -165,9 +165,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="h-9 w-9 p-0 hover:bg-nature-forest/10"
+              className="h-9 w-9 p-0"
             >
-              {isCollapsed ? <Menu className="h-5 w-5 text-nature-forest" /> : <X className="h-5 w-5 text-nature-forest" />}
+              {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
             </Button>
           </div>
         </div>
@@ -186,18 +186,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   group w-full rounded-lg transition-all duration-200 border
                   ${isCollapsed ? 'p-3' : 'p-3'}
                   ${isActive 
-                    ? 'bg-gradient-to-r from-nature-forest/30 to-nature-moss/30 border-nature-forest/40 shadow-md text-nature-forest' 
-                    : 'hover:bg-nature-sage/40 border-transparent text-foreground hover:border-nature-forest/20'
+                    ? 'bg-primary/15 border-primary/30 shadow-sm text-primary' 
+                    : 'hover:bg-muted/60 border-transparent hover:border-border/30'
                   }
                 `}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-nature-forest' : ''}`} />
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
                   {!isCollapsed && (
                     <div className="flex flex-col items-start">
                       <span className="font-medium text-sm">{item.label}</span>
                       {isActive && (
-                        <span className="text-xs text-nature-moss">{item.description}</span>
+                        <span className="text-xs text-muted-foreground">{item.description}</span>
                       )}
                     </div>
                   )}
@@ -209,10 +209,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-nature-forest/20 bg-nature-sage/20">
+          <div className="p-4 border-t border-border/30">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-nature-moss">Status</span>
-              <Badge variant="outline" className="text-nature-forest border-nature-forest/40 bg-nature-sage/30">
+              <span className="text-muted-foreground">Status</span>
+              <Badge variant="outline" className="text-success border-success/30">
                 <Activity className="h-3 w-3 mr-1" />
                 Active
               </Badge>
