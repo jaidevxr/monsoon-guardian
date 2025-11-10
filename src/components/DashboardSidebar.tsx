@@ -141,34 +141,31 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-border/20 shadow-xl bg-background/95 backdrop-blur-xl ${
+      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-white/10 shadow-2xl bg-background/40 backdrop-blur-2xl ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
-      {/* Gradient mesh background */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary))_0%,transparent_50%)]" />
-        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_100%,hsl(var(--accent))_0%,transparent_50%)]" />
-      </div>
+      {/* Glassmorphism layer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-white/0 to-white/5 pointer-events-none" />
       
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
-        backgroundSize: '20px 20px'
+      {/* Simple dot pattern texture */}
+      <div className="absolute inset-0 opacity-[0.15] pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
+        backgroundSize: '16px 16px'
       }} />
       
       {/* Content */}
       <div className="flex flex-col h-full relative z-10">
         {/* Header */}
-        <div className="p-3 border-b border-border/10">
+        <div className="p-3 border-b border-white/10">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg border border-primary/30 shadow-lg">
-                  <Shield className="h-4 w-4 text-primary drop-shadow-glow" />
+                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg border border-primary/20 backdrop-blur-sm">
+                  <Shield className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-sm bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Predict Aid</h2>
+                  <h2 className="font-semibold text-sm text-foreground">Predict Aid</h2>
                   <p className="text-[10px] text-muted-foreground">Dashboard</p>
                 </div>
               </div>
@@ -177,7 +174,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="h-8 w-8 p-0 hover:bg-primary/20 transition-all duration-200 hover:shadow-lg hover:shadow-primary/20"
+              className="h-8 w-8 p-0 hover:bg-white/10 transition-all duration-200"
             >
               {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
@@ -195,24 +192,19 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={`
-                  group w-full rounded-xl transition-all duration-200 relative overflow-hidden
-                  ${isCollapsed ? 'p-2.5' : 'p-2.5'}
+                  group w-full rounded-lg transition-all duration-200 relative
+                  ${isCollapsed ? 'p-3' : 'p-3'}
                   ${isActive 
-                    ? 'bg-gradient-to-r from-primary/20 to-accent/20 shadow-lg shadow-primary/20 text-primary border border-primary/20' 
-                    : 'hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:shadow-md hover:border hover:border-border/20'
+                    ? 'bg-white/10 backdrop-blur-sm text-primary shadow-lg' 
+                    : 'hover:bg-white/5 hover:backdrop-blur-sm'
                   }
                 `}
               >
-                {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 animate-pulse" />
-                )}
-                <div className="flex items-center gap-2.5 relative z-10">
-                  <div className={`p-1 rounded-lg ${isActive ? 'bg-background/50' : ''}`}>
-                    <Icon className={`h-4 w-4 flex-shrink-0 transition-transform duration-200 ${isActive ? 'text-primary scale-110' : 'group-hover:scale-105'}`} />
-                  </div>
+                <div className="flex items-center gap-3 relative z-10">
+                  <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
                   {!isCollapsed && (
                     <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs">{item.label}</span>
+                      <span className={`font-medium text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
                       {isActive && (
                         <span className="text-[10px] text-muted-foreground">{item.description}</span>
                       )}
@@ -226,10 +218,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-3 border-t border-border/10 bg-gradient-to-r from-muted/20 to-transparent">
+          <div className="p-3 border-t border-white/10 backdrop-blur-sm">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Status</span>
-              <Badge variant="outline" className="text-success border-success/30 text-[10px] shadow-sm">
+              <Badge variant="outline" className="text-success border-success/30 text-[10px] bg-white/5">
                 <Activity className="h-2.5 w-2.5 mr-1 animate-pulse" />
                 Active
               </Badge>

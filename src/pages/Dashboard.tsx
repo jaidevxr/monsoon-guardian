@@ -26,7 +26,7 @@ import {
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [mapCenter, setMapCenter] = useState<Location>({ lat: 20.5937, lng: 78.9629 }); // Center of India
   const [disasters, setDisasters] = useState<DisasterEvent[]>([]);
