@@ -54,8 +54,8 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           setCityName('Location detected');
         });
 
-      // Fetch weather data
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lng}&current=temperature_2m,weather_code&timezone=auto`)
+      // Fetch weather data with current_weather parameter for accurate real-time data including day/night
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lng}&current=temperature_2m,weather_code,is_day&timezone=auto`)
         .then(res => res.json())
         .then(data => {
           if (data.current) {
@@ -66,7 +66,12 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
               weatherCode,
               description
             });
-            console.log('🌤️ Weather fetched:', data.current);
+            console.log('🌤️ Real-time weather:', { 
+              temp: data.current.temperature_2m,
+              code: weatherCode, 
+              isDay: data.current.is_day,
+              time: new Date().toLocaleString()
+            });
           }
         })
         .catch((err) => {
