@@ -624,7 +624,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       <div ref={mapRef} className="h-full w-full" />
       
       {/* Mode Selector & Reset */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
         <div className="glass-strong rounded-xl shadow-lg border border-white/30 backdrop-blur-xl">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
             <TabsList className="bg-card/40 backdrop-blur-xl rounded-lg border border-border/20 p-1">
@@ -769,7 +769,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Risk Legend */}
       {overlayMode === 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
+        <div className="absolute bottom-20 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold">Risk Level</h3>
             <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
@@ -820,7 +820,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
+        <div className="absolute bottom-20 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
           <h3 className="text-xs font-semibold mb-2">
             {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
           </h3>
