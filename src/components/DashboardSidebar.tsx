@@ -15,6 +15,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { EmergencyFacility, Location } from '@/types';
 import { fetchEmergencyFacilities, getCurrentLocation } from '@/utils/api';
 
@@ -183,42 +189,60 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
-                className={`
-                  group w-full rounded-xl transition-all duration-200 relative overflow-hidden
-                  ${isCollapsed ? 'p-2 flex items-center justify-center' : 'p-3.5'}
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-primary/15 to-accent/10 backdrop-blur-sm text-primary shadow-lg border border-primary/20' 
-                    : 'hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent hover:border hover:border-border/30'
-                  }
-                `}
-              >
-                {isActive && !isCollapsed && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50" />
-                )}
-                <div className={`flex items-center relative z-10 ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                  <div className={`flex items-center justify-center rounded-lg transition-all duration-200 ${isActive && !isCollapsed ? 'bg-primary/20 p-1.5' : isCollapsed ? 'p-1.5' : 'p-0'} ${isActive && isCollapsed ? 'bg-primary/30' : ''}`}>
-                    <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-                  </div>
-                  {!isCollapsed && (
-                    <div className="flex flex-col items-start flex-1">
-                      <span className={`font-semibold text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
-                      <span className="text-[10px] text-muted-foreground/70">{item.description}</span>
-                    </div>
+        <TooltipProvider delayDuration={200}>
+          <nav className="flex-1 p-3 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              
+              const buttonContent = (
+                <button
+                  key={item.id}
+                  onClick={() => onTabChange(item.id)}
+                  className={`
+                    group w-full rounded-xl transition-all duration-200 relative overflow-hidden
+                    ${isCollapsed ? 'p-2 flex items-center justify-center' : 'p-3.5'}
+                    ${isActive 
+                      ? 'bg-gradient-to-r from-primary/15 to-accent/10 backdrop-blur-sm text-primary shadow-lg border border-primary/20' 
+                      : 'hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent hover:border hover:border-border/30'
+                    }
+                  `}
+                >
+                  {isActive && !isCollapsed && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50" />
                   )}
-                </div>
-              </button>
-            );
-          })}
-        </nav>
+                  <div className={`flex items-center relative z-10 ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+                    <div className={`flex items-center justify-center rounded-lg transition-all duration-200 ${isActive && !isCollapsed ? 'bg-primary/20 p-1.5' : isCollapsed ? 'p-1.5' : 'p-0'} ${isActive && isCollapsed ? 'bg-primary/30' : ''}`}>
+                      <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                    </div>
+                    {!isCollapsed && (
+                      <div className="flex flex-col items-start flex-1">
+                        <span className={`font-semibold text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
+                        <span className="text-[10px] text-muted-foreground/70">{item.description}</span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+
+              return isCollapsed ? (
+                <Tooltip key={item.id}>
+                  <TooltipTrigger asChild>
+                    {buttonContent}
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-popover/95 backdrop-blur-xl border-border/50">
+                    <div className="flex flex-col gap-1">
+                      <p className="font-semibold text-sm">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                buttonContent
+              );
+            })}
+          </nav>
+        </TooltipProvider>
 
         {/* Footer */}
         {!isCollapsed && (
