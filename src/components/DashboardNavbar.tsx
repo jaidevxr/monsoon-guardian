@@ -45,16 +45,16 @@ const DashboardNavbar: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={toggleTheme}
-            className="h-9 w-9 p-0"
+            className="h-9 w-9 p-0 border-2 hover:bg-accent/20"
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {isDark ? (
-              <Sun className="h-5 w-5 text-warning" />
+              <Sun className="h-5 w-5 text-amber-400" />
             ) : (
-              <Moon className="h-5 w-5 text-primary" />
+              <Moon className="h-5 w-5 text-slate-700" />
             )}
           </Button>
 
