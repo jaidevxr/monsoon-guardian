@@ -4,12 +4,22 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, MapPin, Loader2, Bot } from 'lucide-react';
+import { Send, MapPin, Loader2, Bot, Navigation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { Location } from '@/types';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  facilities?: Array<{
+    name: string;
+    type: string;
+    lat: number;
+    lng: number;
+    distance: number;
+    contact?: string;
+  }>;
+  userLocation?: Location;
 }
 
 interface CopilotChatProps {
@@ -23,6 +33,7 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   const [locationName, setLocationName] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch location name when location changes
@@ -69,9 +80,27 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
         throw error;
       }
 
+      // Parse the response to extract facility data if present
+      let facilities;
+      let parsedUserLocation;
+      
+      // Try to extract JSON data from the response
+      try {
+        const jsonMatch = data.message.match(/\{[\s\S]*"facilities"[\s\S]*\}/);
+        if (jsonMatch) {
+          const extracted = JSON.parse(jsonMatch[0]);
+          facilities = extracted.facilities;
+          parsedUserLocation = extracted.userLocation;
+        }
+      } catch (e) {
+        // If parsing fails, it's just regular text
+      }
+
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.message,
+        facilities,
+        userLocation: parsedUserLocation,
       };
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
@@ -95,6 +124,20 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleGetDirections = (facility: any, userLoc: Location) => {
+    // Navigate to emergency page with route info
+    navigate('/emergency', {
+      state: {
+        destination: {
+          lat: facility.lat,
+          lng: facility.lng,
+          name: facility.name
+        },
+        origin: userLoc
+      }
+    });
   };
 
   return (
@@ -157,13 +200,57 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] p-4 rounded-2xl ${
+              className={`max-w-[80%] ${
                 message.role === 'user'
-                  ? 'bg-primary text-primary-foreground ml-auto'
-                  : 'bg-card border border-border/40 text-card-foreground'
+                  ? 'ml-auto'
+                  : ''
               }`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              <div
+                className={`p-4 rounded-2xl ${
+                  message.role === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card border border-border/40 text-card-foreground'
+                }`}
+              >
+                <p className="whitespace-pre-wrap">{message.content}</p>
+              </div>
+              
+              {/* Show facility action buttons for hospitals */}
+              {message.role === 'assistant' && message.facilities && message.userLocation && (
+                <div className="mt-3 space-y-2">
+                  {message.facilities
+                    .filter(f => f.type === 'hospital')
+                    .slice(0, 5)
+                    .map((facility, idx) => (
+                      <Card key={idx} className="p-3 bg-card/50 border-border/40">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground truncate">
+                              {facility.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(facility.distance / 1000).toFixed(1)} km away
+                            </p>
+                            {facility.contact && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                📞 {facility.contact}
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handleGetDirections(facility, message.userLocation!)}
+                            className="shrink-0"
+                          >
+                            <Navigation className="w-3 h-3 mr-1" />
+                            Directions
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -79,21 +79,71 @@ serve(async (req) => {
             properties: {}
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "getEvacuationPlan",
+          description: "Generate a smart evacuation plan based on disaster type, weather conditions, and user location",
+          parameters: {
+            type: "object",
+            properties: {
+              lat: { type: "number", description: "Latitude" },
+              lng: { type: "number", description: "Longitude" },
+              disasterType: { 
+                type: "string", 
+                description: "Type of disaster: earthquake, flood, cyclone, fire, landslide",
+                enum: ["earthquake", "flood", "cyclone", "fire", "landslide"]
+              }
+            },
+            required: ["lat", "lng", "disasterType"]
+          }
+        }
       }
     ];
 
-    // System prompt with location awareness
+    // Enhanced system prompt with medical advice and evacuation planning
     const systemMessage = {
       role: "system",
-      content: `You are a disaster response AI assistant for India. You help users with:
-- Weather information and forecasts
-- Disaster risk assessments
-- Finding nearby emergency services (hospitals, police, fire stations)
-- Current disaster alerts and warnings
+      content: `You are an advanced disaster response AI assistant for India, powered by sophisticated medical and emergency planning capabilities. Your expertise includes:
+
+**Core Capabilities:**
+- Weather information and forecasts with disaster implications
+- Disaster risk assessments and predictive analytics
+- Finding and navigating to emergency services (hospitals, police, fire stations, shelters)
+- Current disaster alerts and warnings for India
+- Basic medical first aid advice during emergencies (CPR, wound care, burns, fractures, choking, etc.)
+- Smart evacuation planning based on disaster type, weather, and location
+
+**Medical Emergency Guidelines:**
+When providing medical advice:
+- Give clear, step-by-step first aid instructions
+- Emphasize when to seek immediate professional help (call 108/102/112)
+- Provide basic stabilization techniques until help arrives
+- Focus on life-threatening situations: severe bleeding, breathing difficulties, unconsciousness, chest pain, severe burns
+- For common emergencies: fractures (immobilize), burns (cool water), wounds (pressure to stop bleeding), CPR (30 compressions, 2 breaths)
+- ALWAYS advise users to seek professional medical help - your advice is for immediate stabilization only
+
+**Evacuation Planning:**
+When asked about evacuation:
+- Analyze the disaster type (earthquake, flood, cyclone, fire, landslide)
+- Consider real-time weather conditions and forecasts
+- Identify safe evacuation routes avoiding disaster zones
+- Recommend nearest shelters and safe zones
+- Provide step-by-step evacuation instructions
+- Suggest what to bring (documents, water, first aid, phone, charger, medicines)
+- Give timing recommendations based on disaster severity
+
+**Hospital Navigation:**
+When users ask about hospitals:
+- Provide hospital names with distances
+- Include "Get Directions" action for navigation
+- Prioritize by distance and specify the type of facility
+- Include contact numbers when available
 
 ${location ? `The user is currently at coordinates: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}. Use this location automatically when they ask about "here", "my location", "nearby", or similar context-based queries.` : ''}
 
-Always be concise, helpful, and prioritize safety information. When providing location-based information, mention the general area (city/region) to help users confirm you're using the right location.`
+Always be concise, actionable, and prioritize life safety. When providing location-based information, mention the general area (city/region) to help users confirm accuracy.`
     };
 
     // Call Lovable AI Gateway
@@ -104,12 +154,12 @@ Always be concise, helpful, and prioritize safety information. When providing lo
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [systemMessage, ...messages],
         tools: tools,
         tool_choice: "auto",
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 2000
       }),
     });
 
@@ -135,7 +185,7 @@ Always be concise, helpful, and prioritize safety information. When providing lo
         let args = JSON.parse(toolCall.function.arguments);
 
         // Auto-fill location if not provided
-        if ((functionName === 'getWeather' || functionName === 'getRisk' || functionName === 'getNearby') 
+        if ((functionName === 'getWeather' || functionName === 'getRisk' || functionName === 'getNearby' || functionName === 'getEvacuationPlan') 
             && (!args.lat || !args.lng) && location) {
           args.lat = location.lat;
           args.lng = location.lng;
@@ -157,6 +207,9 @@ Always be concise, helpful, and prioritize safety information. When providing lo
               break;
             case 'getAlerts':
               result = await getAlerts();
+              break;
+            case 'getEvacuationPlan':
+              result = await getEvacuationPlan(args.lat, args.lng, args.disasterType);
               break;
             default:
               result = { error: 'Unknown function' };
@@ -182,7 +235,7 @@ Always be concise, helpful, and prioritize safety information. When providing lo
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-pro',
           messages: [
             systemMessage,
             ...messages,
@@ -190,7 +243,7 @@ Always be concise, helpful, and prioritize safety information. When providing lo
             ...toolResults
           ],
           temperature: 0.7,
-          max_tokens: 1000
+          max_tokens: 2000
         }),
       });
 
@@ -326,6 +379,8 @@ async function getNearby(lat: number, lng: number, radius: number) {
       return {
         name: element.tags.name || `${type} facility`,
         type,
+        lat: element.lat,
+        lng: element.lon,
         distance: Math.round(calculateDistance(lat, lng, element.lat, element.lon) * 1000),
         contact: element.tags.phone || element.tags.contact
       };
@@ -333,7 +388,8 @@ async function getNearby(lat: number, lng: number, radius: number) {
 
     return {
       count: facilities.length,
-      facilities: facilities.slice(0, 10).sort((a: any, b: any) => a.distance - b.distance)
+      facilities: facilities.slice(0, 10).sort((a: any, b: any) => a.distance - b.distance),
+      userLocation: { lat, lng }
     };
   } catch (error) {
     console.error('Nearby facilities error:', error);
@@ -387,4 +443,97 @@ function mapWeatherCode(code: number): string {
     96: 'Thunderstorm with light hail', 99: 'Thunderstorm with heavy hail'
   };
   return weatherCodes[code] || 'Unknown';
+}
+
+async function getEvacuationPlan(lat: number, lng: number, disasterType: string) {
+  try {
+    // Get weather data
+    const weatherData = await getWeather(lat, lng);
+    
+    // Get nearby shelters and safe zones
+    const facilitiesData = await getNearby(lat, lng, 10000); // 10km radius
+    
+    // Get risk assessment
+    const riskData = await getRisk(lat, lng);
+
+    const shelters = facilitiesData.facilities?.filter((f: any) => f.type === 'shelter') || [];
+    const hospitals = facilitiesData.facilities?.filter((f: any) => f.type === 'hospital').slice(0, 3) || [];
+
+    // Disaster-specific evacuation guidance
+    const disasterGuidance: { [key: string]: any } = {
+      earthquake: {
+        immediate: ['Drop, Cover, and Hold On', 'Stay away from windows and heavy objects', 'If outdoors, move to open area away from buildings'],
+        evacuation: ['Wait for shaking to stop before evacuating', 'Use stairs, never elevators', 'Watch for aftershocks'],
+        safety: ['Check for gas leaks before using electricity', 'Stay away from damaged buildings'],
+        routes: 'Avoid bridges, overpasses, and areas with tall buildings'
+      },
+      flood: {
+        immediate: ['Move to higher ground immediately', 'Avoid walking/driving through flood water', 'Turn off electricity at main breaker'],
+        evacuation: ['Head to highest floor or rooftop if trapped', 'Follow designated evacuation routes', 'Never drive through flooded roads'],
+        safety: ['Stay away from power lines and electrical wires', 'Avoid river banks and low-lying areas'],
+        routes: 'Use elevated roads and bridges, avoid low-lying areas and water crossings'
+      },
+      cyclone: {
+        immediate: ['Stay indoors away from windows', 'Secure loose objects outside', 'Keep emergency supplies ready'],
+        evacuation: ['Follow official evacuation orders', 'Move to designated cyclone shelters', 'Secure your home before leaving'],
+        safety: ['Stay away from coastal areas', 'Avoid flooded roads and fallen power lines'],
+        routes: 'Move inland away from coast, use designated cyclone evacuation routes'
+      },
+      fire: {
+        immediate: ['Alert others and call 101 (fire emergency)', 'Stay low to avoid smoke', 'Feel doors before opening'],
+        evacuation: ['Leave immediately, do not collect belongings', 'Close doors behind you to slow fire spread', 'Never use elevators'],
+        safety: ['If clothes catch fire: Stop, Drop, and Roll', 'Never go back inside a burning building'],
+        routes: 'Move perpendicular to wind direction, avoid dense smoke areas'
+      },
+      landslide: {
+        immediate: ['Move away from the landslide path', 'Alert neighbors of danger', 'Listen for unusual sounds (trees cracking, boulders knocking)'],
+        evacuation: ['Move to higher ground perpendicular to landslide', 'Avoid river valleys and low areas', 'Stay alert for flooding'],
+        safety: ['Watch for changes in water level in streams', 'Be aware of sudden changes in landscape'],
+        routes: 'Move to stable, elevated ground away from slopes'
+      }
+    };
+
+    const guidance = disasterGuidance[disasterType] || disasterGuidance.earthquake;
+
+    return {
+      disasterType,
+      location: { lat, lng },
+      weather: {
+        condition: weatherData.condition,
+        temperature: weatherData.temperature,
+        windSpeed: weatherData.windSpeed,
+        rainfall: weatherData.rainfall
+      },
+      riskLevel: riskData.riskLevel,
+      immediateActions: guidance.immediate,
+      evacuationSteps: guidance.evacuation,
+      safetyTips: guidance.safety,
+      routeGuidance: guidance.routes,
+      nearestShelters: shelters.slice(0, 5),
+      nearestHospitals: hospitals,
+      essentialItems: [
+        'Government ID and important documents (in waterproof bag)',
+        'Water (1 gallon per person per day for 3 days)',
+        'Non-perishable food for 3 days',
+        'First aid kit and prescription medications',
+        'Mobile phone with charger and power bank',
+        'Flashlight with extra batteries',
+        'Cash and credit cards',
+        'Emergency contact list',
+        'Whistle for signaling help',
+        'Dust masks or cloth for air filtration'
+      ],
+      emergencyContacts: {
+        nationalEmergency: '112',
+        ambulance: '102/108',
+        fire: '101',
+        police: '100',
+        disasterManagement: '1078',
+        womenHelpline: '1091'
+      }
+    };
+  } catch (error) {
+    console.error('Evacuation planning error:', error);
+    return { error: 'Unable to generate evacuation plan' };
+  }
 }
