@@ -141,16 +141,21 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`fixed left-4 top-4 bottom-4 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden rounded-2xl border border-primary/10 shadow-2xl bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-xl ${
+      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-border/20 shadow-xl bg-background/95 backdrop-blur-xl ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
-      {/* Gradient Overlay for Visual Depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+      {/* Gradient mesh background */}
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary))_0%,transparent_50%)]" />
+        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_100%,hsl(var(--accent))_0%,transparent_50%)]" />
+      </div>
       
-      {/* Animated Glow Effect */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1s' }} />
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+        backgroundSize: '20px 20px'
+      }} />
       
       {/* Content */}
       <div className="flex flex-col h-full relative z-10">
