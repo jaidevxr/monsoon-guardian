@@ -578,3 +578,52 @@ const toRad = (value: number): number => {
 };
 
 // Fallback disaster data removed - only showing real data from APIs
+
+// Predict disasters using AI analysis of real data
+export const predictDisastersWithAI = async (location: Location): Promise<DisasterEvent[]> => {
+  try {
+    console.log('🤖 Predicting disasters using AI for:', location);
+    
+    const { data, error } = await supabase.functions.invoke('predict-disasters', {
+      body: { latitude: location.lat, longitude: location.lng }
+    });
+
+    if (error) {
+      console.error('❌ Prediction error:', error);
+      return [];
+    }
+
+    if (!data?.predictions) {
+      console.warn('⚠️ No predictions returned');
+      return [];
+    }
+
+    console.log(`✅ Received ${data.predictions.length} AI predictions`);
+
+    // Convert AI predictions to DisasterEvent format
+    return data.predictions.map((pred: any, index: number) => ({
+      id: `ai-pred-${Date.now()}-${index}`,
+      title: `AI Predicted ${pred.type.charAt(0).toUpperCase() + pred.type.slice(1)}`,
+      location: {
+        lat: location.lat,
+        lng: location.lng,
+        name: pred.affected_area
+      },
+      severity: pred.severity,
+      timestamp: new Date(Date.now() + pred.timeframe_days * 24 * 60 * 60 * 1000).toISOString(),
+      lat: location.lat,
+      lng: location.lng,
+      type: pred.type,
+      description: `${pred.reasoning}\n\nProbability: ${(pred.probability * 100).toFixed(0)}%\nConfidence: ${(pred.confidence * 100).toFixed(0)}%\nExpected in: ${pred.timeframe_days} days`,
+      source: 'AI Prediction',
+      affectedPopulation: 0,
+      isPrediction: true,
+      probability: pred.probability,
+      confidence: pred.confidence,
+      timeframeDays: pred.timeframe_days
+    }));
+  } catch (error) {
+    console.error('❌ Error predicting disasters:', error);
+    return [];
+  }
+};

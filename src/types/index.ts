@@ -6,14 +6,23 @@ export interface Location {
 
 export interface DisasterEvent {
   id: string;
-  type: 'earthquake' | 'flood' | 'cyclone' | 'fire' | 'landslide';
-  severity: 'low' | 'medium' | 'high';
+  type: 'earthquake' | 'flood' | 'cyclone' | 'fire' | 'landslide' | 'wildfire' | 'drought' | 'tsunami';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   magnitude?: number;
   location: Location;
-  time: string;
+  time?: string;
+  timestamp?: string;
   title: string;
   description: string;
   url?: string;
+  lat?: number;
+  lng?: number;
+  source?: string;
+  affectedPopulation?: number;
+  isPrediction?: boolean;
+  probability?: number;
+  confidence?: number;
+  timeframeDays?: number;
 }
 
 export interface WeatherData {

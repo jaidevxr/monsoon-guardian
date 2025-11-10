@@ -21,6 +21,7 @@ import {
   fetchEmergencyFacilities, 
   fetchWeatherData,
   getCurrentLocation,
+  predictDisastersWithAI,
 } from '@/utils/api';
 
 const Dashboard: React.FC = () => {
@@ -29,10 +30,12 @@ const Dashboard: React.FC = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [mapCenter, setMapCenter] = useState<Location>({ lat: 20.5937, lng: 78.9629 }); // Center of India
   const [disasters, setDisasters] = useState<DisasterEvent[]>([]);
+  const [predictions, setPredictions] = useState<DisasterEvent[]>([]);
   const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState({
     disasters: false,
+    predictions: false,
     facilities: false,
     weather: false,
   });
@@ -58,6 +61,7 @@ const Dashboard: React.FC = () => {
       setMapCenter(userLocation);
       loadWeatherData(userLocation);
       loadNearbyFacilities(userLocation);
+      loadPredictions(userLocation);
     }
   }, [userLocation]);
 
@@ -95,6 +99,19 @@ const Dashboard: React.FC = () => {
       console.error('Error loading facilities:', error);
     }
     setLoading(prev => ({ ...prev, facilities: false }));
+  };
+
+  const loadPredictions = async (location: Location) => {
+    setLoading(prev => ({ ...prev, predictions: true }));
+    try {
+      const predictionData = await predictDisastersWithAI(location);
+      setPredictions(predictionData);
+      console.log(`🤖 Loaded ${predictionData.length} AI predictions`);
+    } catch (error) {
+      console.error('Error loading predictions:', error);
+      setPredictions([]);
+    }
+    setLoading(prev => ({ ...prev, predictions: false }));
   };
 
   const handleLocationUpdate = useCallback((location: Location) => {
@@ -147,9 +164,9 @@ const Dashboard: React.FC = () => {
         return (
           <div className="h-full overflow-y-auto p-6">
             <DisasterList 
-              disasters={disasters} 
+              disasters={[...disasters, ...predictions]} 
               onDisasterClick={handleDisasterClick}
-              loading={loading.disasters}
+              loading={loading.disasters || loading.predictions}
               userLocation={userLocation}
             />
           </div>
