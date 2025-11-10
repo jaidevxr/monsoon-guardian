@@ -399,12 +399,18 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`
             );
             
-            let temp = 25; // default
+            let temp = null; // No default, only real data
             if (weatherResponse.ok) {
               const weatherData = await weatherResponse.json();
-              temp = weatherData.current?.temperature_2m || 25;
-            } else {
-              console.warn(`Weather API error for ${lat},${lng}:`, weatherResponse.status);
+              if (weatherData.current?.temperature_2m) {
+                temp = weatherData.current.temperature_2m;
+              }
+            }
+            
+            // Skip if no valid temperature data
+            if (temp === null) {
+              await new Promise(resolve => setTimeout(resolve, 300));
+              continue;
             }
             
             // Small delay
@@ -415,17 +421,18 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               `https://api.waqi.info/feed/geo:${lat};${lng}/?token=d148749b9e7bc2b5013c0c4cb1b3c9942197fa95`
             );
             
-            let aqi = 50; // default
+            let aqi = null; // No default, only real data
             if (aqiResponse.ok) {
               const aqiData = await aqiResponse.json();
-              if (aqiData.status === 'ok' && aqiData.data) {
-                aqi = aqiData.data.aqi || 50;
+              if (aqiData.status === 'ok' && aqiData.data && aqiData.data.aqi) {
+                aqi = aqiData.data.aqi;
               }
-            } else {
-              console.warn(`AQI API error for ${lat},${lng}:`, aqiResponse.status);
             }
             
-            dataMap.set(`${lat},${lng}`, { temp, aqi });
+            // Only store data if we have valid AQI
+            if (aqi !== null) {
+              dataMap.set(`${lat},${lng}`, { temp, aqi });
+            }
             loadedCount++;
             setLoadingProgress({ current: loadedCount, total: totalCities });
             console.log(`Loaded ${loadedCount}/${totalCities}: ${lat},${lng} - temp=${temp}, aqi=${aqi}`);
