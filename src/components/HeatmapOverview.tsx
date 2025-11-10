@@ -50,8 +50,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     const map = L.map(mapRef.current).setView([20.5937, 78.9629], 5);
     mapInstanceRef.current = map;
 
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
+    const tileLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+      attribution: '© CartoDB © OpenStreetMap',
       maxZoom: 18,
     }).addTo(map);
     tileLayerRef.current = tileLayer;
@@ -88,8 +88,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
       attribution = '© OpenTopoMap';
     } else {
-      tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-      attribution = '© OpenStreetMap';
+      tileUrl = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png';
+      attribution = '© CartoDB © OpenStreetMap';
     }
 
     const newTileLayer = L.tileLayer(tileUrl, {
@@ -618,9 +618,9 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Mode Selector & Reset */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
-        <div className="glass backdrop-blur-md rounded-xl shadow-lg border border-border/20">
+        <div className="glass rounded-xl shadow-lg border border-border/30">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-            <TabsList className="glass bg-background/50">
+            <TabsList className="bg-card/80">
               <TabsTrigger value="disaster" className="gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Risk</span>
@@ -643,7 +643,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               setSelectedState(null);
               mapInstanceRef.current?.setView([20.5937, 78.9629], 5);
             }}
-            className="glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 px-3 py-2 text-xs font-medium hover:bg-background/80 transition-colors"
+            className="glass rounded-xl shadow-lg border border-border/30 px-3 py-2 text-xs font-medium hover:bg-primary/10 transition-colors"
           >
             Show All India
           </button>
@@ -651,7 +651,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {/* Map Layer Controls */}
-      <div className="absolute top-4 left-4 glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 p-3 z-[1000]">
+      <div className="absolute top-4 left-4 glass rounded-xl shadow-lg border border-border/30 p-3 z-[1000]">
         <h3 className="text-xs font-semibold mb-2">Map Style</h3>
         <div className="flex flex-col gap-2">
           <button
@@ -688,7 +688,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {/* Heatmap Controls */}
-      <div className="absolute top-4 right-4 glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 p-3 z-[1000] min-w-[180px]">
+      <div className="absolute top-4 right-4 glass rounded-xl shadow-lg border border-border/30 p-3 z-[1000] min-w-[180px]">
         <h3 className="text-xs font-semibold mb-3">Heatmap Settings</h3>
         <div className="space-y-3">
           <div>
@@ -723,7 +723,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {loading && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass backdrop-blur-md p-4 rounded-xl border border-border/20 z-[1000] min-w-[200px]">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass p-4 rounded-xl border border-border/30 z-[1000] min-w-[200px]">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 justify-center">
               <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -748,7 +748,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Risk Legend */}
       {overlayMode === 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
+        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg border border-border/30 z-[1000] max-w-[180px]">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold">Risk Level</h3>
             <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
@@ -796,7 +796,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
+        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg border border-border/30 z-[1000] max-w-[180px]">
           <h3 className="text-xs font-semibold mb-2">
             {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
           </h3>

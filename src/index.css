@@ -9,13 +9,13 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Nature/Green theme - Fresh and earthy */
-    --background: 140 30% 96%;
+    --background: 140 35% 92%;
     --foreground: 145 70% 15%;
 
-    --card: 138 40% 98% / 0.95;
+    --card: 138 45% 94%;
     --card-foreground: 145 70% 15%;
 
-    --popover: 140 35% 97%;
+    --popover: 140 40% 95%;
     --popover-foreground: 145 70% 15%;
 
     /* Primary - Forest Green */
@@ -55,8 +55,8 @@ All colors MUST be HSL.
     /* Nature-inspired Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 71% 45%));
     --gradient-secondary: linear-gradient(135deg, hsl(120 35% 75%), hsl(160 60% 45%));
-    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36% / 0.1), hsl(160 60% 45% / 0.1));
-    --gradient-card: linear-gradient(135deg, hsl(138 40% 98% / 0.95), hsl(140 35% 97% / 0.95));
+    --gradient-hero: linear-gradient(135deg, hsl(140 35% 92%), hsl(142 40% 88%));
+    --gradient-card: linear-gradient(135deg, hsl(138 45% 94%), hsl(140 40% 90%));
     
     /* Shadows with green tint */
     --shadow-glow: 0 8px 32px -8px hsl(142 76% 36% / 0.3);
@@ -65,7 +65,7 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    --sidebar-background: 140 35% 97%;
+    --sidebar-background: 140 40% 90%;
 
     --sidebar-foreground: 145 60% 20%;
 
@@ -155,14 +155,14 @@ All colors MUST be HSL.
     @apply font-bold;
   }
 
-  /* Enhanced Glassmorphism */
+  /* Solid nature-themed cards */
   .glass {
-    @apply backdrop-blur-xl bg-card/90 border border-border/30 rounded-2xl;
+    @apply bg-card border border-border/50 rounded-xl;
     box-shadow: var(--shadow-card);
   }
 
   .glass-strong {
-    @apply backdrop-blur-2xl bg-card border border-border/40 rounded-2xl;
+    @apply bg-card border border-border/60 rounded-xl;
     box-shadow: var(--shadow-elevated);
   }
   
@@ -214,11 +214,12 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-glow);
   }
 
-  /* Map styles */
+  /* Map styles with rounded corners */
   .leaflet-container {
     height: 100%;
     width: 100%;
-    @apply rounded-2xl;
+    @apply rounded-xl;
+    background: hsl(var(--background));
   }
 
   /* Animations */

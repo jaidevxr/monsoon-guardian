@@ -56,11 +56,11 @@ const AnimatedBackground: React.FC = () => {
       timeRef.current += 0.01;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Soft gradient background (nature colors)
+      // Nature-themed gradient background
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, 'rgba(145, 200, 150, 0.08)'); // soft green
-      gradient.addColorStop(0.5, 'rgba(100, 180, 140, 0.05)');
-      gradient.addColorStop(1, 'rgba(80, 160, 120, 0.1)');
+      gradient.addColorStop(0, 'rgba(180, 220, 170, 0.15)'); // lighter green top
+      gradient.addColorStop(0.5, 'rgba(140, 200, 150, 0.12)'); // mid green
+      gradient.addColorStop(1, 'rgba(120, 180, 140, 0.18)'); // deeper green bottom
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -79,16 +79,16 @@ const AnimatedBackground: React.FC = () => {
         
         ctx.quadraticCurveTo(controlX, controlY, endX, endY);
         
-        // Gradient for grass blade (darker at base, lighter at tip)
+        // Gradient for grass blade (more vibrant green)
         const bladeGradient = ctx.createLinearGradient(
           blade.x,
           blade.baseY,
           endX,
           endY
         );
-        bladeGradient.addColorStop(0, 'rgba(60, 130, 80, 0.4)');
-        bladeGradient.addColorStop(0.5, 'rgba(80, 160, 100, 0.35)');
-        bladeGradient.addColorStop(1, 'rgba(100, 180, 120, 0.25)');
+        bladeGradient.addColorStop(0, 'rgba(50, 120, 70, 0.6)');
+        bladeGradient.addColorStop(0.5, 'rgba(70, 150, 90, 0.5)');
+        bladeGradient.addColorStop(1, 'rgba(90, 180, 110, 0.4)');
         
         ctx.strokeStyle = bladeGradient;
         ctx.lineWidth = blade.width;
