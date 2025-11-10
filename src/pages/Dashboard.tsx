@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
-import DashboardNavbar from '@/components/DashboardNavbar';
+import DynamicIsland from '@/components/DynamicIsland';
 import WeatherWidget from '@/components/WeatherWidget';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import DisasterList from '@/components/DisasterList';
@@ -181,6 +181,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <AnimatedBackground />
+      <DynamicIsland userLocation={userLocation} />
       <div className="relative z-10 h-screen flex">
         <DashboardSidebar
           activeTab={activeTab}
