@@ -230,7 +230,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   <TooltipTrigger asChild>
                     {buttonContent}
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-popover/95 backdrop-blur-xl border-border/50">
+                  <TooltipContent side="right" align="center" sideOffset={8} className="bg-popover/95 backdrop-blur-xl border-border/50">
                     <div className="flex flex-col gap-1">
                       <p className="font-semibold text-sm">{item.label}</p>
                       <p className="text-xs text-muted-foreground">{item.description}</p>
