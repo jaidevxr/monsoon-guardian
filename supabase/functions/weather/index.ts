@@ -22,15 +22,22 @@ serve(async (req) => {
 
     console.log(`Fetching weather for: ${lat}, ${lng}`);
 
-    // Fetch current weather + forecast (One Call API 3.0)
-    const oneCallUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lng}&exclude=minutely&units=metric&appid=${OPENWEATHER_API_KEY}`;
-    const oneCallResponse = await fetch(oneCallUrl);
+    // Fetch current weather (Free tier - API 2.5)
+    const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&appid=${OPENWEATHER_API_KEY}`;
+    const currentWeatherResponse = await fetch(currentWeatherUrl);
     
-    if (!oneCallResponse.ok) {
-      throw new Error(`OpenWeather API error: ${oneCallResponse.statusText}`);
+    if (!currentWeatherResponse.ok) {
+      const errorText = await currentWeatherResponse.text();
+      console.error('OpenWeather API error:', errorText);
+      throw new Error(`OpenWeather API error: ${currentWeatherResponse.statusText}`);
     }
     
-    const oneCallData = await oneCallResponse.json();
+    const currentWeatherData = await currentWeatherResponse.json();
+
+    // Fetch 5-day forecast (Free tier - API 2.5)
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&units=metric&appid=${OPENWEATHER_API_KEY}`;
+    const forecastResponse = await fetch(forecastUrl);
+    const forecastData = await forecastResponse.json();
 
     // Fetch air quality
     const airQualityUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${OPENWEATHER_API_KEY}`;
@@ -38,23 +45,22 @@ serve(async (req) => {
     const airQualityData = await airQualityResponse.json();
 
     // Process current weather
-    const current = oneCallData.current;
     const weatherData = {
-      temperature: Math.round(current.temp),
-      feelsLike: Math.round(current.feels_like),
-      humidity: current.humidity,
-      pressure: current.pressure,
-      windSpeed: Math.round(current.wind_speed * 3.6), // Convert m/s to km/h
-      windDirection: current.wind_deg,
-      visibility: Math.round(current.visibility / 1000), // Convert to km
-      uvIndex: current.uvi,
-      clouds: current.clouds,
-      sunrise: current.sunrise,
-      sunset: current.sunset,
-      condition: current.weather[0].main,
-      description: current.weather[0].description,
-      icon: current.weather[0].icon,
-      isDay: current.weather[0].icon.includes('d') ? 1 : 0,
+      temperature: Math.round(currentWeatherData.main.temp),
+      feelsLike: Math.round(currentWeatherData.main.feels_like),
+      humidity: currentWeatherData.main.humidity,
+      pressure: currentWeatherData.main.pressure,
+      windSpeed: Math.round(currentWeatherData.wind.speed * 3.6), // Convert m/s to km/h
+      windDirection: currentWeatherData.wind.deg,
+      visibility: Math.round(currentWeatherData.visibility / 1000), // Convert to km
+      uvIndex: 0, // Will be updated from air quality or separate call
+      clouds: currentWeatherData.clouds.all,
+      sunrise: currentWeatherData.sys.sunrise,
+      sunset: currentWeatherData.sys.sunset,
+      condition: currentWeatherData.weather[0].main,
+      description: currentWeatherData.weather[0].description,
+      icon: currentWeatherData.weather[0].icon,
+      isDay: currentWeatherData.weather[0].icon.includes('d') ? 1 : 0,
     };
 
     // Process air quality
@@ -69,50 +75,62 @@ serve(async (req) => {
       o3: airQuality?.components?.o3 || 0,
     };
 
-    // Process hourly forecast (next 24 hours)
-    const hourlyForecast = oneCallData.hourly.slice(0, 24).map((hour: any) => ({
+    // Process hourly forecast (next 24 hours from 5-day/3-hour forecast)
+    const hourlyForecast = forecastData.list.slice(0, 8).map((hour: any) => ({
       time: hour.dt,
-      temperature: Math.round(hour.temp),
-      feelsLike: Math.round(hour.feels_like),
+      temperature: Math.round(hour.main.temp),
+      feelsLike: Math.round(hour.main.feels_like),
       precipitation: Math.round((hour.pop || 0) * 100), // Probability of precipitation
-      rain: hour.rain?.['1h'] || 0,
-      humidity: hour.humidity,
-      windSpeed: Math.round(hour.wind_speed * 3.6),
+      rain: hour.rain?.['3h'] || 0,
+      humidity: hour.main.humidity,
+      windSpeed: Math.round(hour.wind.speed * 3.6),
       condition: hour.weather[0].main,
       description: hour.weather[0].description,
       icon: hour.weather[0].icon,
     }));
 
-    // Process daily forecast (next 7 days)
-    const dailyForecast = oneCallData.daily.slice(0, 7).map((day: any) => ({
-      date: day.dt,
+    // Process daily forecast (group 3-hour forecasts into daily)
+    const dailyMap = new Map();
+    forecastData.list.forEach((item: any) => {
+      const date = new Date(item.dt * 1000).toDateString();
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, {
+          temps: [],
+          conditions: [],
+          precipitation: [],
+          humidity: [],
+          windSpeed: [],
+          item: item
+        });
+      }
+      const day = dailyMap.get(date);
+      day.temps.push(item.main.temp);
+      day.conditions.push(item.weather[0]);
+      day.precipitation.push(item.pop || 0);
+      day.humidity.push(item.main.humidity);
+      day.windSpeed.push(item.wind.speed);
+    });
+
+    const dailyForecast = Array.from(dailyMap.values()).slice(0, 5).map((day: any) => ({
+      date: day.item.dt,
       temperature: {
-        min: Math.round(day.temp.min),
-        max: Math.round(day.temp.max),
+        min: Math.round(Math.min(...day.temps)),
+        max: Math.round(Math.max(...day.temps)),
       },
-      precipitation: Math.round((day.pop || 0) * 100),
-      rain: day.rain || 0,
-      humidity: day.humidity,
-      windSpeed: Math.round(day.wind_speed * 3.6),
-      condition: day.weather[0].main,
-      description: day.weather[0].description,
-      icon: day.weather[0].icon,
-      sunrise: day.sunrise,
-      sunset: day.sunset,
-      uvIndex: day.uvi,
+      precipitation: Math.round(Math.max(...day.precipitation) * 100),
+      rain: day.item.rain?.['3h'] || 0,
+      humidity: Math.round(day.humidity.reduce((a: number, b: number) => a + b, 0) / day.humidity.length),
+      windSpeed: Math.round((day.windSpeed.reduce((a: number, b: number) => a + b, 0) / day.windSpeed.length) * 3.6),
+      condition: day.conditions[0].main,
+      description: day.conditions[0].description,
+      icon: day.conditions[0].icon,
+      sunrise: currentWeatherData.sys.sunrise,
+      sunset: currentWeatherData.sys.sunset,
+      uvIndex: 0,
     }));
 
-    // Process alerts
-    const alerts = (oneCallData.alerts || []).map((alert: any) => ({
-      id: `alert-${alert.start}`,
-      title: alert.event,
-      description: alert.description,
-      severity: alert.tags?.includes('Extreme') ? 'extreme' : 
-                alert.tags?.includes('Severe') ? 'severe' : 
-                alert.tags?.includes('Moderate') ? 'moderate' : 'minor',
-      start: new Date(alert.start * 1000).toISOString(),
-      end: new Date(alert.end * 1000).toISOString(),
-    }));
+    // Alerts are not available in free tier, return empty array
+    const alerts: any[] = [];
 
     console.log(`Weather data fetched successfully`);
 
