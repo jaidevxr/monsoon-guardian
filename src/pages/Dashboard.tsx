@@ -43,6 +43,16 @@ const Dashboard: React.FC = () => {
     loadDisasterData();
   }, []);
 
+  // Listen for tab change events from Dynamic Island
+  useEffect(() => {
+    const handleTabChange = (event: CustomEvent) => {
+      setActiveTab(event.detail);
+    };
+
+    window.addEventListener('changeTab', handleTabChange as EventListener);
+    return () => window.removeEventListener('changeTab', handleTabChange as EventListener);
+  }, []);
+
   // Update data when user location changes
   useEffect(() => {
     if (userLocation) {

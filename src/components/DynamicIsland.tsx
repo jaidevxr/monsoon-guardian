@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, MapPin, Cloud, CloudRain, CloudSnow, Wind, CloudMoon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Location } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 interface DynamicIslandProps {
   userLocation: Location | null;
@@ -15,6 +16,7 @@ interface WeatherData {
 }
 
 const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
+  const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -118,6 +120,12 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
 
   const toggleTheme = () => setIsDark(!isDark);
 
+  const handleWeatherClick = () => {
+    navigate('/?tab=weather');
+    // Trigger tab change event
+    window.dispatchEvent(new CustomEvent('changeTab', { detail: 'weather' }));
+  };
+
   return (
     <div 
       className="fixed top-4 left-1/2 -translate-x-1/2 z-[1001]"
@@ -158,12 +166,14 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
             `}
           />
 
-          {/* Location Info */}
+          {/* Location Info - Clickable to go to weather */}
           <div 
+            onClick={handleWeatherClick}
             className={`
               flex items-center gap-3 text-sm overflow-hidden whitespace-nowrap
               transition-all duration-300 ease-in-out
               will-change-[max-width,opacity]
+              cursor-pointer hover:opacity-80
               ${isExpanded ? 'max-w-[600px] opacity-100' : 'max-w-0 opacity-0'}
             `}
           >
@@ -194,20 +204,17 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
             )}
           </div>
 
-          {/* Compact Location Indicator */}
+          {/* Compact Location Indicator - Clickable */}
           <div 
+            onClick={handleWeatherClick}
             className={`
               flex items-center gap-1.5 whitespace-nowrap
               transition-all duration-300 ease-in-out
               will-change-[max-width,opacity]
+              cursor-pointer hover:opacity-80
               ${isExpanded ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}
             `}
           >
-            {weather && cityName !== 'Detecting...' && (
-              <div className="flex items-center gap-1">
-                {getWeatherIcon(weather.weatherCode, weather.isDay)}
-              </div>
-            )}
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-medium text-foreground truncate">
               {cityName}
