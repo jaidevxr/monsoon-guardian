@@ -625,26 +625,26 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Mode Selector & Reset */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
-        <div className="glass-strong rounded-xl shadow-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5 backdrop-blur-xl">
+        <div className="glass-strong rounded-xl shadow-lg border border-accent/30 backdrop-blur-xl">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-            <TabsList className="bg-card/40 backdrop-blur-xl rounded-lg border border-border/30 p-1">
+            <TabsList className="bg-muted/30 backdrop-blur-xl rounded-lg border border-border/20 p-1">
               <TabsTrigger 
                 value="disaster" 
-                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow hover:bg-card/70"
+                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-glow hover:bg-muted/50"
               >
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Risk</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="temperature" 
-                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow hover:bg-card/70"
+                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-glow hover:bg-muted/50"
               >
                 <Cloud className="h-4 w-4" />
                 <span className="hidden sm:inline">Temp</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="pollution" 
-                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow hover:bg-card/70"
+                className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-glow hover:bg-muted/50"
               >
                 <Droplets className="h-4 w-4" />
                 <span className="hidden sm:inline">AQI</span>
@@ -659,7 +659,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               setSelectedState(null);
               mapInstanceRef.current?.setView([20.5937, 78.9629], 5);
             }}
-            className="glass-strong rounded-xl shadow-elevated border border-primary/20 px-4 py-2 text-xs font-semibold hover:bg-primary/20 hover:border-primary/40 transition-all duration-300 backdrop-blur-xl"
+            className="glass-strong rounded-xl shadow-elevated border border-accent/30 px-4 py-2 text-xs font-semibold hover:bg-accent/20 hover:border-accent/50 transition-all duration-300 backdrop-blur-xl"
           >
             Show All India
           </button>
@@ -667,35 +667,35 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {/* Map Layer Controls */}
-      <div className="absolute top-4 left-4 glass-strong rounded-xl shadow-elevated border border-primary/20 p-3 z-[1000] backdrop-blur-xl">
+      <div className="absolute top-4 left-4 glass-strong rounded-xl shadow-elevated border border-accent/30 p-3 z-[1000] backdrop-blur-xl">
         <h3 className="text-xs font-semibold mb-2 text-foreground">Map Style</h3>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setMapLayer('default')}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 ${
+            className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
               mapLayer === 'default' 
-                ? 'bg-primary text-primary-foreground shadow-glow font-semibold' 
-                : 'bg-card/60 hover:bg-card/80 text-foreground hover:shadow-md backdrop-blur-sm'
+                ? 'bg-accent text-accent-foreground shadow-glow' 
+                : 'bg-muted/60 hover:bg-muted text-foreground hover:shadow-md'
             }`}
           >
             Default
           </button>
           <button
             onClick={() => setMapLayer('satellite')}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 ${
+            className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
               mapLayer === 'satellite' 
-                ? 'bg-primary text-primary-foreground shadow-glow font-semibold' 
-                : 'bg-card/60 hover:bg-card/80 text-foreground hover:shadow-md backdrop-blur-sm'
+                ? 'bg-accent text-accent-foreground shadow-glow' 
+                : 'bg-muted/60 hover:bg-muted text-foreground hover:shadow-md'
             }`}
           >
             Satellite
           </button>
           <button
             onClick={() => setMapLayer('terrain')}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 ${
+            className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
               mapLayer === 'terrain' 
-                ? 'bg-primary text-primary-foreground shadow-glow font-semibold' 
-                : 'bg-card/60 hover:bg-card/80 text-foreground hover:shadow-md backdrop-blur-sm'
+                ? 'bg-accent text-accent-foreground shadow-glow' 
+                : 'bg-muted/60 hover:bg-muted text-foreground hover:shadow-md'
             }`}
           >
             Terrain
@@ -704,9 +704,9 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {/* Heatmap Controls */}
-      <div className="absolute top-4 right-4 glass-strong rounded-xl shadow-elevated border border-primary/20 p-4 z-[1000] min-w-[200px] backdrop-blur-xl">
+      <div className="absolute top-4 right-4 glass-strong rounded-xl shadow-elevated border border-accent/30 p-4 z-[1000] min-w-[200px] backdrop-blur-xl">
         <h3 className="text-xs font-semibold mb-3 text-foreground flex items-center gap-2">
-          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
           Heatmap Settings
@@ -715,7 +715,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           <div>
             <label className="text-xs text-muted-foreground flex justify-between mb-2">
               <span className="font-medium">Radius</span>
-              <span className="text-foreground font-semibold">{heatmapRadius}px</span>
+              <span className="text-accent font-semibold">{heatmapRadius}px</span>
             </label>
             <input
               type="range"
@@ -729,7 +729,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
           <div>
             <label className="text-xs text-muted-foreground flex justify-between mb-2">
               <span className="font-medium">Blur</span>
-              <span className="text-foreground font-semibold">{heatmapBlur}px</span>
+              <span className="text-accent font-semibold">{heatmapBlur}px</span>
             </label>
             <input
               type="range"
@@ -744,10 +744,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {loading && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass-strong p-4 rounded-xl border border-primary/20 z-[1000] min-w-[240px] backdrop-blur-xl">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass-strong p-4 rounded-xl border border-accent/30 z-[1000] min-w-[240px] backdrop-blur-xl">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 justify-center">
-              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+              <div className="animate-spin h-4 w-4 border-2 border-accent border-t-transparent rounded-full"></div>
               <span className="text-sm font-semibold">Loading data...</span>
             </div>
             {loadingProgress.total > 0 && (
@@ -757,7 +757,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
                 </div>
                 <div className="w-full bg-muted/50 rounded-full h-2.5 overflow-hidden border border-border/30">
                   <div 
-                    className="bg-gradient-to-r from-primary to-primary-glow h-full transition-all duration-300 rounded-full shadow-glow"
+                    className="bg-gradient-to-r from-accent to-accent-glow h-full transition-all duration-300 rounded-full shadow-glow"
                     style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
                   ></div>
                 </div>
@@ -769,10 +769,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Risk Legend */}
       {overlayMode === 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-primary/20 z-[1000] max-w-[200px] backdrop-blur-xl">
+        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-accent/30 z-[1000] max-w-[200px] backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold">Risk Level</h3>
-            <Badge variant="outline" className="text-xs border-primary/30">{activeFilters.size}/3</Badge>
+            <Badge variant="outline" className="text-xs border-accent/40">{activeFilters.size}/3</Badge>
           </div>
           
           <div className="space-y-1.5">
@@ -820,7 +820,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-primary/20 z-[1000] max-w-[200px] backdrop-blur-xl">
+        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-accent/30 z-[1000] max-w-[200px] backdrop-blur-xl">
           <h3 className="text-xs font-semibold mb-2">
             {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
           </h3>

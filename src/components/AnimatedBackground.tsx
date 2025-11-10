@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
 interface Particle {
   id: number;
@@ -21,7 +23,27 @@ interface Leaf {
   opacity: number;
 }
 
+type BackgroundIntensity = 'off' | 'low' | 'medium' | 'high';
+
 const AnimatedBackground: React.FC = () => {
+  const [intensity, setIntensity] = useState<BackgroundIntensity>(() => {
+    const saved = localStorage.getItem('bg-intensity');
+    return (saved as BackgroundIntensity) || 'medium';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('bg-intensity', intensity);
+  }, [intensity]);
+
+  const intensityConfig = {
+    off: { particles: 0, leaves: 0, orbs: false },
+    low: { particles: 8, leaves: 12, orbs: true },
+    medium: { particles: 18, leaves: 22, orbs: true },
+    high: { particles: 30, leaves: 35, orbs: true },
+  };
+
+  const config = intensityConfig[intensity];
+
   // Generate floating particles with variety of colors
   const particles = useMemo(() => {
     const colors = [
@@ -32,7 +54,7 @@ const AnimatedBackground: React.FC = () => {
       'bg-accent-glow/20',
     ];
     
-    return Array.from({ length: 24 }, (_, i) => ({
+    return Array.from({ length: config.particles }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -41,11 +63,11 @@ const AnimatedBackground: React.FC = () => {
       delay: Math.random() * 5,
       color: colors[Math.floor(Math.random() * colors.length)],
     }));
-  }, []);
+  }, [config.particles]);
 
   // Generate floating leaves with natural motion
   const leaves = useMemo(() => {
-    return Array.from({ length: 28 }, (_, i) => ({
+    return Array.from({ length: config.leaves }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: -10 - Math.random() * 20,
@@ -55,17 +77,29 @@ const AnimatedBackground: React.FC = () => {
       rotation: Math.random() * 360,
       opacity: Math.random() * 0.3 + 0.15,
     }));
-  }, []);
+  }, [config.leaves]);
+
+  const cycleIntensity = () => {
+    const levels: BackgroundIntensity[] = ['off', 'low', 'medium', 'high'];
+    const currentIndex = levels.indexOf(intensity);
+    const nextIndex = (currentIndex + 1) % levels.length;
+    setIntensity(levels[nextIndex]);
+  };
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden gradient-hero pointer-events-none">
-      {/* Large animated gradient orbs with blur for glassmorphism effect */}
-      <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-[100px] animate-float" />
-      <div className="absolute bottom-20 right-10 w-[600px] h-[600px] bg-gradient-to-tl from-accent/15 to-primary/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-secondary/10 to-primary/5 rounded-full blur-[150px] animate-float" style={{ animationDelay: '2s' }} />
-      
-      {/* Mesh gradient overlay for depth */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(142,76,36,0.03),transparent_50%)] animate-shimmer" />
+    <>
+      <div className="fixed inset-0 -z-10 overflow-hidden gradient-hero pointer-events-none">
+        {/* Large animated gradient orbs with blur for glassmorphism effect */}
+        {config.orbs && (
+          <>
+            <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-[100px] animate-float" />
+            <div className="absolute bottom-20 right-10 w-[600px] h-[600px] bg-gradient-to-tl from-accent/15 to-primary/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-secondary/10 to-primary/5 rounded-full blur-[150px] animate-float" style={{ animationDelay: '2s' }} />
+          </>
+        )}
+        
+        {/* Mesh gradient overlay for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(142,76,36,0.03),transparent_50%)] animate-shimmer" />
       
       {/* Floating glowing particles */}
       <div className="absolute inset-0">
@@ -117,10 +151,27 @@ const AnimatedBackground: React.FC = () => {
         ))}
       </div>
 
-      {/* Subtle plant shadows */}
-      <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-foreground/5 to-transparent opacity-30 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/5 to-transparent opacity-20 pointer-events-none" />
-    </div>
+        {/* Subtle plant shadows */}
+        {config.orbs && (
+          <>
+            <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-foreground/5 to-transparent opacity-30 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/5 to-transparent opacity-20 pointer-events-none" />
+          </>
+        )}
+      </div>
+
+      {/* Background Intensity Control */}
+      <Button
+        onClick={cycleIntensity}
+        variant="outline"
+        size="sm"
+        className="fixed bottom-4 right-4 z-[9999] glass-strong backdrop-blur-xl border-accent/30 hover:border-accent/50 hover:bg-accent/10 transition-all duration-300 gap-2 pointer-events-auto shadow-elevated"
+        title="Toggle background animation intensity"
+      >
+        <Sparkles className="h-4 w-4 text-accent" />
+        <span className="text-xs font-semibold capitalize">{intensity}</span>
+      </Button>
+    </>
   );
 };
 
