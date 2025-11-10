@@ -21,7 +21,7 @@ L.Icon.Default.mergeOptions({
 
 type RiskLevel = 'low' | 'medium' | 'high';
 type OverlayMode = 'disaster' | 'temperature' | 'pollution';
-type MapLayer = 'default' | 'satellite' | 'terrain';
+type MapLayer = 'default' | 'satellite' | 'terrain' | 'streets';
 
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -87,6 +87,9 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     } else if (mapLayer === 'terrain') {
       tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
       attribution = '© OpenTopoMap';
+    } else if (mapLayer === 'streets') {
+      tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      attribution = '© OpenStreetMap contributors';
     } else {
       tileUrl = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png';
       attribution = '© CartoDB © OpenStreetMap';
@@ -681,6 +684,16 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
             Default
           </button>
           <button
+            onClick={() => setMapLayer('streets')}
+            className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
+              mapLayer === 'streets' 
+                ? 'bg-primary text-primary-foreground shadow-lg' 
+                : 'bg-card/90 hover:bg-card border border-border hover:shadow-md'
+            }`}
+          >
+            Streets (Google-like)
+          </button>
+          <button
             onClick={() => setMapLayer('satellite')}
             className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
               mapLayer === 'satellite' 
@@ -717,28 +730,42 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               <span className="font-medium">Radius</span>
               <span className="text-primary font-semibold">{heatmapRadius}px</span>
             </label>
-            <input
-              type="range"
-              min="30"
-              max="120"
-              value={heatmapRadius}
-              onChange={(e) => setHeatmapRadius(Number(e.target.value))}
-              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-            />
+            <div className="relative h-3">
+              <div className="absolute inset-0 rounded-full bg-muted" />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 left-0 h-[2px] bg-foreground rounded-full shadow-sm"
+                style={{ width: `${((heatmapRadius - 30) / (120 - 30)) * 100}%` }}
+              />
+              <input
+                type="range"
+                min="30"
+                max="120"
+                value={heatmapRadius}
+                onChange={(e) => setHeatmapRadius(Number(e.target.value))}
+                className="absolute inset-0 w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs text-foreground flex justify-between mb-2">
               <span className="font-medium">Blur</span>
               <span className="text-primary font-semibold">{heatmapBlur}px</span>
             </label>
-            <input
-              type="range"
-              min="10"
-              max="80"
-              value={heatmapBlur}
-              onChange={(e) => setHeatmapBlur(Number(e.target.value))}
-              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-            />
+            <div className="relative h-3">
+              <div className="absolute inset-0 rounded-full bg-muted" />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 left-0 h-[2px] bg-foreground rounded-full shadow-sm"
+                style={{ width: `${((heatmapBlur - 10) / (80 - 10)) * 100}%` }}
+              />
+              <input
+                type="range"
+                min="10"
+                max="80"
+                value={heatmapBlur}
+                onChange={(e) => setHeatmapBlur(Number(e.target.value))}
+                className="absolute inset-0 w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              />
+            </div>
           </div>
         </div>
       </div>
