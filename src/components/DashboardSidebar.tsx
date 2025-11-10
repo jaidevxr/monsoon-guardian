@@ -141,23 +141,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`relative glass h-full flex flex-col transition-all duration-300 ease-out overflow-hidden ${
+      className={`relative h-full flex flex-col transition-all duration-300 ease-out overflow-hidden bg-nature-sage/30 border-r border-nature-forest/20 backdrop-blur-sm ${
         isCollapsed ? 'w-20' : 'w-72'
       }`}
     >
       {/* Content */}
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="p-4 border-b border-border/20">
+        <div className="p-4 border-b border-nature-forest/20">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-                  <Shield className="h-5 w-5 text-primary" />
+                <div className="flex items-center justify-center w-10 h-10 bg-nature-forest/20 rounded-lg border border-nature-forest/30">
+                  <Shield className="h-5 w-5 text-nature-forest" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-base">Predict Aid</h2>
-                  <p className="text-xs text-muted-foreground">Dashboard</p>
+                  <h2 className="font-semibold text-base text-nature-forest">Predict Aid</h2>
+                  <p className="text-xs text-nature-moss">Dashboard</p>
                 </div>
               </div>
             )}
@@ -165,15 +165,15 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="h-9 w-9 p-0"
+              className="h-9 w-9 p-0 hover:bg-nature-forest/10"
             >
-              {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+              {isCollapsed ? <Menu className="h-5 w-5 text-nature-forest" /> : <X className="h-5 w-5 text-nature-forest" />}
             </Button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -183,18 +183,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={`
-                  group w-full rounded-lg transition-all duration-200
+                  group w-full rounded-lg transition-all duration-200 border
                   ${isCollapsed ? 'p-3' : 'p-3'}
                   ${isActive 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'hover:bg-muted text-foreground'
+                    ? 'bg-gradient-to-r from-nature-forest/30 to-nature-moss/30 border-nature-forest/40 shadow-md text-nature-forest' 
+                    : 'hover:bg-nature-sage/40 border-transparent text-foreground hover:border-nature-forest/20'
                   }
                 `}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-nature-forest' : ''}`} />
                   {!isCollapsed && (
-                    <span className="font-medium text-sm">{item.label}</span>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-sm">{item.label}</span>
+                      {isActive && (
+                        <span className="text-xs text-nature-moss">{item.description}</span>
+                      )}
+                    </div>
                   )}
                 </div>
               </button>
@@ -204,10 +209,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-border/20">
+          <div className="p-4 border-t border-nature-forest/20 bg-nature-sage/20">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Status</span>
-              <Badge variant="outline" className="text-success border-success/30">
+              <span className="text-nature-moss">Status</span>
+              <Badge variant="outline" className="text-nature-forest border-nature-forest/40 bg-nature-sage/30">
                 <Activity className="h-3 w-3 mr-1" />
                 Active
               </Badge>
