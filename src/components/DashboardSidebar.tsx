@@ -161,10 +161,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       
       {/* Content */}
       <div className="flex flex-col h-full relative z-10">
-        {/* Dynamic Island Logo Header */}
+        {/* Dynamic Island Logo Header - Always Visible */}
         <div className="p-4">
-          {!isCollapsed ? (
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-3 border border-white/[0.08] shadow-lg">
+          <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-3 border border-white/[0.08] shadow-lg">
+            {!isCollapsed ? (
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20">
                   <Shield className="h-5 w-5 text-primary" />
@@ -174,18 +174,22 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   <p className="text-[9px] text-muted-foreground/80">Dashboard</p>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20">
-                <Shield className="h-5 w-5 text-primary" />
+            ) : (
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/20">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[9px] font-semibold text-foreground leading-tight">Predict</p>
+                  <p className="text-[8px] text-muted-foreground/80">Aid</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Toggle Button */}
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-4">
           <Button
             variant="ghost"
             size="sm"
@@ -197,7 +201,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-2 space-y-2 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 px-3 py-2 space-y-3 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -208,20 +212,24 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 onClick={() => onTabChange(item.id)}
                 className={`
                   group w-full rounded-xl transition-all duration-200 relative
-                  ${isCollapsed ? 'p-3' : 'px-3 py-3'}
+                  ${isCollapsed ? 'p-3.5' : 'px-3.5 py-3.5'}
                   ${isActive 
                     ? 'bg-white/[0.12] backdrop-blur-xl text-foreground shadow-lg border border-white/[0.08]' 
-                    : 'hover:bg-white/[0.06] border border-transparent'
+                    : 'hover:bg-white/[0.06] border border-transparent hover:border-white/[0.05]'
                   }
                 `}
               >
-                <div className="flex items-center gap-3 relative z-10">
+                <div className={`flex items-center relative z-10 ${isCollapsed ? 'flex-col gap-1.5' : 'gap-3'}`}>
                   <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-                  {!isCollapsed && (
+                  {!isCollapsed ? (
                     <div className="flex flex-col items-start gap-0.5">
                       <span className={`font-medium text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.label}</span>
                       <span className="text-[10px] text-muted-foreground/70">{item.description}</span>
                     </div>
+                  ) : (
+                    <span className={`text-[9px] font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>
+                      {item.label.split(' ')[0]}
+                    </span>
                   )}
                 </div>
               </button>
