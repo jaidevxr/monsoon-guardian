@@ -10,6 +10,17 @@ interface Particle {
   color: string;
 }
 
+interface Leaf {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  duration: number;
+  delay: number;
+  rotation: number;
+  opacity: number;
+}
+
 const AnimatedBackground: React.FC = () => {
   // Generate floating particles with variety of colors
   const particles = useMemo(() => {
@@ -29,6 +40,20 @@ const AnimatedBackground: React.FC = () => {
       duration: Math.random() * 15 + 15,
       delay: Math.random() * 5,
       color: colors[Math.floor(Math.random() * colors.length)],
+    }));
+  }, []);
+
+  // Generate floating leaves with natural motion
+  const leaves = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: -10 - Math.random() * 20,
+      size: Math.random() * 30 + 15,
+      duration: Math.random() * 20 + 15,
+      delay: Math.random() * 10,
+      rotation: Math.random() * 360,
+      opacity: Math.random() * 0.3 + 0.15,
     }));
   }, []);
 
@@ -60,6 +85,41 @@ const AnimatedBackground: React.FC = () => {
           />
         ))}
       </div>
+
+      {/* Floating leaves with natural motion */}
+      <div className="absolute inset-0 pointer-events-none">
+        {leaves.map((leaf) => (
+          <div
+            key={`leaf-${leaf.id}`}
+            className="absolute animate-leaf-fall"
+            style={{
+              left: `${leaf.x}%`,
+              top: `${leaf.y}%`,
+              animationDuration: `${leaf.duration}s`,
+              animationDelay: `${leaf.delay}s`,
+              opacity: leaf.opacity,
+            }}
+          >
+            <svg
+              width={leaf.size}
+              height={leaf.size}
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-primary/40 dark:text-primary/30"
+              style={{
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                transform: `rotate(${leaf.rotation}deg)`,
+              }}
+            >
+              <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66 1.89-6.87c1.7-6.17 5.3-6.84 9.04-6.84 2.86 0 5.76.86 7.36 2.56V8c-2-1-4-1-7-1zm3.47 8.14c-.75-.75-1.47-1.14-2.47-1.14-2.5 0-3 2-3 4 0 2 .5 4 3 4 1 0 1.72-.39 2.47-1.14V17c0-1 0-2 .75-2.75-.75-.75-.75-1.75-.75-2.75z"/>
+            </svg>
+          </div>
+        ))}
+      </div>
+
+      {/* Subtle plant shadows */}
+      <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-foreground/5 to-transparent opacity-30 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/5 to-transparent opacity-20 pointer-events-none" />
     </div>
   );
 };

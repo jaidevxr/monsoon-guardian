@@ -273,6 +273,28 @@ All colors MUST be HSL.
     }
   }
   
+  @keyframes leaf-fall {
+    0% {
+      transform: translateY(0) translateX(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(25vh) translateX(10px) rotate(90deg);
+    }
+    50% {
+      transform: translateY(50vh) translateX(-10px) rotate(180deg);
+    }
+    75% {
+      transform: translateY(75vh) translateX(5px) rotate(270deg);
+    }
+    100% {
+      transform: translateY(110vh) translateX(0) rotate(360deg);
+    }
+  }
+  
+  .animate-leaf-fall {
+    animation: leaf-fall linear infinite;
+  }
+  
   /* Custom scrollbar */
   .scrollbar-thin {
     scrollbar-width: thin;

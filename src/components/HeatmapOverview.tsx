@@ -659,7 +659,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               setSelectedState(null);
               mapInstanceRef.current?.setView([20.5937, 78.9629], 5);
             }}
-            className="glass rounded-xl shadow-lg border border-border/30 px-3 py-2 text-xs font-medium hover:bg-primary/10 transition-colors"
+            className="glass-strong rounded-xl shadow-elevated border border-primary/20 px-4 py-2 text-xs font-semibold hover:bg-primary/20 hover:border-primary/40 transition-all duration-300 backdrop-blur-xl"
           >
             Show All India
           </button>
@@ -667,35 +667,35 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {/* Map Layer Controls */}
-      <div className="absolute top-4 left-4 glass rounded-xl shadow-lg border border-border/30 p-3 z-[1000]">
-        <h3 className="text-xs font-semibold mb-2">Map Style</h3>
+      <div className="absolute top-4 left-4 glass-strong rounded-xl shadow-elevated border border-primary/20 p-3 z-[1000] backdrop-blur-xl">
+        <h3 className="text-xs font-semibold mb-2 text-foreground">Map Style</h3>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setMapLayer('default')}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 ${
               mapLayer === 'default' 
-                ? 'bg-foreground text-background' 
-                : 'bg-muted hover:bg-muted/80 text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-glow font-semibold' 
+                : 'bg-card/60 hover:bg-card/80 text-foreground hover:shadow-md backdrop-blur-sm'
             }`}
           >
             Default
           </button>
           <button
             onClick={() => setMapLayer('satellite')}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 ${
               mapLayer === 'satellite' 
-                ? 'bg-foreground text-background' 
-                : 'bg-muted hover:bg-muted/80 text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-glow font-semibold' 
+                : 'bg-card/60 hover:bg-card/80 text-foreground hover:shadow-md backdrop-blur-sm'
             }`}
           >
             Satellite
           </button>
           <button
             onClick={() => setMapLayer('terrain')}
-            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 ${
               mapLayer === 'terrain' 
-                ? 'bg-foreground text-background' 
-                : 'bg-muted hover:bg-muted/80 text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-glow font-semibold' 
+                : 'bg-card/60 hover:bg-card/80 text-foreground hover:shadow-md backdrop-blur-sm'
             }`}
           >
             Terrain
@@ -704,13 +704,18 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       </div>
 
       {/* Heatmap Controls */}
-      <div className="absolute top-4 right-4 glass rounded-xl shadow-lg border border-border/30 p-3 z-[1000] min-w-[180px]">
-        <h3 className="text-xs font-semibold mb-3">Heatmap Settings</h3>
-        <div className="space-y-3">
+      <div className="absolute top-4 right-4 glass-strong rounded-xl shadow-elevated border border-primary/20 p-4 z-[1000] min-w-[200px] backdrop-blur-xl">
+        <h3 className="text-xs font-semibold mb-3 text-foreground flex items-center gap-2">
+          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+          Heatmap Settings
+        </h3>
+        <div className="space-y-4">
           <div>
-            <label className="text-xs text-muted-foreground flex justify-between mb-1">
-              <span>Radius</span>
-              <span className="font-medium">{heatmapRadius}px</span>
+            <label className="text-xs text-muted-foreground flex justify-between mb-2">
+              <span className="font-medium">Radius</span>
+              <span className="text-foreground font-semibold">{heatmapRadius}px</span>
             </label>
             <input
               type="range"
@@ -718,13 +723,13 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               max="120"
               value={heatmapRadius}
               onChange={(e) => setHeatmapRadius(Number(e.target.value))}
-              className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+              className="w-full"
             />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground flex justify-between mb-1">
-              <span>Blur</span>
-              <span className="font-medium">{heatmapBlur}px</span>
+            <label className="text-xs text-muted-foreground flex justify-between mb-2">
+              <span className="font-medium">Blur</span>
+              <span className="text-foreground font-semibold">{heatmapBlur}px</span>
             </label>
             <input
               type="range"
@@ -732,27 +737,27 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
               max="80"
               value={heatmapBlur}
               onChange={(e) => setHeatmapBlur(Number(e.target.value))}
-              className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+              className="w-full"
             />
           </div>
         </div>
       </div>
 
       {loading && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass p-4 rounded-xl border border-border/30 z-[1000] min-w-[200px]">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 glass-strong p-4 rounded-xl border border-primary/20 z-[1000] min-w-[240px] backdrop-blur-xl">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 justify-center">
               <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-              <span className="text-sm font-medium">Loading data...</span>
+              <span className="text-sm font-semibold">Loading data...</span>
             </div>
             {loadingProgress.total > 0 && (
               <>
                 <div className="text-xs text-center text-muted-foreground">
                   Loaded {loadingProgress.current}/{loadingProgress.total} cities
                 </div>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-muted/50 rounded-full h-2.5 overflow-hidden border border-border/30">
                   <div 
-                    className="bg-primary h-full transition-all duration-300 rounded-full"
+                    className="bg-gradient-to-r from-primary to-primary-glow h-full transition-all duration-300 rounded-full shadow-glow"
                     style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
                   ></div>
                 </div>
@@ -764,47 +769,47 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Risk Legend */}
       {overlayMode === 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg border border-border/30 z-[1000] max-w-[180px]">
+        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-primary/20 z-[1000] max-w-[200px] backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold">Risk Level</h3>
-            <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
+            <Badge variant="outline" className="text-xs border-primary/30">{activeFilters.size}/3</Badge>
           </div>
           
           <div className="space-y-1.5">
             <div
               onClick={() => toggleFilter('low')}
-              className={`flex items-center gap-2 p-1.5 rounded cursor-pointer transition-all ${
+              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 ${
                 activeFilters.has('low') 
-                  ? 'bg-green-500/20' 
-                  : 'opacity-40 hover:opacity-60'
+                  ? 'bg-green-500/20 border border-green-500/40 shadow-md' 
+                  : 'opacity-40 hover:opacity-60 hover:bg-card/40'
               }`}
             >
-              <div className="w-3 h-3 rounded-full bg-green-400/50 border border-green-600"></div>
-              <span className="text-xs">Low</span>
+              <div className="w-3 h-3 rounded-full bg-green-400/60 border-2 border-green-600 shadow-sm"></div>
+              <span className="text-xs font-medium">Low</span>
             </div>
             
             <div
               onClick={() => toggleFilter('medium')}
-              className={`flex items-center gap-2 p-1.5 rounded cursor-pointer transition-all ${
+              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 ${
                 activeFilters.has('medium') 
-                  ? 'bg-yellow-500/20' 
-                  : 'opacity-40 hover:opacity-60'
+                  ? 'bg-yellow-500/20 border border-yellow-500/40 shadow-md' 
+                  : 'opacity-40 hover:opacity-60 hover:bg-card/40'
               }`}
             >
-              <div className="w-3 h-3 rounded-full bg-yellow-400/50 border border-yellow-600"></div>
-              <span className="text-xs">Medium</span>
+              <div className="w-3 h-3 rounded-full bg-yellow-400/60 border-2 border-yellow-600 shadow-sm"></div>
+              <span className="text-xs font-medium">Medium</span>
             </div>
             
             <div
               onClick={() => toggleFilter('high')}
-              className={`flex items-center gap-2 p-1.5 rounded cursor-pointer transition-all ${
+              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 ${
                 activeFilters.has('high') 
-                  ? 'bg-red-500/20' 
-                  : 'opacity-40 hover:opacity-60'
+                  ? 'bg-red-500/20 border border-red-500/40 shadow-md' 
+                  : 'opacity-40 hover:opacity-60 hover:bg-card/40'
               }`}
             >
-              <div className="w-3 h-3 rounded-full bg-red-500/50 border border-red-600"></div>
-              <span className="text-xs">High</span>
+              <div className="w-3 h-3 rounded-full bg-red-500/60 border-2 border-red-600 shadow-sm"></div>
+              <span className="text-xs font-medium">High</span>
             </div>
           </div>
         </div>
@@ -812,52 +817,52 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
-        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg border border-border/30 z-[1000] max-w-[180px]">
+        <div className="absolute bottom-4 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-primary/20 z-[1000] max-w-[200px] backdrop-blur-xl">
           <h3 className="text-xs font-semibold mb-2">
             {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
           </h3>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {overlayMode === 'temperature' ? (
               <>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-600/50 border border-blue-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-blue-600/60 border-2 border-blue-700 shadow-sm"></div>
                   <span className="text-xs">Cold (&lt;15°C)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500/50 border border-green-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-green-500/60 border-2 border-green-700 shadow-sm"></div>
                   <span className="text-xs">Mild (22-28°C)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/60 border-2 border-yellow-700 shadow-sm"></div>
                   <span className="text-xs">Warm (28-35°C)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/50 border border-red-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-red-500/60 border-2 border-red-700 shadow-sm"></div>
                   <span className="text-xs">Hot (&gt;35°C)</span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500/50 border border-green-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-green-500/60 border-2 border-green-700 shadow-sm"></div>
                   <span className="text-xs">Good (0-50)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/60 border-2 border-yellow-700 shadow-sm"></div>
                   <span className="text-xs">Moderate (50-100)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500/50 border border-orange-700"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-orange-500/60 border-2 border-orange-700 shadow-sm"></div>
                   <span className="text-xs">Unhealthy (100-150)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-600/50 border border-red-800"></div>
+                <div className="flex items-center gap-2 p-1">
+                  <div className="w-3 h-3 rounded-full bg-red-600/60 border-2 border-red-800 shadow-sm"></div>
                   <span className="text-xs">Hazardous (&gt;200)</span>
                 </div>
               </>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Click points for details</p>
+          <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border/30">Click points for details</p>
         </div>
       )}
     </div>
