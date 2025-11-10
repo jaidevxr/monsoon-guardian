@@ -7,7 +7,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { fetchWeatherDataForMultipleLocations } from '@/utils/api';
 import { Cloud, Droplets, AlertTriangle } from 'lucide-react';
-import DynamicIsland from '@/components/DynamicIsland';
 
 interface HeatmapOverviewProps {
   disasters: DisasterEvent[];
@@ -659,7 +658,6 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
         }
       `}</style>
-      <DynamicIsland userLocation={userLocation} />
       <div ref={mapRef} className="h-full w-full" />
       
       {/* Mode Selector & Reset */}
