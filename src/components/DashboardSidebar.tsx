@@ -194,18 +194,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 onClick={() => onTabChange(item.id)}
                 className={`
                   group w-full rounded-xl transition-all duration-200 relative overflow-hidden
-                  ${isCollapsed ? 'p-3' : 'p-3.5'}
+                  ${isCollapsed ? 'p-2 flex items-center justify-center' : 'p-3.5'}
                   ${isActive 
                     ? 'bg-gradient-to-r from-primary/15 to-accent/10 backdrop-blur-sm text-primary shadow-lg border border-primary/20' 
                     : 'hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent hover:border hover:border-border/30'
                   }
                 `}
               >
-                {isActive && (
+                {isActive && !isCollapsed && (
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50" />
                 )}
-                <div className="flex items-center gap-3 relative z-10">
-                  <div className={`flex items-center justify-center rounded-lg transition-all duration-200 ${isActive ? 'bg-primary/20 p-1.5' : 'p-0'}`}>
+                <div className={`flex items-center relative z-10 ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+                  <div className={`flex items-center justify-center rounded-lg transition-all duration-200 ${isActive && !isCollapsed ? 'bg-primary/20 p-1.5' : isCollapsed ? 'p-1.5' : 'p-0'} ${isActive && isCollapsed ? 'bg-primary/30' : ''}`}>
                     <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
                   </div>
                   {!isCollapsed && (
