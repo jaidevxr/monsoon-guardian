@@ -200,7 +200,11 @@ const Dashboard: React.FC = () => {
           onLocationUpdate={handleLocationUpdate}
         />
         
-        <main className="w-full h-full">
+        <main 
+          className={`w-full h-full transition-all duration-300 ${
+            sidebarCollapsed ? 'pl-24' : 'pl-72'
+          }`}
+        >
           {/* Tab Content - Full Height */}
           <div className="h-full">
             {renderTabContent()}
