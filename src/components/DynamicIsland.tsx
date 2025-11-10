@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, MapPin } from 'lucide-react';
+import { Sun, Moon, MapPin, Cloud, CloudRain, CloudSnow, Wind } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Location } from '@/types';
 
 interface DynamicIslandProps {
   userLocation: Location | null;
+}
+
+interface WeatherData {
+  temperature: number;
+  weatherCode: number;
+  description: string;
 }
 
 const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
@@ -14,6 +20,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
   });
   const [cityName, setCityName] = useState<string>('Locating...');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
 
   useEffect(() => {
     if (isDark) {
@@ -46,8 +53,46 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           console.error('Failed to get city name:', err);
           setCityName('Location detected');
         });
+
+      // Fetch weather data
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lng}&current=temperature_2m,weather_code&timezone=auto`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.current) {
+            const weatherCode = data.current.weather_code;
+            const description = getWeatherDescription(weatherCode);
+            setWeather({
+              temperature: Math.round(data.current.temperature_2m),
+              weatherCode,
+              description
+            });
+            console.log('🌤️ Weather fetched:', data.current);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch weather:', err);
+        });
     }
   }, [userLocation]);
+
+  const getWeatherDescription = (code: number): string => {
+    if (code === 0) return 'Clear';
+    if (code <= 3) return 'Partly Cloudy';
+    if (code <= 48) return 'Foggy';
+    if (code <= 67) return 'Rainy';
+    if (code <= 77) return 'Snowy';
+    if (code <= 82) return 'Showers';
+    if (code <= 99) return 'Thunderstorm';
+    return 'Unknown';
+  };
+
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return <Sun className="h-4 w-4 text-amber-400" />;
+    if (code <= 3) return <Cloud className="h-4 w-4 text-foreground" />;
+    if (code <= 67) return <CloudRain className="h-4 w-4 text-primary" />;
+    if (code <= 77) return <CloudSnow className="h-4 w-4 text-primary" />;
+    return <Wind className="h-4 w-4 text-foreground" />;
+  };
 
   const toggleTheme = () => setIsDark(!isDark);
 
@@ -88,7 +133,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
           {/* Location Info */}
           <div 
             className={`
-              flex items-center gap-2 text-sm overflow-hidden whitespace-nowrap
+              flex items-center gap-3 text-sm overflow-hidden whitespace-nowrap
               transition-[max-width,opacity] duration-150 ease-out
               ${isExpanded ? 'max-w-md opacity-100' : 'max-w-0 opacity-0'}
             `}
@@ -105,6 +150,20 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ userLocation }) => {
                 </span>
               )}
             </div>
+
+            {/* Weather Info */}
+            {weather && cityName !== 'Locating...' && (
+              <>
+                <div className="h-6 w-px bg-border/30" />
+                <div className="flex items-center gap-1.5">
+                  {getWeatherIcon(weather.weatherCode)}
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-foreground">{weather.temperature}°C</span>
+                    <span className="text-xs text-muted-foreground">{weather.description}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Compact Location Indicator */}

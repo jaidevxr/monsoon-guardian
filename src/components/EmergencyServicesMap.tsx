@@ -23,6 +23,7 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const routingControlRef = useRef<any>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const [services, setServices] = useState<EmergencyService[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,7 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
   const { toast } = useToast();
 
   // Close dropdown when clicking outside
@@ -293,10 +295,18 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
     const map = L.map(mapRef.current).setView([20.5937, 78.9629], 5);
     mapInstanceRef.current = map;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    const getTileUrl = () => {
+      if (isDarkMode) {
+        return 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
+      }
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    };
+
+    const tileLayer = L.tileLayer(getTileUrl(), {
+      attribution: isDarkMode ? '© CartoDB © OpenStreetMap' : '© OpenStreetMap contributors',
       maxZoom: 18,
     }).addTo(map);
+    tileLayerRef.current = tileLayer;
 
     return () => {
       if (mapInstanceRef.current) {
@@ -305,6 +315,46 @@ const EmergencyServicesMap: React.FC<EmergencyServicesMapProps> = ({ onFacilityC
       }
     };
   }, []);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setIsDarkMode(isDark);
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Update map tiles when theme changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+
+    mapInstanceRef.current.removeLayer(tileLayerRef.current);
+
+    const getTileUrl = () => {
+      if (isDarkMode) {
+        return 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
+      }
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    };
+
+    const newTileLayer = L.tileLayer(getTileUrl(), {
+      attribution: isDarkMode ? '© CartoDB © OpenStreetMap' : '© OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newTileLayer;
+  }, [isDarkMode]);
 
   useEffect(() => {
     console.log('🗺️ [EmergencyServicesMap] Component mounted, requesting location...');

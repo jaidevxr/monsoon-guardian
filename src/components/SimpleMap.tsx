@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { DisasterEvent, EmergencyFacility, Location } from '@/types';
@@ -32,6 +32,8 @@ const SimpleMap: React.FC<SimpleMapProps> = ({
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -39,10 +41,18 @@ const SimpleMap: React.FC<SimpleMapProps> = ({
     // Initialize map
     leafletMap.current = L.map(mapRef.current).setView([center.lat, center.lng], 6);
 
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // Add tile layer with dark mode support
+    const getTileUrl = () => {
+      if (isDarkMode) {
+        return 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
+      }
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    };
+
+    const tileLayer = L.tileLayer(getTileUrl(), {
+      attribution: isDarkMode ? '© CartoDB © OpenStreetMap' : '© OpenStreetMap contributors'
     }).addTo(leafletMap.current);
+    tileLayerRef.current = tileLayer;
 
     return () => {
       if (leafletMap.current) {
@@ -51,6 +61,45 @@ const SimpleMap: React.FC<SimpleMapProps> = ({
       }
     };
   }, []);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setIsDarkMode(isDark);
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Update map tiles when theme changes
+  useEffect(() => {
+    if (!leafletMap.current || !tileLayerRef.current) return;
+
+    leafletMap.current.removeLayer(tileLayerRef.current);
+
+    const getTileUrl = () => {
+      if (isDarkMode) {
+        return 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
+      }
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    };
+
+    const newTileLayer = L.tileLayer(getTileUrl(), {
+      attribution: isDarkMode ? '© CartoDB © OpenStreetMap' : '© OpenStreetMap contributors'
+    }).addTo(leafletMap.current);
+
+    tileLayerRef.current = newTileLayer;
+  }, [isDarkMode]);
 
   // Update map center when prop changes
   useEffect(() => {

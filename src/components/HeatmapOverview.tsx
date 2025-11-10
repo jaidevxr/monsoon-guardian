@@ -43,6 +43,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [allStatesData, setAllStatesData] = useState<any>(null);
   const [stateAverages, setStateAverages] = useState<Map<string, { avgTemp: number; avgAqi: number; avgRisk: number; count: number }>>(new Map());
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
 
   // Initialize map
   useEffect(() => {
@@ -51,7 +52,14 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     const map = L.map(mapRef.current).setView([20.5937, 78.9629], 5);
     mapInstanceRef.current = map;
 
-    const tileLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+    const getTileUrl = () => {
+      if (isDarkMode) {
+        return 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
+      }
+      return 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png';
+    };
+
+    const tileLayer = L.tileLayer(getTileUrl(), {
       attribution: '© CartoDB © OpenStreetMap',
       maxZoom: 18,
     }).addTo(map);
@@ -73,6 +81,25 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     };
   }, []);
 
+  // Listen for theme changes
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setIsDarkMode(isDark);
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   // Update map layer
   useEffect(() => {
     if (!mapInstanceRef.current || !tileLayerRef.current) return;
@@ -92,7 +119,12 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
       attribution = '© OpenStreetMap contributors';
     } else {
-      tileUrl = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png';
+      // Default layer respects dark mode
+      if (isDarkMode) {
+        tileUrl = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
+      } else {
+        tileUrl = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png';
+      }
       attribution = '© CartoDB © OpenStreetMap';
     }
 
@@ -102,7 +134,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     }).addTo(mapInstanceRef.current);
 
     tileLayerRef.current = newTileLayer;
-  }, [mapLayer]);
+  }, [mapLayer, isDarkMode]);
 
   // Update state boundaries layer
   useEffect(() => {
