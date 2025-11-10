@@ -141,14 +141,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`fixed left-4 top-4 bottom-4 z-50 flex flex-col transition-all duration-300 ease-out overflow-hidden rounded-2xl border border-border/20 shadow-2xl ${
+      className={`fixed left-4 top-4 bottom-4 z-50 flex flex-col transition-all duration-300 ease-out overflow-hidden rounded-2xl border border-border/20 shadow-2xl bg-background/70 backdrop-blur-xl ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}
-      style={{
-        background: 'rgba(var(--background-rgb, 255, 255, 255), 0.7)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-      }}
     >
       {/* Content */}
       <div className="flex flex-col h-full">
