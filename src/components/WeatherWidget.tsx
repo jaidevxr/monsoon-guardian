@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Cloud, Droplets, Wind, Thermometer, AlertCircle, Eye, MapPin, 
   Sunrise, Sunset, Gauge, CloudRain, CloudSnow, CloudDrizzle, 
-  CloudFog, Zap, Snowflake, Sun, Moon, Umbrella, Navigation
+  CloudFog, Zap, Snowflake, Sun, Moon, Umbrella, Navigation, Clock
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { WeatherData, WeatherAlert, Location } from '@/types';
 import { searchLocation } from '@/utils/api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 interface WeatherWidgetProps {
   weather: WeatherData | null;
@@ -119,6 +120,47 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
     }
   };
 
+  const getWindDirection = (deg?: number) => {
+    if (!deg) return 'N/A';
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return directions[Math.round(deg / 22.5) % 16];
+  };
+
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleTimeString('en-IN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const getAirQualityColor = (aqi?: number) => {
+    if (!aqi) return 'bg-gray-500/20 border-gray-500/30';
+    if (aqi === 1) return 'bg-green-500/20 border-green-500/30';
+    if (aqi === 2) return 'bg-yellow-500/20 border-yellow-500/30';
+    if (aqi === 3) return 'bg-orange-500/20 border-orange-500/30';
+    if (aqi === 4) return 'bg-red-500/20 border-red-500/30';
+    return 'bg-purple-500/20 border-purple-500/30';
+  };
+
+  const getUVColor = (uv?: number) => {
+    if (!uv) return 'bg-gray-500/20 border-gray-500/30';
+    if (uv < 3) return 'bg-green-500/20 border-green-500/30';
+    if (uv < 6) return 'bg-yellow-500/20 border-yellow-500/30';
+    if (uv < 8) return 'bg-orange-500/20 border-orange-500/30';
+    if (uv < 11) return 'bg-red-500/20 border-red-500/30';
+    return 'bg-purple-500/20 border-purple-500/30';
+  };
+
+  const getUVLabel = (uv?: number) => {
+    if (!uv) return 'N/A';
+    if (uv < 3) return 'Low';
+    if (uv < 6) return 'Moderate';
+    if (uv < 8) return 'High';
+    if (uv < 11) return 'Very High';
+    return 'Extreme';
+  };
+
   return (
     <div className="space-y-6">
       {/* City Search */}
@@ -192,7 +234,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
             <div className="text-5xl font-bold text-primary">{weather.temperature}°C</div>
             <p className="text-muted-foreground capitalize mt-1">{weather.condition}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Feels like {weather.temperature - 2}°C
+              Feels like {weather.feelsLike || weather.temperature}°C
             </p>
           </div>
         </div>
@@ -235,7 +277,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Visibility</p>
-              <p className="font-semibold text-lg">10 km</p>
+              <p className="font-semibold text-lg">{weather.visibility || 10} km</p>
             </div>
           </div>
 
@@ -245,7 +287,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Pressure</p>
-              <p className="font-semibold text-lg">1013 hPa</p>
+              <p className="font-semibold text-lg">{weather.pressure || 1013} hPa</p>
             </div>
           </div>
 
@@ -255,7 +297,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Sunrise</p>
-              <p className="font-semibold text-lg">6:30 AM</p>
+              <p className="font-semibold text-lg">{weather.sunrise ? formatTime(weather.sunrise) : '6:30 AM'}</p>
             </div>
           </div>
 
@@ -265,7 +307,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Sunset</p>
-              <p className="font-semibold text-lg">6:45 PM</p>
+              <p className="font-semibold text-lg">{weather.sunset ? formatTime(weather.sunset) : '6:45 PM'}</p>
             </div>
           </div>
 
@@ -275,46 +317,64 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Wind Dir.</p>
-              <p className="font-semibold text-lg">NE</p>
+              <p className="font-semibold text-lg">{getWindDirection(weather.windDirection)}</p>
             </div>
           </div>
         </div>
 
         {/* UV Index & Air Quality */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-border/30">
+          <div className={`p-4 rounded-xl border ${getUVColor(weather.uvIndex)}`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Sun className="h-5 w-5 text-amber-500" />
                 <span className="font-semibold">UV Index</span>
               </div>
-              <Badge variant="outline" className="bg-amber-500/20 border-amber-500/30">
-                Moderate
+              <Badge variant="outline" className={getUVColor(weather.uvIndex)}>
+                {getUVLabel(weather.uvIndex)}
               </Badge>
             </div>
             <div className="space-y-2">
-              <Progress value={60} className="h-2 bg-amber-100 dark:bg-amber-950" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl font-bold">{weather.uvIndex?.toFixed(1) || 'N/A'}</span>
+              </div>
+              <Progress value={Math.min((weather.uvIndex || 0) * 10, 100)} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                UV level is moderate. Use sun protection if outdoors.
+                {weather.uvIndex && weather.uvIndex < 3 ? 'Minimal protection needed' :
+                 weather.uvIndex && weather.uvIndex < 6 ? 'Use sun protection if outdoors' :
+                 weather.uvIndex && weather.uvIndex < 8 ? 'Protection essential. Reduce sun exposure' :
+                 'Avoid sun exposure. Take all precautions'}
               </p>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-border/30">
+          <div className={`p-4 rounded-xl border ${getAirQualityColor(weather.airQuality?.aqi)}`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Wind className="h-5 w-5 text-green-500" />
+                <Wind className="h-5 w-5" />
                 <span className="font-semibold">Air Quality</span>
               </div>
-              <Badge variant="outline" className="bg-green-500/20 border-green-500/30">
-                Good
+              <Badge variant="outline" className={getAirQualityColor(weather.airQuality?.aqi)}>
+                {weather.airQuality?.quality || 'Unknown'}
               </Badge>
             </div>
             <div className="space-y-2">
-              <Progress value={75} className="h-2 bg-green-100 dark:bg-green-950" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl font-bold">AQI {weather.airQuality?.aqi || 'N/A'}</span>
+              </div>
+              <Progress value={weather.airQuality?.aqi ? weather.airQuality.aqi * 20 : 0} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                Air quality is good. Perfect conditions for outdoor activities.
+                {weather.airQuality?.aqi === 1 ? 'Air quality is excellent. Perfect for outdoor activities' :
+                 weather.airQuality?.aqi === 2 ? 'Air quality is acceptable for most people' :
+                 weather.airQuality?.aqi === 3 ? 'Sensitive groups should limit outdoor exposure' :
+                 'Air quality is unhealthy. Avoid outdoor activities'}
               </p>
+              {weather.airQuality && (
+                <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                  <div>PM2.5: {weather.airQuality.pm25.toFixed(1)}</div>
+                  <div>PM10: {weather.airQuality.pm10.toFixed(1)}</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -345,6 +405,97 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, loading, onLocat
           </p>
         </div>
       </Card>
+
+      {/* Hourly Forecast - Next 24 Hours */}
+      {weather.hourlyForecast && weather.hourlyForecast.length > 0 && (
+        <Card className="glass p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-xl">Hourly Forecast (24 Hours)</h3>
+          </div>
+
+          {/* Temperature Chart */}
+          <div className="mb-6 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={weather.hourlyForecast.map(hour => ({
+                time: formatTime(hour.time),
+                temperature: hour.temperature,
+                precipitation: hour.precipitation,
+              }))}>
+                <defs>
+                  <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  interval="preserveStartEnd"
+                />
+                <YAxis 
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  label={{ value: 'Temperature (°C)', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="temperature" 
+                  stroke="hsl(var(--primary))" 
+                  fill="url(#tempGradient)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Hourly Details Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-96 overflow-y-auto">
+            {weather.hourlyForecast.map((hour, index) => (
+              <div 
+                key={index}
+                className="text-center p-3 rounded-lg bg-card/50 border border-border/30 hover:border-primary/30 transition-all"
+              >
+                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                  {formatTime(hour.time)}
+                </p>
+                <div className="flex justify-center mb-2">
+                  {hour.icon ? (
+                    <img 
+                      src={`https://openweathermap.org/img/wn/${hour.icon}@2x.png`} 
+                      alt={hour.condition}
+                      className="w-12 h-12"
+                    />
+                  ) : (
+                    <span className="text-2xl">☀️</span>
+                  )}
+                </div>
+                <p className="font-bold text-lg mb-1">{hour.temperature}°</p>
+                <p className="text-xs text-muted-foreground mb-1">{hour.condition}</p>
+                {hour.precipitation > 0 && (
+                  <div className="flex items-center justify-center gap-1 mt-2 p-1 rounded bg-ocean-blue/10">
+                    <Droplets className="h-3 w-3 text-ocean-blue" />
+                    <p className="text-xs font-medium text-ocean-blue">{hour.precipitation}%</p>
+                  </div>
+                )}
+                {hour.rain > 0 && (
+                  <p className="text-xs text-ocean-blue mt-1">{hour.rain.toFixed(1)}mm</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Weather Alerts - Enhanced */}
       {weather.alerts.length > 0 && (

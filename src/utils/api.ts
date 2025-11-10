@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { DisasterEvent, WeatherData, EmergencyFacility, Location } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const OPENWEATHER_API_KEY = '7c6a3b0b8f72c5a9d2e4f1a8c9b7e3d2'; // Demo API key
 const USGS_EARTHQUAKE_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson';
@@ -482,45 +483,61 @@ export const fetchWeatherDataForMultipleLocations = async (
   return weatherMap;
 };
 
-// Fetch weather data for OpenWeatherMap
+// Fetch weather data using OpenWeather API via edge function
 export const fetchWeatherData = async (location: Location): Promise<WeatherData | null> => {
   try {
-    // Use Open-Meteo (no API key required) for reliable, real weather data
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&timezone=auto`;
-    const response = await axios.get(url);
-    const data = response.data;
+    console.log('Fetching real weather data from OpenWeather API...');
+    
+    // Call the Supabase edge function
+    const { data, error } = await supabase.functions.invoke('weather', {
+      body: { lat: location.lat, lng: location.lng }
+    });
 
-    const currentTemp = Math.round(data.current?.temperature_2m ?? 0);
-    const humidity = Math.round(data.current?.relative_humidity_2m ?? 0);
-    const wind = Math.round(data.current?.wind_speed_10m ?? 0); // already in km/h
-    const rainfall = Math.round((data.current?.precipitation ?? 0) * 10) / 10;
-
-    const forecast: WeatherData['forecast'] = [];
-    if (data.daily?.time?.length) {
-      for (let i = 0; i < Math.min(5, data.daily.time.length); i++) {
-        forecast.push({
-          date: data.daily.time[i],
-          temperature: {
-            min: Math.round(data.daily.temperature_2m_min[i]),
-            max: Math.round(data.daily.temperature_2m_max[i]),
-          },
-          rainfall: Math.round((data.daily.precipitation_sum[i] ?? 0) * 10) / 10,
-          condition: mapWeatherCodeToText(data.daily.weathercode?.[i]),
-          icon: mapWeatherCodeToIcon(data.daily.weathercode?.[i]),
-        });
-      }
+    if (error) {
+      console.error('Edge function error:', error);
+      return getFallbackWeatherData(location);
     }
+
+    if (!data) {
+      return getFallbackWeatherData(location);
+    }
+
+    const { current, airQuality, hourly, daily, alerts } = data;
+
+    // Map daily forecast to expected format
+    const forecast: WeatherData['forecast'] = daily.map((day: any) => ({
+      date: new Date(day.date * 1000).toISOString().split('T')[0],
+      temperature: day.temperature,
+      rainfall: day.rain,
+      condition: day.condition,
+      icon: day.icon,
+    }));
 
     return {
       location,
-      temperature: currentTemp,
-      humidity,
-      windSpeed: wind,
-      rainfall,
-      condition: mapWeatherCodeToText(data.daily?.weathercode?.[0] ?? data.current?.weathercode),
-      icon: mapWeatherCodeToIcon(data.daily?.weathercode?.[0] ?? data.current?.weathercode),
-      alerts: [],
+      temperature: current.temperature,
+      humidity: current.humidity,
+      windSpeed: current.windSpeed,
+      rainfall: hourly[0]?.rain || 0,
+      condition: current.condition,
+      icon: current.icon,
+      alerts: alerts || [],
       forecast,
+      feelsLike: current.feelsLike,
+      pressure: current.pressure,
+      windDirection: current.windDirection,
+      visibility: current.visibility,
+      uvIndex: current.uvIndex,
+      sunrise: current.sunrise,
+      sunset: current.sunset,
+      isDay: current.isDay,
+      airQuality: airQuality ? {
+        aqi: airQuality.aqi,
+        quality: airQuality.quality,
+        pm25: airQuality.pm25,
+        pm10: airQuality.pm10,
+      } : undefined,
+      hourlyForecast: hourly,
     };
   } catch (error) {
     console.error('Error fetching weather data:', error);

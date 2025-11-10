@@ -26,6 +26,34 @@ export interface WeatherData {
   icon: string;
   alerts: WeatherAlert[];
   forecast: WeatherForecast[];
+  feelsLike?: number;
+  pressure?: number;
+  windDirection?: number;
+  visibility?: number;
+  uvIndex?: number;
+  sunrise?: number;
+  sunset?: number;
+  isDay?: number;
+  airQuality?: {
+    aqi: number;
+    quality: string;
+    pm25: number;
+    pm10: number;
+  };
+  hourlyForecast?: HourlyForecast[];
+}
+
+export interface HourlyForecast {
+  time: number;
+  temperature: number;
+  feelsLike: number;
+  precipitation: number;
+  rain: number;
+  humidity: number;
+  windSpeed: number;
+  condition: string;
+  description: string;
+  icon: string;
 }
 
 export interface WeatherAlert {

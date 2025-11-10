@@ -2,3 +2,6 @@ project_id = "ziqqqkzxakejqdixevng"
 
 [functions.copilot-chat]
 verify_jwt = false
+
+[functions.weather]
+verify_jwt = false
