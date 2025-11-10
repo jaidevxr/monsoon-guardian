@@ -23,10 +23,12 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           glow: "hsl(var(--primary-glow))",
+          dark: "hsl(var(--primary-dark))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          glow: "hsl(var(--secondary-glow))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -47,6 +49,7 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          glow: "hsl(var(--accent-glow))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -56,13 +59,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        ocean: {
-          blue: "hsl(var(--ocean-blue))",
-          deep: "hsl(var(--ocean-blue-deep))",
-        },
-        earth: {
-          warm: "hsl(var(--earth-warm))",
-          deep: "hsl(var(--earth-deep))",
+        nature: {
+          forest: "hsl(142, 76%, 36%)",
+          sage: "hsl(120, 30%, 85%)",
+          teal: "hsl(160, 60%, 45%)",
+          moss: "hsl(140, 60%, 35%)",
+          leaf: "hsl(142, 71%, 45%)",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

@@ -21,16 +21,21 @@ L.Icon.Default.mergeOptions({
 
 type RiskLevel = 'low' | 'medium' | 'high';
 type OverlayMode = 'disaster' | 'temperature' | 'pollution';
+type MapLayer = 'default' | 'satellite' | 'terrain';
 
 const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
   const stateLayerRef = useRef<any>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<RiskLevel>>(
     new Set(['low', 'medium', 'high'])
   );
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('disaster');
+  const [mapLayer, setMapLayer] = useState<MapLayer>('default');
+  const [heatmapRadius, setHeatmapRadius] = useState(60);
+  const [heatmapBlur, setHeatmapBlur] = useState(35);
   const [weatherData, setWeatherData] = useState<Map<string, { temp: number; aqi: number }>>(new Map());
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
@@ -45,10 +50,11 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
     const map = L.map(mapRef.current).setView([20.5937, 78.9629], 5);
     mapInstanceRef.current = map;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
       maxZoom: 18,
     }).addTo(map);
+    tileLayerRef.current = tileLayer;
 
     // Load state boundaries
     fetch('https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States')
@@ -65,6 +71,34 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       }
     };
   }, []);
+
+  // Update map layer
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+
+    mapInstanceRef.current.removeLayer(tileLayerRef.current);
+
+    let tileUrl = '';
+    let attribution = '';
+    
+    if (mapLayer === 'satellite') {
+      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      attribution = '© Esri';
+    } else if (mapLayer === 'terrain') {
+      tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+      attribution = '© OpenTopoMap';
+    } else {
+      tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      attribution = '© OpenStreetMap';
+    }
+
+    const newTileLayer = L.tileLayer(tileUrl, {
+      attribution,
+      maxZoom: 18,
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newTileLayer;
+  }, [mapLayer]);
 
   // Update state boundaries layer
   useEffect(() => {
@@ -479,7 +513,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
         // Only large glow circle with hover tooltip
         const glowCircle = L.circleMarker([lat, lng], {
-          radius: 60,
+          radius: heatmapRadius,
           fillColor: getColor(risk, 'disaster', 0.25),
           color: 'transparent',
           weight: 0,
@@ -518,7 +552,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         
         // Large glow circle for heatmap effect
         const glowCircle = L.circleMarker([lat, lng], {
-          radius: 60,
+          radius: heatmapRadius,
           fillColor: getColor(value, overlayMode, 0.25),
           color: 'transparent',
           weight: 0,
@@ -549,13 +583,13 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         markersRef.current.push(glowCircle, centerCircle);
       });
     }
-  }, [overlayMode, weatherData, activeFilters]);
+  }, [overlayMode, weatherData, activeFilters, heatmapRadius]);
 
   return (
     <div className="h-full w-full relative">
       <style>{`
         .heatmap-glow {
-          filter: blur(35px);
+          filter: blur(${heatmapBlur}px);
           opacity: 0.7;
         }
         .custom-tooltip {
@@ -616,6 +650,78 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
         )}
       </div>
 
+      {/* Map Layer Controls */}
+      <div className="absolute top-4 left-4 glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 p-3 z-[1000]">
+        <h3 className="text-xs font-semibold mb-2">Map Style</h3>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setMapLayer('default')}
+            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+              mapLayer === 'default' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary hover:bg-secondary/80'
+            }`}
+          >
+            Default
+          </button>
+          <button
+            onClick={() => setMapLayer('satellite')}
+            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+              mapLayer === 'satellite' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary hover:bg-secondary/80'
+            }`}
+          >
+            Satellite
+          </button>
+          <button
+            onClick={() => setMapLayer('terrain')}
+            className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+              mapLayer === 'terrain' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary hover:bg-secondary/80'
+            }`}
+          >
+            Terrain
+          </button>
+        </div>
+      </div>
+
+      {/* Heatmap Controls */}
+      <div className="absolute top-4 right-4 glass backdrop-blur-md rounded-xl shadow-lg border border-border/20 p-3 z-[1000] min-w-[180px]">
+        <h3 className="text-xs font-semibold mb-3">Heatmap Settings</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground flex justify-between mb-1">
+              <span>Radius</span>
+              <span className="font-medium">{heatmapRadius}px</span>
+            </label>
+            <input
+              type="range"
+              min="30"
+              max="120"
+              value={heatmapRadius}
+              onChange={(e) => setHeatmapRadius(Number(e.target.value))}
+              className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground flex justify-between mb-1">
+              <span>Blur</span>
+              <span className="font-medium">{heatmapBlur}px</span>
+            </label>
+            <input
+              type="range"
+              min="10"
+              max="80"
+              value={heatmapBlur}
+              onChange={(e) => setHeatmapBlur(Number(e.target.value))}
+              className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+        </div>
+      </div>
+
       {loading && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 glass backdrop-blur-md p-4 rounded-xl border border-border/20 z-[1000] min-w-[200px]">
           <div className="flex flex-col gap-2">
@@ -642,7 +748,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
       
       {/* Risk Legend */}
       {overlayMode === 'disaster' && (
-        <div className="absolute bottom-4 right-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
+        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold">Risk Level</h3>
             <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
@@ -690,7 +796,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters }) => {
 
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (
-        <div className="absolute bottom-4 right-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
+        <div className="absolute bottom-4 left-4 glass p-3 rounded-xl shadow-lg backdrop-blur-md border border-border/20 z-[1000] max-w-[180px]">
           <h3 className="text-xs font-semibold mb-2">
             {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
           </h3>
