@@ -826,56 +826,6 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
         </div>
       )}
       
-      {/* Risk Legend */}
-      {overlayMode === 'disaster' && (
-        <div className="absolute bottom-20 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-semibold">Risk Level</h3>
-            <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
-          </div>
-          
-          <div className="space-y-1.5">
-            <div
-              onClick={() => toggleFilter('low')}
-              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 border ${
-                activeFilters.has('low') 
-                  ? 'shadow-md' 
-                  : 'opacity-60 hover:opacity-80 hover:bg-card/40'
-              }`}
-              style={activeFilters.has('low') ? { background: 'hsl(var(--success) / 0.2)', borderColor: 'hsl(var(--success) / 0.4)' } : {}}
-            >
-              <div className="w-3 h-3 rounded-full opacity-60 border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
-              <span className="text-xs font-medium">Low</span>
-            </div>
-            
-            <div
-              onClick={() => toggleFilter('medium')}
-              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 border ${
-                activeFilters.has('medium') 
-                  ? 'shadow-md' 
-                  : 'opacity-60 hover:opacity-80 hover:bg-card/40'
-              }`}
-              style={activeFilters.has('medium') ? { background: 'hsl(var(--warning) / 0.2)', borderColor: 'hsl(var(--warning) / 0.4)' } : {}}
-            >
-              <div className="w-3 h-3 rounded-full opacity-60 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
-              <span className="text-xs font-medium">Medium</span>
-            </div>
-            
-            <div
-              onClick={() => toggleFilter('high')}
-              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 border ${
-                activeFilters.has('high') 
-                  ? 'shadow-md' 
-                  : 'opacity-60 hover:opacity-80 hover:bg-card/40'
-              }`}
-              style={activeFilters.has('high') ? { background: 'hsl(var(--destructive) / 0.2)', borderColor: 'hsl(var(--destructive) / 0.4)' } : {}}
-            >
-              <div className="w-3 h-3 rounded-full opacity-60 border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
-              <span className="text-xs font-medium">High</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Weather/Pollution Legend */}
       {overlayMode !== 'disaster' && (

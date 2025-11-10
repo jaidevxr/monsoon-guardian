@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
         
         <main 
           className={`w-full h-full transition-all duration-300 ${
-            sidebarCollapsed ? 'pl-16' : 'pl-64'
+            sidebarCollapsed ? 'pl-16' : 'pl-72'
           }`}
         >
           {/* Tab Content - Full Height */}

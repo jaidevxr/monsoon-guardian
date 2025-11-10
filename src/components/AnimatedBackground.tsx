@@ -160,17 +160,6 @@ const AnimatedBackground: React.FC = () => {
         )}
       </div>
 
-      {/* Background Intensity Control */}
-      <Button
-        onClick={cycleIntensity}
-        variant="outline"
-        size="sm"
-        className="fixed bottom-4 right-4 z-[9999] glass-strong backdrop-blur-xl border-accent/30 hover:border-accent/50 hover:bg-accent/10 transition-all duration-300 gap-2 pointer-events-auto shadow-elevated"
-        title="Toggle background animation intensity"
-      >
-        <Sparkles className="h-4 w-4 text-accent" />
-        <span className="text-xs font-semibold capitalize">{intensity}</span>
-      </Button>
     </>
   );
 };
