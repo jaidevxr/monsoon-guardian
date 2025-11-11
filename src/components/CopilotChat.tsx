@@ -141,15 +141,24 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
       let facilities;
       let parsedUserLocation;
       
-      // Try to extract JSON data from the response
+      // Try to extract JSON data from the response - look for the last JSON block
       try {
-        const jsonMatch = data.message.match(/\{[\s\S]*"facilities"[\s\S]*\}/);
-        if (jsonMatch) {
-          const extracted = JSON.parse(jsonMatch[0]);
+        // Match JSON blocks that contain "facilities"
+        const jsonMatches = data.message.matchAll(/\{[\s\S]*?"facilities"[\s\S]*?\}/g);
+        const matches = Array.from(jsonMatches);
+        
+        if (matches.length > 0) {
+          // Use the last match (most likely to be the appended data)
+          const lastMatch = matches[matches.length - 1][0];
+          const extracted = JSON.parse(lastMatch);
           facilities = extracted.facilities;
           parsedUserLocation = extracted.userLocation;
+          
+          // Remove the JSON block from the display message for cleaner UI
+          data.message = data.message.replace(lastMatch, '').trim();
         }
       } catch (e) {
+        console.error('Failed to parse facility data:', e);
         // If parsing fails, it's just regular text
       }
 
@@ -255,15 +264,16 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   };
 
   const handleGetDirections = (facility: any, userLoc: Location) => {
-    // Navigate to emergency page with route info
-    navigate('/emergency', {
+    // Navigate to dashboard overview (emergency hub) with route info
+    navigate('/dashboard', {
       state: {
         destination: {
           lat: facility.lat,
           lng: facility.lng,
           name: facility.name
         },
-        origin: userLoc
+        origin: userLoc,
+        showRoute: true
       }
     });
   };

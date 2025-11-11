@@ -150,11 +150,17 @@ When asked about evacuation:
 - Give timing recommendations based on disaster severity
 
 **Hospital Navigation:**
-When users ask about hospitals:
-- Provide hospital names with distances
-- Include "Get Directions" action for navigation
-- Prioritize by distance and specify the type of facility
-- Include contact numbers when available
+When users ask about hospitals or nearby facilities:
+- Provide a natural language response with hospital names and distances
+- IMPORTANT: After your response, append a JSON block with facility data in this EXACT format:
+  {
+    "facilities": [
+      {"name": "Hospital Name", "type": "hospital", "lat": 12.34, "lng": 56.78, "distance": 1500, "contact": "+91..."}
+    ],
+    "userLocation": {"lat": 12.34, "lng": 56.78}
+  }
+- Include up to 5 nearest hospitals
+- This JSON will enable "Get Directions" buttons for navigation
 
 ${location ? `The user is currently at coordinates: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}. Use this location automatically when they ask about "here", "my location", "nearby", or similar context-based queries.` : ''}
 

@@ -1,21 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-routing-machine';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import { DisasterEvent, Location } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { fetchWeatherDataForMultipleLocations } from '@/utils/api';
-import { Cloud, Droplets, AlertTriangle, Settings, Layers, X } from 'lucide-react';
+import { Cloud, Droplets, AlertTriangle, Settings, Layers, X, Navigation2 } from 'lucide-react';
 import DynamicIsland from '@/components/DynamicIsland';
 import EmergencySOS from '@/components/EmergencySOS';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Card } from '@/components/ui/card';
 
 interface HeatmapOverviewProps {
   disasters: DisasterEvent[];
   userLocation: Location | null;
   nearbyDisasters: DisasterEvent[];
+  routeInfo?: {
+    origin: Location;
+    destination: { lat: number; lng: number; name: string };
+  } | null;
+  onRouteClose?: () => void;
 }
 
 // Fix Leaflet default icon
@@ -30,12 +38,19 @@ type RiskLevel = 'low' | 'medium' | 'high';
 type OverlayMode = 'disaster' | 'temperature' | 'pollution';
 type MapLayer = 'default' | 'satellite' | 'terrain' | 'streets';
 
-const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocation, nearbyDisasters }) => {
+const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ 
+  disasters, 
+  userLocation, 
+  nearbyDisasters,
+  routeInfo,
+  onRouteClose 
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
   const stateLayerRef = useRef<any>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const routingControlRef = useRef<any>(null);
   const [activeFilters, setActiveFilters] = useState<Set<RiskLevel>>(
     new Set(['low', 'medium', 'high'])
   );
@@ -642,6 +657,64 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
     }
   }, [overlayMode, weatherData, activeFilters, heatmapRadius]);
 
+  // Handle routing display
+  useEffect(() => {
+    if (!mapInstanceRef.current || !routeInfo) return;
+
+    // Remove existing routing control
+    if (routingControlRef.current) {
+      mapInstanceRef.current.removeControl(routingControlRef.current);
+      routingControlRef.current = null;
+    }
+
+    // Create routing control
+    const routingControl = (L as any).Routing.control({
+      waypoints: [
+        L.latLng(routeInfo.origin.lat, routeInfo.origin.lng),
+        L.latLng(routeInfo.destination.lat, routeInfo.destination.lng)
+      ],
+      routeWhileDragging: false,
+      addWaypoints: false,
+      lineOptions: {
+        styles: [{ color: 'hsl(var(--primary))', weight: 6, opacity: 0.8 }]
+      },
+      createMarker: function(i: number, waypoint: any) {
+        const isDestination = i === 1;
+        return L.marker(waypoint.latLng, {
+          icon: L.divIcon({
+            className: 'custom-route-marker',
+            html: `<div style="background: hsl(var(${isDestination ? '--destructive' : '--primary'})); width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          })
+        }).bindPopup(isDestination ? routeInfo.destination.name : 'Your Location');
+      },
+      show: true,
+      collapsible: false
+    }).addTo(mapInstanceRef.current);
+
+    routingControlRef.current = routingControl;
+
+    // Fit map to show the route
+    setTimeout(() => {
+      if (mapInstanceRef.current) {
+        const bounds = L.latLngBounds([
+          [routeInfo.origin.lat, routeInfo.origin.lng],
+          [routeInfo.destination.lat, routeInfo.destination.lng]
+        ]);
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }, 100);
+
+    return () => {
+      if (routingControlRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeControl(routingControlRef.current);
+        routingControlRef.current = null;
+      }
+    };
+  }, [routeInfo]);
+
+
   return (
     <div className="h-full w-full relative">
       <style>{`
@@ -673,6 +746,33 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
       `}</style>
       <DynamicIsland userLocation={userLocation} />
       <div ref={mapRef} className="h-full w-full" />
+      
+      {/* Route Info Card */}
+      {routeInfo && (
+        <Card className="absolute top-4 right-4 z-[1000] p-4 max-w-sm glass-strong border border-border/40 backdrop-blur-xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Navigation2 className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Route to</h3>
+              </div>
+              <p className="text-sm font-medium text-foreground">{routeInfo.destination.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Follow the blue route on the map
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRouteClose}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Card>
+      )}
+
       
       {/* Mode Selector & Reset */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
