@@ -4,8 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, MapPin, Loader2, Bot, Navigation } from 'lucide-react';
+import { Send, MapPin, Loader2, Bot, Navigation, Languages } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Location } from '@/types';
 
 interface Message {
@@ -31,6 +32,7 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [locationName, setLocationName] = useState<string>('');
+  const [language, setLanguage] = useState('en');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -66,6 +68,7 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
         body: {
           messages: [...messages, userMessage],
           location: userLocation,
+          language: language,
         },
       });
 
@@ -154,14 +157,34 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
               <p className="text-sm text-muted-foreground">Disaster & Medical Response Assistant</p>
             </div>
           </div>
-          {userLocation && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
-              <MapPin className="w-4 h-4 text-primary" />
-              <span className="font-medium">
-                {locationName || `${userLocation.lat.toFixed(2)}, ${userLocation.lng.toFixed(2)}`}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger className="w-[160px] bg-background border-border/40">
+                <Languages className="w-4 h-4 mr-2 text-primary" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                <SelectItem value="ta">தமிழ் (Tamil)</SelectItem>
+                <SelectItem value="bn">বাংলা (Bengali)</SelectItem>
+                <SelectItem value="te">తెలుగు (Telugu)</SelectItem>
+                <SelectItem value="mr">मराठी (Marathi)</SelectItem>
+                <SelectItem value="gu">ગુજરાતી (Gujarati)</SelectItem>
+                <SelectItem value="kn">ಕನ್ನಡ (Kannada)</SelectItem>
+                <SelectItem value="ml">മലയാളം (Malayalam)</SelectItem>
+                <SelectItem value="pa">ਪੰਜਾਬੀ (Punjabi)</SelectItem>
+              </SelectContent>
+            </Select>
+            {userLocation && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
+                <MapPin className="w-4 h-4 text-primary" />
+                <span className="font-medium">
+                  {locationName || `${userLocation.lat.toFixed(2)}, ${userLocation.lng.toFixed(2)}`}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -12,14 +12,29 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, location } = await req.json();
+    const { messages, location, language = 'en' } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Received request with location:', location);
+    console.log('Received request with location:', location, 'language:', language);
+
+    const languageNames: { [key: string]: string } = {
+      'en': 'English',
+      'hi': 'Hindi (हिन्दी)',
+      'ta': 'Tamil (தமிழ்)',
+      'bn': 'Bengali (বাংলা)',
+      'te': 'Telugu (తెలుగు)',
+      'mr': 'Marathi (मराठी)',
+      'gu': 'Gujarati (ગુજરાતી)',
+      'kn': 'Kannada (ಕನ್ನಡ)',
+      'ml': 'Malayalam (മലയാളം)',
+      'pa': 'Punjabi (ਪੰਜਾਬੀ)'
+    };
+    
+    const selectedLanguage = languageNames[language] || 'English';
 
     // Define tools for the LLM
     const tools = [
@@ -152,6 +167,9 @@ You MUST ONLY respond to queries related to:
 - Emergency services and evacuation
 
 For ANY other topic (general knowledge, entertainment, technology, sports, politics, casual conversation, etc.), politely respond: "I'm Saarthi, specialized in disaster response and medical emergencies. I can only help with health, safety, and disaster-related questions. Please ask me about medical emergencies, disasters, weather, or emergency services."
+
+**LANGUAGE INSTRUCTION:**
+The user has selected ${selectedLanguage} as their preferred language. You MUST respond in ${selectedLanguage} ONLY. All your responses, including medical advice, disaster information, and emergency instructions, must be in ${selectedLanguage}. Use native script and natural language appropriate for ${selectedLanguage} speakers.
 
 Always be concise, actionable, and prioritize life safety. When providing location-based information, mention the general area (city/region) to help users confirm accuracy.`
     };
