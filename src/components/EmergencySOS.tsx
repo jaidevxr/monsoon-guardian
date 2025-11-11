@@ -28,6 +28,20 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
     return saved ? JSON.parse(saved) : [];
   };
 
+  const handleOpenSOS = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Opening SOS dialog');
+    setShowDialog(true);
+  };
+
+  const handleOpenContacts = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Opening contacts dialog');
+    setShowContactsDialog(true);
+  };
+
   const handleSendAlert = async () => {
     const contacts = getContactsFromStorage();
     
@@ -129,8 +143,8 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
           aria-label="Manage emergency contacts"
           size={compact ? 'icon' : 'icon'}
           variant="outline"
-          onClick={() => setShowContactsDialog(true)}
-          className={`${compact ? 'h-10 w-10' : 'h-12 w-12 md:h-14 md:w-14'} rounded-full shadow-lg bg-background/90 backdrop-blur-sm hover:scale-110 transition-transform border-2 border-primary`}
+          onClick={handleOpenContacts}
+          className={`${compact ? 'h-10 w-10' : 'h-12 w-12 md:h-14 md:w-14'} rounded-full shadow-lg bg-background backdrop-blur-sm hover:scale-110 transition-transform border-2 border-primary z-[2001]`}
           title="Manage Emergency Contacts"
         >
           <Users className={`${compact ? 'h-5 w-5' : 'h-5 w-5 md:h-6 md:w-6'} text-primary`} />
@@ -139,8 +153,8 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
         <Button
           aria-label="Send emergency alert"
           size={compact ? 'sm' : 'lg'}
-          onClick={() => setShowDialog(true)}
-          className={`${compact ? 'h-12 w-12' : 'h-16 w-16 md:h-20 md:w-20'} rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-[pulse_1.5s_ease-in-out_infinite] hover:scale-110 transition-transform ring-4 ring-destructive/30`}
+          onClick={handleOpenSOS}
+          className={`${compact ? 'h-12 w-12' : 'h-16 w-16 md:h-20 md:w-20'} rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-[pulse_1.5s_ease-in-out_infinite] hover:scale-110 transition-transform ring-4 ring-destructive/30 z-[2001]`}
           title="Send Emergency Alert"
         >
           <AlertCircle className={`${compact ? 'h-6 w-6' : 'h-8 w-8 md:h-10 md:w-10'}`} />
@@ -149,7 +163,7 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
 
       {/* Emergency Alert Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md sm:max-w-lg mx-4">
+        <DialogContent className="max-w-md sm:max-w-lg mx-4 z-[3000]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
