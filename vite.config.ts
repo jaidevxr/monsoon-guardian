@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit for ML models
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./i,
