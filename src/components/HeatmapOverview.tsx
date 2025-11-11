@@ -675,10 +675,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
       <div ref={mapRef} className="h-full w-full" />
       
       {/* Mode Selector & Reset */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1000]">
-        <div className="glass-strong rounded-xl shadow-lg border border-white/30 backdrop-blur-xl">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[1001] pointer-events-auto">
+        <div className="glass-strong rounded-xl shadow-lg border border-white/30 backdrop-blur-xl pointer-events-auto">
           <Tabs value={overlayMode} onValueChange={(value) => setOverlayMode(value as OverlayMode)}>
-            <TabsList className="bg-card/40 backdrop-blur-xl rounded-lg border border-border/20 p-1">
+            <TabsList className="bg-card/40 backdrop-blur-xl rounded-lg border border-border/20 p-1 pointer-events-auto">
               <TabsTrigger 
                 value="disaster" 
                 className="gap-2 rounded-md transition-all duration-300 bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg hover:bg-muted/50"

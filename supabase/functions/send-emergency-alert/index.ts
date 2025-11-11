@@ -49,8 +49,10 @@ const handler = async (req: Request): Promise<Response> => {
          </div>`
       : '';
 
-    const emailPromises = contacts.map((contact) =>
-      resend.emails.send({
+    // Send emails to all contacts
+    const emailPromises = contacts.map((contact) => {
+      console.log(`Sending email to ${contact.name} (${contact.email})`);
+      return resend.emails.send({
         from: "Saarthi Emergency Alert <onboarding@resend.dev>",
         to: [contact.email],
         subject: `🚨 EMERGENCY ALERT from ${userName}`,
@@ -117,13 +119,23 @@ const handler = async (req: Request): Promise<Response> => {
             </body>
           </html>
         `,
-      })
-    );
+      });
+    });
 
+    console.log(`Attempting to send ${emailPromises.length} emergency emails`);
     const results = await Promise.allSettled(emailPromises);
     
     const successful = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
+    
+    // Log failed emails for debugging
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to send email to ${contacts[index].name} (${contacts[index].email}):`, result.reason);
+      } else {
+        console.log(`Successfully sent email to ${contacts[index].name} (${contacts[index].email})`);
+      }
+    });
 
     console.log(`Emergency alerts sent: ${successful} successful, ${failed} failed`);
 
