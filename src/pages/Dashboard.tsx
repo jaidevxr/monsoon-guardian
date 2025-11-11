@@ -10,7 +10,8 @@ import EmergencyServicesMap from '@/components/EmergencyServicesMap';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
+import { Menu } from 'lucide-react';
+import {
   DisasterEvent, 
   EmergencyFacility, 
   WeatherData, 
@@ -202,24 +203,8 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-background relative">
       <AnimatedBackground />
 
-      {/* Mobile Sidebar Toggle - always visible when collapsed on mobile */}
-      {sidebarCollapsed && (
-        <Button
-          aria-label="Open sidebar"
-          variant="secondary"
-          size="icon"
-          onClick={() => setSidebarCollapsed(false)}
-          className="fixed left-3 top-3 z-[2500] shadow-lg md:hidden"
-        >
-          <span className="relative block w-4 h-4"> 
-            <span className="absolute inset-x-0 top-0 h-0.5 bg-foreground rounded" />
-            <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-foreground rounded" />
-            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-foreground rounded" />
-          </span>
-        </Button>
-      )}
-
-      <div className="relative z-10 h-screen">
+      <div className="flex h-screen w-full">
+        {/* Sidebar */}
         <DashboardSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -232,21 +217,30 @@ const Dashboard: React.FC = () => {
         {/* Mobile: Overlay when sidebar is open */}
         {!sidebarCollapsed && (
           <div 
-            className="fixed inset-0 bg-black/50 z-[1999] md:hidden"
+            className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
             onClick={() => setSidebarCollapsed(true)}
           />
         )}
         
-        <main 
-          className={`w-full h-full transition-all duration-300 ${
-            sidebarCollapsed ? 'md:pl-16' : 'md:pl-72'
-          }`}
-        >
-          {/* Tab Content - Full Height */}
-          <div className="h-full">
+        {/* Main Content */}
+        <main className="flex-1 w-full h-full overflow-hidden">
+          <div className="h-full w-full">
             {renderTabContent()}
           </div>
         </main>
+
+        {/* Mobile Sidebar Toggle - Fixed position, always on top */}
+        {sidebarCollapsed && (
+          <Button
+            aria-label="Open sidebar"
+            variant="secondary"
+            size="icon"
+            onClick={() => setSidebarCollapsed(false)}
+            className="fixed left-4 top-4 z-50 shadow-xl md:hidden backdrop-blur-sm bg-background/80 border border-border/50 hover:bg-background/90"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
       </div>
     </div>
   );

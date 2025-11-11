@@ -184,8 +184,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <aside 
-      className={`fixed left-0 top-0 bottom-0 z-[2000] flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-border/20 shadow-2xl bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-xl ${
-        isCollapsed ? 'w-16 -translate-x-full md:translate-x-0' : 'w-72'
+      className={`fixed md:relative left-0 top-0 bottom-0 z-50 md:z-10 flex flex-col transition-all duration-300 ease-out overflow-hidden border-r border-border/20 shadow-2xl bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-xl ${
+        isCollapsed ? 'w-16 -translate-x-full md:translate-x-0' : 'w-72 translate-x-0'
       }`}
     >
       {/* Multi-layer glassmorphism */}
