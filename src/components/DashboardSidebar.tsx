@@ -10,8 +10,10 @@ import {
   Shield, 
   Flame,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Download
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,9 +43,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onFacilityClick,
   onLocationUpdate,
 }) => {
+  const navigate = useNavigate();
   const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   const navItems = [
     { 
@@ -107,6 +112,38 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
     loadUserLocation();
   }, [onLocationUpdate]);
+
+  // PWA Install prompt handling
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) {
+      // If no install prompt available, redirect to install page
+      navigate('/install');
+      return;
+    }
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    }
+  };
 
   const loadEmergencyFacilities = async (location: Location) => {
     setLoading(true);
@@ -245,8 +282,34 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </TooltipProvider>
 
         {/* Footer */}
-        {!isCollapsed && (
-          <div className="p-4 border-t border-border/20 bg-gradient-to-r from-transparent to-primary/5 backdrop-blur-sm">
+        <div className="p-4 border-t border-border/20 bg-gradient-to-r from-transparent to-primary/5 backdrop-blur-sm space-y-3">
+          {/* Install Button */}
+          {!isInstalled && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleInstall}
+                    variant="outline"
+                    size={isCollapsed ? "icon" : "sm"}
+                    className={`${isCollapsed ? 'w-full h-10' : 'w-full'} bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 hover:border-primary/50 transition-all duration-200`}
+                  >
+                    <Download className={`${isCollapsed ? 'h-4 w-4' : 'h-4 w-4 mr-2'}`} />
+                    {!isCollapsed && <span className="font-semibold text-xs">Install App</span>}
+                  </Button>
+                </TooltipTrigger>
+                {isCollapsed && (
+                  <TooltipContent side="right" align="center" sideOffset={8} className="bg-popover/95 backdrop-blur-xl border-border/50">
+                    <p className="font-semibold text-sm">Install App</p>
+                    <p className="text-xs text-muted-foreground">Use offline</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {/* System Status */}
+          {!isCollapsed && (
             <div className="flex items-center justify-between text-xs bg-muted/30 rounded-lg p-2.5 border border-border/20">
               <span className="text-muted-foreground font-medium">System Status</span>
               <Badge variant="outline" className="text-success border-success/40 text-[10px] bg-success/10 px-2">
@@ -254,8 +317,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 Active
               </Badge>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </aside>
   );
