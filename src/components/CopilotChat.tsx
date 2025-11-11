@@ -143,19 +143,27 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
       
       // Try to extract JSON data from the response - look for the last JSON block
       try {
-        // Match JSON blocks that contain "facilities"
-        const jsonMatches = data.message.matchAll(/\{[\s\S]*?"facilities"[\s\S]*?\}/g);
-        const matches = Array.from(jsonMatches);
+        // First, try to find JSON in code blocks (```json ... ```)
+        const codeBlockMatch = data.message.match(/```json\s*([\s\S]*?)\s*```/);
+        let jsonText = null;
         
-        if (matches.length > 0) {
-          // Use the last match (most likely to be the appended data)
-          const lastMatch = matches[matches.length - 1][0];
-          const extracted = JSON.parse(lastMatch);
+        if (codeBlockMatch) {
+          jsonText = codeBlockMatch[1];
+          // Remove the code block from display message
+          data.message = data.message.replace(codeBlockMatch[0], '').trim();
+        } else {
+          // Fallback: look for raw JSON blocks
+          const jsonMatches = Array.from(data.message.matchAll(/\{[\s\S]*?"facilities"[\s\S]*?\}/g));
+          if (jsonMatches.length > 0) {
+            jsonText = jsonMatches[jsonMatches.length - 1][0];
+            data.message = data.message.replace(jsonText, '').trim();
+          }
+        }
+        
+        if (jsonText) {
+          const extracted = JSON.parse(jsonText);
           facilities = extracted.facilities;
           parsedUserLocation = extracted.userLocation;
-          
-          // Remove the JSON block from the display message for cleaner UI
-          data.message = data.message.replace(lastMatch, '').trim();
         }
       } catch (e) {
         console.error('Failed to parse facility data:', e);
