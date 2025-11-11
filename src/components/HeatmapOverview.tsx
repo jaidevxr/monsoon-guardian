@@ -8,10 +8,12 @@ import { Slider } from '@/components/ui/slider';
 import { fetchWeatherDataForMultipleLocations } from '@/utils/api';
 import { Cloud, Droplets, AlertTriangle } from 'lucide-react';
 import DynamicIsland from '@/components/DynamicIsland';
+import EmergencySOS from '@/components/EmergencySOS';
 
 interface HeatmapOverviewProps {
   disasters: DisasterEvent[];
   userLocation: Location | null;
+  nearbyDisasters: DisasterEvent[];
 }
 
 // Fix Leaflet default icon
@@ -26,7 +28,7 @@ type RiskLevel = 'low' | 'medium' | 'high';
 type OverlayMode = 'disaster' | 'temperature' | 'pollution';
 type MapLayer = 'default' | 'satellite' | 'terrain' | 'streets';
 
-const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocation }) => {
+const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocation, nearbyDisasters }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
@@ -925,6 +927,14 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
           <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border/30">Click points for details</p>
         </div>
       )}
+
+      {/* Emergency SOS Dynamic Island */}
+      <div className="absolute bottom-6 right-6 z-[1000]">
+        <EmergencySOS 
+          userLocation={userLocation} 
+          nearbyDisasters={nearbyDisasters}
+        />
+      </div>
     </div>
   );
 };

@@ -7,7 +7,6 @@ import CopilotChat from '@/components/CopilotChat';
 import DisasterGuidelines from '@/components/DisasterGuidelines';
 import HeatmapOverview from '@/components/HeatmapOverview';
 import EmergencyServicesMap from '@/components/EmergencyServicesMap';
-import EmergencySOS from '@/components/EmergencySOS';
 import OfflineIndicator from '@/components/OfflineIndicator';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -193,7 +192,18 @@ const Dashboard: React.FC = () => {
       case 'overview':
         return (
           <div className="h-full">
-            <HeatmapOverview disasters={disasters} userLocation={userLocation} />
+            <HeatmapOverview 
+              disasters={disasters} 
+              userLocation={userLocation}
+              nearbyDisasters={disasters.filter(d => {
+                if (!userLocation) return false;
+                const distance = Math.sqrt(
+                  Math.pow(d.location.lat - userLocation.lat, 2) + 
+                  Math.pow(d.location.lng - userLocation.lng, 2)
+                );
+                return distance < 1; // Within ~100km radius
+              })}
+            />
           </div>
         );
 
@@ -292,18 +302,6 @@ const Dashboard: React.FC = () => {
           </Button>
         )}
 
-        {/* Emergency SOS Button */}
-        <EmergencySOS 
-          userLocation={userLocation} 
-          nearbyDisasters={disasters.filter(d => {
-            if (!userLocation) return false;
-            const distance = Math.sqrt(
-              Math.pow(d.location.lat - userLocation.lat, 2) + 
-              Math.pow(d.location.lng - userLocation.lng, 2)
-            );
-            return distance < 1; // Within ~100km radius
-          })}
-        />
       </div>
     </div>
   );
