@@ -277,7 +277,7 @@ const Dashboard: React.FC = () => {
         {/* Mobile: Overlay when sidebar is open */}
         {!sidebarCollapsed && (
           <div 
-            className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-background/60 z-40 md:hidden backdrop-blur-sm transition-opacity"
             onClick={() => setSidebarCollapsed(true)}
           />
         )}
