@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, MapPin, Loader2, Bot, Navigation, Languages } from 'lucide-react';
+import { Send, MapPin, Loader2, Bot, Navigation, Languages, WifiOff, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { offlineTranslator, isOnline, translateSystemMessage, getEmergencyPhrase } from '@/utils/offlineTranslation';
 import type { Location } from '@/types';
 
 interface Message {
@@ -33,6 +35,10 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   const [loading, setLoading] = useState(false);
   const [locationName, setLocationName] = useState<string>('');
   const [language, setLanguage] = useState('en');
+  const [online, setOnline] = useState(true);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [modelProgress, setModelProgress] = useState(0);
+  const [modelReady, setModelReady] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -52,6 +58,48 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   }, [userLocation]);
 
   useEffect(() => {
+    // Monitor online/offline status
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+
+    setOnline(isOnline());
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const initializeOfflineModel = async () => {
+    if (modelReady || modelLoading) return;
+
+    setModelLoading(true);
+    setModelProgress(0);
+
+    try {
+      await offlineTranslator.initialize((progress) => {
+        setModelProgress(progress);
+      });
+      setModelReady(true);
+      toast({
+        title: "Offline Mode Ready",
+        description: "Translation model downloaded. You can now use Saarthi offline.",
+      });
+    } catch (error) {
+      console.error('Failed to initialize offline model:', error);
+      toast({
+        title: "Download Failed",
+        description: "Could not download offline translation model. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setModelLoading(false);
+    }
+  };
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -64,6 +112,11 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
     setLoading(true);
 
     try {
+      // Check if online and if we need offline fallback
+      if (!online) {
+        throw new Error('OFFLINE');
+      }
+
       const { data, error } = await supabase.functions.invoke('copilot-chat', {
         body: {
           messages: [...messages, userMessage],
@@ -109,14 +162,51 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
     } catch (error) {
       console.error('Error:', error);
       
-      // Remove the user message on error
-      setMessages(prev => prev.slice(0, -1));
-      
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response. Please try again.",
-        variant: "destructive",
-      });
+      // If offline or network error, use offline translation
+      if (error instanceof Error && (error.message === 'OFFLINE' || error.message.includes('Failed to fetch'))) {
+        try {
+          // Use offline translation for predefined responses
+          let offlineResponse = "I'm currently in offline mode. I can provide basic translations of emergency phrases. Please use the quick phrases below or try again when online.";
+          
+          if (language !== 'en') {
+            if (!offlineTranslator.isReady()) {
+              await offlineTranslator.initialize((progress) => {
+                setModelProgress(progress);
+              });
+            }
+            offlineResponse = await translateSystemMessage(offlineResponse, language);
+          }
+
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: offlineResponse,
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          
+          toast({
+            title: "Offline Mode",
+            description: "Using offline translation. Functionality is limited.",
+            variant: "default",
+          });
+        } catch (offlineError) {
+          console.error('Offline translation error:', offlineError);
+          setMessages(prev => prev.slice(0, -1));
+          toast({
+            title: "Error",
+            description: "Cannot process request offline. Please connect to internet.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Remove the user message on error
+        setMessages(prev => prev.slice(0, -1));
+        
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to get response. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -147,7 +237,7 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-border/40 bg-card/50 backdrop-blur">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Bot className="w-5 h-5 text-primary" />
@@ -157,7 +247,24 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
               <p className="text-sm text-muted-foreground">Disaster & Medical Response Assistant</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {!online && (
+              <div className="flex items-center gap-2 text-sm text-warning bg-warning/10 px-3 py-2 rounded-lg">
+                <WifiOff className="w-4 h-4" />
+                <span className="font-medium">Offline Mode</span>
+              </div>
+            )}
+            {!modelReady && !modelLoading && language !== 'en' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={initializeOfflineModel}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Enable Offline Mode
+              </Button>
+            )}
             <Select value={language} onValueChange={setLanguage}>
               <SelectTrigger className="w-[160px] bg-background border-border/40">
                 <Languages className="w-4 h-4 mr-2 text-primary" />
@@ -186,6 +293,15 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
             )}
           </div>
         </div>
+        {modelLoading && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Downloading offline translation model...</span>
+              <span className="text-primary font-medium">{modelProgress}%</span>
+            </div>
+            <Progress value={modelProgress} className="h-2" />
+          </div>
+        )}
       </div>
 
       {/* Messages */}
