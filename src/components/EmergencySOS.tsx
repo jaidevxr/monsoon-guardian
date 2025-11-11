@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Location, DisasterEvent } from '@/types';
 import { EmergencyContact } from '@/types/emergency';
 import EmergencyContactsDialog from './EmergencyContactsDialog';
+import { queueEmergencyAlert } from '@/utils/offlineStorage';
 
 interface EmergencySOSProps {
   userLocation: Location | null;
@@ -66,20 +67,36 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
         .slice(0, 5)
         .map(d => `${d.type.toUpperCase()}: ${d.title} (${d.severity})`);
 
+      const alertPayload = {
+        contacts: contacts.map(c => ({ name: c.name, email: c.email })),
+        userName: localStorage.getItem('userName') || 'A Saarthi User',
+        location: {
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          address,
+        },
+        status: status,
+        timestamp: new Date().toISOString(),
+        nearbyDisasters: nearbyDisastersInfo,
+      };
+
+      // Check if online
+      if (!navigator.onLine) {
+        // Queue for later if offline
+        await queueEmergencyAlert(alertPayload);
+        
+        toast.warning('You are offline', {
+          description: 'Emergency alert queued and will be sent when connection is restored.',
+        });
+        
+        setShowDialog(false);
+        setStatus('');
+        return;
+      }
+
       // Send alert via edge function
       const { data, error } = await supabase.functions.invoke('send-emergency-alert', {
-        body: {
-          contacts: contacts.map(c => ({ name: c.name, email: c.email })),
-          userName: localStorage.getItem('userName') || 'A Saarthi User',
-          location: {
-            lat: userLocation.lat,
-            lng: userLocation.lng,
-            address,
-          },
-          status: status,
-          timestamp: new Date().toISOString(),
-          nearbyDisasters: nearbyDisastersInfo,
-        },
+        body: alertPayload,
       });
 
       if (error) throw error;

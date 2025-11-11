@@ -33,6 +33,7 @@ interface DashboardSidebarProps {
   onToggleCollapse: () => void;
   onFacilityClick: (facility: EmergencyFacility) => void;
   onLocationUpdate: (location: Location) => void;
+  children?: React.ReactNode;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -42,6 +43,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onToggleCollapse,
   onFacilityClick,
   onLocationUpdate,
+  children,
 }) => {
   const navigate = useNavigate();
   const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
@@ -320,6 +322,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           )}
         </div>
       </div>
+
+      {/* Additional content slot */}
+      {children}
     </aside>
   );
 };

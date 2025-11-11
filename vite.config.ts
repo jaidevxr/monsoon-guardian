@@ -17,11 +17,11 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192x192.png', 'icon-512x512.png'],
       manifest: {
-        name: 'Predict Aid - Disaster Response Platform',
-        short_name: 'Predict Aid',
-        description: 'AI-powered disaster prediction and response platform with offline support',
-        theme_color: '#1e40af',
-        background_color: '#0a0f1e',
+        name: 'Saarthi - Disaster Management',
+        short_name: 'Saarthi',
+        description: 'Real-time disaster management and emergency response system with offline support',
+        theme_color: '#667eea',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
@@ -42,9 +42,37 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit for ML models
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.openweathermap\.org\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'weather-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-tiles',
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
           {
             urlPattern: /^https:\/\/api\./i,
             handler: 'NetworkFirst',

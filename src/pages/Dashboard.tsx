@@ -8,10 +8,17 @@ import DisasterGuidelines from '@/components/DisasterGuidelines';
 import HeatmapOverview from '@/components/HeatmapOverview';
 import EmergencyServicesMap from '@/components/EmergencyServicesMap';
 import EmergencySOS from '@/components/EmergencySOS';
+import OfflineIndicator from '@/components/OfflineIndicator';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
+import { 
+  getCachedDisasters, 
+  getCachedFacilities, 
+  getCachedWeather 
+} from '@/utils/offlineStorage';
 import {
   DisasterEvent, 
   EmergencyFacility, 
@@ -42,6 +49,8 @@ const Dashboard: React.FC = () => {
     weather: false,
   });
 
+  const { cacheDataForOffline } = useOfflineSync();
+
   // Load initial data
   useEffect(() => {
     loadDisasterData();
@@ -70,13 +79,25 @@ const Dashboard: React.FC = () => {
   const loadDisasterData = async () => {
     setLoading(prev => ({ ...prev, disasters: true }));
     try {
+      // Try to fetch from API
       const disasterData = await fetchDisasterData();
       setDisasters(disasterData);
+      
+      // Cache for offline use
+      await cacheDataForOffline(disasterData);
       
       console.log(`Loaded ${disasterData.length} real disasters from USGS and GDACS`);
     } catch (error) {
       console.error('Error loading disaster data:', error);
-      setDisasters([]);
+      
+      // Fall back to cached data if offline
+      if (!navigator.onLine) {
+        const cached = await getCachedDisasters();
+        if (cached.length > 0) {
+          setDisasters(cached);
+          console.log(`Loaded ${cached.length} cached disasters (offline mode)`);
+        }
+      }
     }
     setLoading(prev => ({ ...prev, disasters: false }));
   };
@@ -86,8 +107,22 @@ const Dashboard: React.FC = () => {
     try {
       const weatherData = await fetchWeatherData(location);
       setWeather(weatherData);
+      
+      // Cache for offline use
+      const locationKey = `${location.lat.toFixed(4)},${location.lng.toFixed(4)}`;
+      await cacheDataForOffline(undefined, undefined, { location: locationKey, data: weatherData });
     } catch (error) {
       console.error('Error loading weather data:', error);
+      
+      // Fall back to cached data if offline
+      if (!navigator.onLine) {
+        const locationKey = `${location.lat.toFixed(4)},${location.lng.toFixed(4)}`;
+        const cached = await getCachedWeather(locationKey);
+        if (cached) {
+          setWeather(cached);
+          console.log('Loaded cached weather (offline mode)');
+        }
+      }
     }
     setLoading(prev => ({ ...prev, weather: false }));
   };
@@ -97,8 +132,20 @@ const Dashboard: React.FC = () => {
     try {
       const facilityData = await fetchEmergencyFacilities(location);
       setFacilities(facilityData);
+      
+      // Cache for offline use
+      await cacheDataForOffline(undefined, facilityData);
     } catch (error) {
       console.error('Error loading facilities:', error);
+      
+      // Fall back to cached data if offline
+      if (!navigator.onLine) {
+        const cached = await getCachedFacilities();
+        if (cached.length > 0) {
+          setFacilities(cached);
+          console.log(`Loaded ${cached.length} cached facilities (offline mode)`);
+        }
+      }
     }
     setLoading(prev => ({ ...prev, facilities: false }));
   };
@@ -213,7 +260,11 @@ const Dashboard: React.FC = () => {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           onFacilityClick={handleFacilityClick}
           onLocationUpdate={handleLocationUpdate}
-        />
+        >
+          <div className="p-4 border-t border-border/20">
+            <OfflineIndicator />
+          </div>
+        </DashboardSidebar>
         
         {/* Mobile: Overlay when sidebar is open */}
         {!sidebarCollapsed && (
