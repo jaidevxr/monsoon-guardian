@@ -162,8 +162,9 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
       </div>
 
       {/* Emergency Alert Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md sm:max-w-lg mx-4 z-[3000]">
+      <Dialog open={showDialog} onOpenChange={setShowDialog} modal={false}>
+        <DialogContent className="max-w-md sm:max-w-lg mx-4 z-[3000]" onPointerDownOutside={(e) => e.preventDefault()}>
+
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
