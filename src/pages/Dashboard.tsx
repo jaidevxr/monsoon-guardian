@@ -202,14 +202,14 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-background relative">
       <AnimatedBackground />
 
-      {/* Global Sidebar Toggle - always visible when collapsed */}
+      {/* Mobile Sidebar Toggle - always visible when collapsed on mobile */}
       {sidebarCollapsed && (
         <Button
           aria-label="Open sidebar"
           variant="secondary"
           size="icon"
           onClick={() => setSidebarCollapsed(false)}
-          className="fixed left-3 top-3 z-[2500] shadow-lg"
+          className="fixed left-3 top-3 z-[2500] shadow-lg md:hidden"
         >
           <span className="relative block w-4 h-4"> 
             <span className="absolute inset-x-0 top-0 h-0.5 bg-foreground rounded" />
@@ -229,9 +229,17 @@ const Dashboard: React.FC = () => {
           onLocationUpdate={handleLocationUpdate}
         />
         
+        {/* Mobile: Overlay when sidebar is open */}
+        {!sidebarCollapsed && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-[1999] md:hidden"
+            onClick={() => setSidebarCollapsed(true)}
+          />
+        )}
+        
         <main 
           className={`w-full h-full transition-all duration-300 ${
-            sidebarCollapsed ? 'pl-16' : 'pl-72'
+            sidebarCollapsed ? 'md:pl-16' : 'md:pl-72'
           }`}
         >
           {/* Tab Content - Full Height */}
