@@ -122,31 +122,31 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
 
   return (
     <>
-      {/* Floating SOS Button */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2">
+      {/* SOS Button Group */}
+      <div className="flex flex-col gap-3">
         <Button
           size="icon"
           variant="outline"
           onClick={() => setShowContactsDialog(true)}
-          className="h-12 w-12 rounded-full shadow-lg bg-background/90 backdrop-blur-sm"
+          className="h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-background/90 backdrop-blur-sm hover:scale-110 transition-transform border-2 border-primary"
           title="Manage Emergency Contacts"
         >
-          <Users className="h-5 w-5" />
+          <Users className="h-5 w-5 md:h-6 md:w-6 text-primary" />
         </Button>
         
         <Button
           size="lg"
           onClick={() => setShowDialog(true)}
-          className="h-16 w-16 rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-pulse"
+          className="h-16 w-16 md:h-20 md:w-20 rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-[pulse_1.5s_ease-in-out_infinite] hover:scale-110 transition-transform ring-4 ring-destructive/30"
           title="Send Emergency Alert"
         >
-          <AlertCircle className="h-8 w-8" />
+          <AlertCircle className="h-8 w-8 md:h-10 md:w-10" />
         </Button>
       </div>
 
       {/* Emergency Alert Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md sm:max-w-lg mx-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />

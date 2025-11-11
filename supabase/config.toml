@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.predict-disasters]
 verify_jwt = false
+
+[functions.nearby]
+verify_jwt = false
+
+[functions.send-emergency-alert]
+verify_jwt = false
