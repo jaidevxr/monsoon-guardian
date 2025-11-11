@@ -930,11 +930,13 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
       )}
 
       {/* Emergency SOS Dynamic Island - Mobile adjusted */}
-      <div className="absolute bottom-20 right-4 md:bottom-6 md:right-6 z-[1000]">
-        <EmergencySOS 
-          userLocation={userLocation} 
-          nearbyDisasters={nearbyDisasters}
-        />
+      <div className="absolute bottom-20 right-4 md:bottom-6 md:right-6 z-[1100] pointer-events-auto">
+        <div className="glass-strong rounded-2xl p-2 md:p-3 border border-white/30 shadow-elevated backdrop-blur-xl">
+          <EmergencySOS 
+            userLocation={userLocation} 
+            nearbyDisasters={nearbyDisasters}
+          />
+        </div>
       </div>
     </div>
   );

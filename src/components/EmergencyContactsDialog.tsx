@@ -37,14 +37,23 @@ const EmergencyContactsDialog: React.FC<EmergencyContactsDialogProps> = ({
     setContacts(updatedContacts);
   };
 
+  const generateId = () => {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      return 'id_' + Math.random().toString(36).slice(2, 9);
+    }
+  };
+
   const addContact = () => {
-    if (!newContact.name || !newContact.email) {
-      toast.error('Name and email are required');
+    const emailValid = /.+@.+\..+/.test(newContact.email);
+    if (!newContact.name || !emailValid) {
+      toast.error('Please enter a valid name and email');
       return;
     }
 
     const contact: EmergencyContact = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       ...newContact,
     };
 
@@ -52,6 +61,7 @@ const EmergencyContactsDialog: React.FC<EmergencyContactsDialogProps> = ({
     saveContacts(updated);
     setNewContact({ name: '', email: '', phone: '', relationship: '' });
     toast.success(`${contact.name} added to emergency contacts`);
+    console.log('Emergency contacts updated:', updated);
   };
 
   const removeContact = (id: string) => {
