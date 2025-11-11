@@ -88,7 +88,7 @@ const EmergencyContactsDialog: React.FC<EmergencyContactsDialogProps> = ({
                   id="name"
                   value={newContact.name}
                   onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                  placeholder="John Doe"
+                  placeholder="Enter contact's full name"
                 />
               </div>
               
@@ -99,7 +99,7 @@ const EmergencyContactsDialog: React.FC<EmergencyContactsDialogProps> = ({
                   type="email"
                   value={newContact.email}
                   onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                  placeholder="john@example.com"
+                  placeholder="contact@example.com"
                 />
               </div>
               
@@ -110,7 +110,7 @@ const EmergencyContactsDialog: React.FC<EmergencyContactsDialogProps> = ({
                   type="tel"
                   value={newContact.phone}
                   onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                  placeholder="+1234567890"
+                  placeholder="+91 9876543210"
                 />
               </div>
               
@@ -120,7 +120,7 @@ const EmergencyContactsDialog: React.FC<EmergencyContactsDialogProps> = ({
                   id="relationship"
                   value={newContact.relationship}
                   onChange={(e) => setNewContact({ ...newContact, relationship: e.target.value })}
-                  placeholder="Family, Friend, Colleague"
+                  placeholder="e.g., Father, Mother, Spouse, Friend"
                 />
               </div>
             </div>
