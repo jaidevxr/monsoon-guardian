@@ -150,8 +150,8 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
               <Bot className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">AI Copilot</h2>
-              <p className="text-sm text-muted-foreground">Disaster Response Assistant</p>
+              <h2 className="text-xl font-bold text-foreground">Saarthi</h2>
+              <p className="text-sm text-muted-foreground">Disaster & Medical Response Assistant</p>
             </div>
           </div>
           {userLocation && (
@@ -172,9 +172,9 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Bot className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Welcome to AI Copilot</h3>
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Welcome to Saarthi</h3>
             <p className="text-muted-foreground mb-4">
-              I can help you with weather, disaster risks, nearby emergency services, and active alerts.
+              I'm your disaster and medical response assistant. Ask me about emergencies, health, weather, and safety.
               {userLocation && locationName && (
                 <span className="block mt-2 text-primary font-medium">
                   📍 Your location: {locationName}
