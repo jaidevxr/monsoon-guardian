@@ -126,6 +126,7 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
       {/* SOS Button Group - compact renders in a single row */}
       <div className={`${compact ? 'flex flex-row items-center gap-2' : 'flex flex-col gap-3'}`}>
         <Button
+          aria-label="Manage emergency contacts"
           size={compact ? 'icon' : 'icon'}
           variant="outline"
           onClick={() => setShowContactsDialog(true)}
@@ -136,6 +137,7 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
         </Button>
         
         <Button
+          aria-label="Send emergency alert"
           size={compact ? 'sm' : 'lg'}
           onClick={() => setShowDialog(true)}
           className={`${compact ? 'h-12 w-12' : 'h-16 w-16 md:h-20 md:w-20'} rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-[pulse_1.5s_ease-in-out_infinite] hover:scale-110 transition-transform ring-4 ring-destructive/30`}
