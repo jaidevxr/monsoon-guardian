@@ -6,6 +6,7 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 interface EmergencyAlertRequest {
@@ -36,7 +37,25 @@ const handler = async (req: Request): Promise<Response> => {
       nearbyDisasters,
     }: EmergencyAlertRequest = await req.json();
 
-    console.log(`Sending emergency alert from ${userName} to ${contacts.length} contacts`);
+    // Sanitize and deduplicate contacts by valid email
+    const emailRegex = /^[\w.!#$%&'*+/=?^`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
+    const sanitizedContacts = (contacts || [])
+      .map(c => ({
+        name: (c.name || '').toString().trim() || 'Contact',
+        email: (c.email || '').toString().trim().toLowerCase(),
+      }))
+      .filter(c => !!c.email);
+
+    const invalidRecipients = sanitizedContacts
+      .filter(c => !emailRegex.test(c.email))
+      .map(c => c.email);
+
+    // unique by email
+    const targetContacts = Array.from(
+      new Map(sanitizedContacts.filter(c => emailRegex.test(c.email)).map(c => [c.email, c])).values()
+    );
+
+    console.log(`Sending emergency alert from ${userName} to ${targetContacts.length} contacts (invalid: ${invalidRecipients.length})`);
 
     const googleMapsLink = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
     
@@ -49,8 +68,25 @@ const handler = async (req: Request): Promise<Response> => {
          </div>`
       : '';
 
-    // Send emails to all contacts
-    const emailPromises = contacts.map((contact) => {
+    // Send emails to all valid contacts
+    if (targetContacts.length === 0) {
+      console.warn('No valid contacts with emails to send.');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          sent: 0,
+          failed: 0,
+          invalid: invalidRecipients,
+          message: 'No valid contact emails to send.'
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const emailPromises = targetContacts.map((contact) => {
       console.log(`Sending email to ${contact.name} (${contact.email})`);
       return resend.emails.send({
         from: "Saarthi Emergency Alert <onboarding@resend.dev>",
@@ -131,9 +167,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Log failed emails for debugging
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        console.error(`Failed to send email to ${contacts[index].name} (${contacts[index].email}):`, result.reason);
+        console.error(`Failed to send email to ${targetContacts[index].name} (${targetContacts[index].email}):`, result.reason);
       } else {
-        console.log(`Successfully sent email to ${contacts[index].name} (${contacts[index].email})`);
+        console.log(`Successfully sent email to ${targetContacts[index].name} (${targetContacts[index].email})`);
       }
     });
 
@@ -144,7 +180,9 @@ const handler = async (req: Request): Promise<Response> => {
         success: true,
         sent: successful,
         failed: failed,
-        message: `Emergency alert sent to ${successful} of ${contacts.length} contacts`,
+        attempted: targetContacts.length,
+        invalid: invalidRecipients,
+        message: `Emergency alert sent to ${successful} of ${targetContacts.length} contacts` ,
       }),
       {
         status: 200,
