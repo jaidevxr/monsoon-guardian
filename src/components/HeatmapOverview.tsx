@@ -508,26 +508,26 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
   // Get color based on value with better opacity for heatmap effect
   const getColor = (value: number, mode: OverlayMode, opacity: number = 0.6): string => {
     if (mode === 'temperature') {
-      // Temperature: 10-45°C - Purple to Red gradient
-      if (value < 15) return `rgba(147, 51, 234, ${opacity})`; // Cool purple
-      if (value < 22) return `rgba(168, 85, 247, ${opacity})`; // Light purple
-      if (value < 28) return `rgba(251, 146, 60, ${opacity})`; // Light orange
-      if (value < 35) return `rgba(249, 115, 22, ${opacity})`; // Orange
-      if (value < 40) return `rgba(239, 68, 68, ${opacity})`; // Red
-      return `rgba(220, 38, 38, ${opacity})`; // Hot dark red
+      // Temperature: 10-45°C - Purple to Red gradient (matches legend)
+      if (value < 15) return `rgba(168, 85, 247, ${opacity})`; // Cool purple (accent)
+      if (value < 22) return `rgba(168, 85, 247, ${opacity})`; // Light purple (accent)
+      if (value < 28) return `rgba(251, 146, 60, ${opacity})`; // Light orange (warning)
+      if (value < 35) return `rgba(249, 115, 22, ${opacity})`; // Orange (warning darker)
+      if (value < 40) return `rgba(239, 68, 68, ${opacity})`; // Red (destructive)
+      return `rgba(220, 38, 38, ${opacity})`; // Hot dark red (destructive darker)
     } else if (mode === 'pollution') {
-      // AQI: 0-300+ - Yellow to Red to Purple gradient
-      if (value < 50) return `rgba(253, 224, 71, ${opacity})`; // Good - yellow
-      if (value < 100) return `rgba(251, 191, 36, ${opacity})`; // Moderate - amber
-      if (value < 150) return `rgba(251, 146, 60, ${opacity})`; // Unhealthy for sensitive - orange
-      if (value < 200) return `rgba(239, 68, 68, ${opacity})`; // Unhealthy - red
+      // AQI: 0-300+ - Green to Yellow to Red to Purple gradient (matches legend)
+      if (value < 50) return `rgba(34, 197, 94, ${opacity})`; // Good - green (success)
+      if (value < 100) return `rgba(234, 179, 8, ${opacity})`; // Moderate - yellow (warning lighter)
+      if (value < 150) return `rgba(251, 146, 60, ${opacity})`; // Unhealthy for sensitive - orange (warning)
+      if (value < 200) return `rgba(239, 68, 68, ${opacity})`; // Unhealthy - red (destructive)
       if (value < 300) return `rgba(190, 18, 60, ${opacity})`; // Very unhealthy - dark red
-      return `rgba(147, 51, 234, ${opacity})`; // Hazardous - purple
+      return `rgba(147, 51, 234, ${opacity})`; // Hazardous - purple (accent)
     } else {
-      // Disaster risk - Yellow to Orange to Red gradient
-      if (value < 0.45) return `rgba(253, 224, 71, ${opacity})`; // Yellow (low)
-      if (value < 0.65) return `rgba(251, 146, 60, ${opacity})`; // Orange (medium)
-      return `rgba(239, 68, 68, ${opacity})`; // Red (high)
+      // Disaster risk - Green to Orange to Red gradient (matches legend exactly)
+      if (value < 0.45) return `rgba(34, 197, 94, ${opacity})`; // Green (low/success)
+      if (value < 0.65) return `rgba(251, 146, 60, ${opacity})`; // Orange (medium/warning)
+      return `rgba(239, 68, 68, ${opacity})`; // Red (high/destructive)
     }
   };
 
