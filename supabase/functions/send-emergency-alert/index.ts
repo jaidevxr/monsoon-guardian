@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const FROM_NAME = Deno.env.get("ALERTS_FROM_NAME") || "Saarthi Emergency Alert";
+const FROM_EMAIL = Deno.env.get("ALERTS_FROM_EMAIL") || "onboarding@resend.dev";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,12 +88,25 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Ensure email service configured
+    if (!Deno.env.get("RESEND_API_KEY")) {
+      console.error("RESEND_API_KEY is not configured in Supabase function secrets.");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Email service not configured. Please set RESEND_API_KEY in Supabase function secrets."
+        }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const emailPromises = targetContacts.map((contact) => {
       console.log(`Sending email to ${contact.name} (${contact.email})`);
       return resend.emails.send({
-        from: "Saarthi Emergency Alert <onboarding@resend.dev>",
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: [contact.email],
         subject: `🚨 EMERGENCY ALERT from ${userName}`,
+        text: `Emergency status: ${status}. Location: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}${location.address ? ` - ${location.address}` : ''}. Map: ${googleMapsLink}. Time: ${new Date(timestamp).toLocaleString()}`,
         html: `
           <!DOCTYPE html>
           <html>
