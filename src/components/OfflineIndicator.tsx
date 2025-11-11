@@ -5,7 +5,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { WifiOff, Wifi, Download, HardDrive } from 'lucide-react';
 import { getStorageUsage, getPendingAlerts } from '@/utils/offlineStorage';
 import { toast } from 'sonner';
-const OfflineIndicator: React.FC = () => {
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+interface OfflineIndicatorProps {
+  isCollapsed?: boolean;
+}
+
+const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ isCollapsed = false }) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showDetails, setShowDetails] = useState(false);
   const [storageInfo, setStorageInfo] = useState<any>(null);
@@ -64,7 +75,45 @@ const OfflineIndicator: React.FC = () => {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
   return <>
-      
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size={isCollapsed ? "icon" : "sm"}
+              onClick={() => setShowDetails(true)}
+              className={`${isCollapsed ? 'w-full h-10' : 'w-full'} relative hover:bg-primary/10 transition-all duration-200`}
+            >
+              {isOnline ? (
+                <Wifi className={`${isCollapsed ? 'h-4 w-4' : 'h-4 w-4 mr-2'} text-success`} />
+              ) : (
+                <WifiOff className={`${isCollapsed ? 'h-4 w-4' : 'h-4 w-4 mr-2'} text-warning`} />
+              )}
+              {!isCollapsed && (
+                <span className="font-semibold text-xs">
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+              )}
+              {pendingCount > 0 && !isCollapsed && (
+                <Badge variant="secondary" className="ml-auto text-[10px] px-1.5">
+                  {pendingCount}
+                </Badge>
+              )}
+              {pendingCount > 0 && isCollapsed && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full border-2 border-background" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right" align="center" sideOffset={8} className="bg-popover/95 backdrop-blur-xl border-border/50">
+              <p className="font-semibold text-sm">{isOnline ? 'Online' : 'Offline'}</p>
+              {pendingCount > 0 && (
+                <p className="text-xs text-muted-foreground">{pendingCount} pending</p>
+              )}
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent>

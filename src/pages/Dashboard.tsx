@@ -261,9 +261,7 @@ const Dashboard: React.FC = () => {
           onFacilityClick={handleFacilityClick}
           onLocationUpdate={handleLocationUpdate}
         >
-          <div className="p-4 border-t border-border/20">
-            <OfflineIndicator />
-          </div>
+          <OfflineIndicator isCollapsed={sidebarCollapsed} />
         </DashboardSidebar>
         
         {/* Mobile: Overlay when sidebar is open */}

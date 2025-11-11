@@ -285,6 +285,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* Footer */}
         <div className="p-4 border-t border-border/20 bg-gradient-to-r from-transparent to-primary/5 backdrop-blur-sm space-y-3">
+          {/* Offline Indicator */}
+          {children}
+          
           {/* Install Button */}
           {!isInstalled && (
             <TooltipProvider delayDuration={200}>
@@ -322,9 +325,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           )}
         </div>
       </div>
-
-      {/* Additional content slot */}
-      {children}
     </aside>
   );
 };
