@@ -141,32 +141,15 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
       let facilities;
       let parsedUserLocation;
       
-      // Try to extract JSON data from the response - look for the last JSON block
+      // Try to extract JSON data from the response
       try {
-        // First, try to find JSON in code blocks (```json ... ```)
-        const codeBlockMatch = data.message.match(/```json\s*([\s\S]*?)\s*```/);
-        let jsonText = null;
-        
-        if (codeBlockMatch) {
-          jsonText = codeBlockMatch[1];
-          // Remove the code block from display message
-          data.message = data.message.replace(codeBlockMatch[0], '').trim();
-        } else {
-          // Fallback: look for raw JSON blocks
-          const jsonMatches = Array.from(data.message.matchAll(/\{[\s\S]*?"facilities"[\s\S]*?\}/g));
-          if (jsonMatches.length > 0) {
-            jsonText = jsonMatches[jsonMatches.length - 1][0];
-            data.message = data.message.replace(jsonText, '').trim();
-          }
-        }
-        
-        if (jsonText) {
-          const extracted = JSON.parse(jsonText);
+        const jsonMatch = data.message.match(/\{[\s\S]*"facilities"[\s\S]*\}/);
+        if (jsonMatch) {
+          const extracted = JSON.parse(jsonMatch[0]);
           facilities = extracted.facilities;
           parsedUserLocation = extracted.userLocation;
         }
       } catch (e) {
-        console.error('Failed to parse facility data:', e);
         // If parsing fails, it's just regular text
       }
 
@@ -272,16 +255,15 @@ const CopilotChat = ({ userLocation }: CopilotChatProps) => {
   };
 
   const handleGetDirections = (facility: any, userLoc: Location) => {
-    // Navigate to dashboard overview (emergency hub) with route info
-    navigate('/dashboard', {
+    // Navigate to emergency page with route info
+    navigate('/emergency', {
       state: {
         destination: {
           lat: facility.lat,
           lng: facility.lng,
           name: facility.name
         },
-        origin: userLoc,
-        showRoute: true
+        origin: userLoc
       }
     });
   };

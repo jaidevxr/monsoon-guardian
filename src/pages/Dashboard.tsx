@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import WeatherWidget from '@/components/WeatherWidget';
 import AnimatedBackground from '@/components/AnimatedBackground';
@@ -34,8 +33,6 @@ import {
 } from '@/utils/api';
 
 const Dashboard: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
@@ -44,7 +41,6 @@ const Dashboard: React.FC = () => {
   const [predictions, setPredictions] = useState<DisasterEvent[]>([]);
   const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [routeInfo, setRouteInfo] = useState<any>(null);
   const [loading, setLoading] = useState({
     disasters: false,
     predictions: false,
@@ -53,20 +49,6 @@ const Dashboard: React.FC = () => {
   });
 
   const { cacheDataForOffline } = useOfflineSync();
-
-  // Handle route navigation from AI chat
-  useEffect(() => {
-    if (location.state?.showRoute && location.state?.destination) {
-      setRouteInfo({
-        origin: location.state.origin,
-        destination: location.state.destination
-      });
-      setActiveTab('overview');
-      // Clear the state after using it
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state]);
-
 
   // Load initial data
   useEffect(() => {
@@ -221,8 +203,6 @@ const Dashboard: React.FC = () => {
                 );
                 return distance < 1; // Within ~100km radius
               })}
-              routeInfo={routeInfo}
-              onRouteClose={() => setRouteInfo(null)}
             />
           </div>
         );
