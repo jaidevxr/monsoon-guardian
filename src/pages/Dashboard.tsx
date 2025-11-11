@@ -289,14 +289,14 @@ const Dashboard: React.FC = () => {
           </div>
         </main>
 
-        {/* Mobile Sidebar Toggle - Fixed position, always on top */}
+        {/* Mobile Sidebar Toggle - Adjusted position to avoid map controls */}
         {sidebarCollapsed && (
           <Button
             aria-label="Open sidebar"
             variant="secondary"
             size="icon"
             onClick={() => setSidebarCollapsed(false)}
-            className="fixed left-4 top-4 z-50 shadow-xl md:hidden backdrop-blur-sm bg-background/80 border border-border/50 hover:bg-background/90"
+            className="fixed left-4 top-[72px] z-[1002] shadow-xl md:hidden backdrop-blur-sm bg-background/80 border border-border/50 hover:bg-background/90"
           >
             <Menu className="h-5 w-5" />
           </Button>

@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { fetchWeatherDataForMultipleLocations } from '@/utils/api';
-import { Cloud, Droplets, AlertTriangle } from 'lucide-react';
+import { Cloud, Droplets, AlertTriangle, Settings, Layers, X } from 'lucide-react';
 import DynamicIsland from '@/components/DynamicIsland';
 import EmergencySOS from '@/components/EmergencySOS';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface HeatmapOverviewProps {
   disasters: DisasterEvent[];
@@ -48,6 +50,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
   const [allStatesData, setAllStatesData] = useState<any>(null);
   const [stateAverages, setStateAverages] = useState<Map<string, { avgTemp: number; avgAqi: number; avgRisk: number; count: number }>>(new Map());
   const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
+  const [showMapStyleSheet, setShowMapStyleSheet] = useState(false);
+  const [showHeatmapSheet, setShowHeatmapSheet] = useState(false);
 
   // Initialize map
   useEffect(() => {
@@ -713,8 +717,8 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
         )}
       </div>
 
-      {/* Map Layer Controls */}
-      <div className="absolute top-4 left-4 glass-strong rounded-xl shadow-elevated border border-white/30 p-3 z-[1000] backdrop-blur-xl">
+      {/* Desktop Map Layer Controls */}
+      <div className="hidden md:block absolute top-4 left-4 glass-strong rounded-xl shadow-elevated border border-white/30 p-3 z-[1000] backdrop-blur-xl">
         <h3 className="text-xs font-semibold mb-2 text-foreground">Map Style</h3>
         <div className="flex flex-col gap-2">
           <button
@@ -735,7 +739,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
                 : 'bg-card/90 hover:bg-card border border-border hover:shadow-md'
             }`}
           >
-            Streets (Google-like)
+            Streets
           </button>
           <button
             onClick={() => setMapLayer('satellite')}
@@ -760,12 +764,10 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
         </div>
       </div>
 
-      {/* Heatmap Controls */}
-      <div className="absolute top-4 right-4 glass-strong rounded-xl shadow-elevated border border-white/30 p-4 z-[1000] min-w-[200px] backdrop-blur-xl">
+      {/* Desktop Heatmap Controls */}
+      <div className="hidden md:block absolute top-4 right-4 glass-strong rounded-xl shadow-elevated border border-white/30 p-4 z-[1000] min-w-[200px] backdrop-blur-xl">
         <h3 className="text-xs font-semibold mb-3 text-foreground flex items-center gap-2">
-          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
+          <Settings className="w-4 h-4 text-primary" />
           Heatmap Settings
         </h3>
         <div className="space-y-4">
@@ -829,107 +831,106 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
       )}
       
 
-      {/* Risk Legend */}
+      {/* Risk Legend - Mobile positioned differently */}
       {overlayMode === 'disaster' && (
-        <div className="absolute bottom-6 left-6 glass-strong p-4 rounded-xl shadow-elevated border border-border/30 z-[1000] max-w-[220px] backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">Risk Level</h3>
-            <Badge variant="outline" className="text-xs">{activeFilters.size}/3</Badge>
+        <div className="absolute bottom-20 md:bottom-6 left-4 md:left-6 glass-strong p-3 md:p-4 rounded-xl shadow-elevated border border-border/30 z-[1000] max-w-[180px] md:max-w-[220px] backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <h3 className="text-xs md:text-sm font-semibold text-foreground">Risk Level</h3>
+            <Badge variant="outline" className="text-[10px] md:text-xs px-1 md:px-2">{activeFilters.size}/3</Badge>
           </div>
           
           <div className="space-y-2">
             <div
               onClick={() => toggleFilter('low')}
-              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
+              className={`flex items-center gap-2 md:gap-3 p-1.5 md:p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
                 activeFilters.has('low') 
                   ? 'shadow-md border-success/40 bg-success/10' 
                   : 'opacity-50 hover:opacity-80 hover:bg-muted/30 border-transparent'
               }`}
             >
-              <div className="w-4 h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
-              <span className="text-sm font-medium text-foreground">Low Risk</span>
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
+              <span className="text-xs md:text-sm font-medium text-foreground">Low</span>
             </div>
             
             <div
               onClick={() => toggleFilter('medium')}
-              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
+              className={`flex items-center gap-2 md:gap-3 p-1.5 md:p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
                 activeFilters.has('medium') 
                   ? 'shadow-md border-warning/40 bg-warning/10' 
                   : 'opacity-50 hover:opacity-80 hover:bg-muted/30 border-transparent'
               }`}
             >
-              <div className="w-4 h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
-              <span className="text-sm font-medium text-foreground">Medium Risk</span>
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
+              <span className="text-xs md:text-sm font-medium text-foreground">Medium</span>
             </div>
             
             <div
               onClick={() => toggleFilter('high')}
-              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
+              className={`flex items-center gap-2 md:gap-3 p-1.5 md:p-2.5 rounded-lg cursor-pointer transition-all duration-300 border ${
                 activeFilters.has('high') 
                   ? 'shadow-md border-destructive/40 bg-destructive/10' 
                   : 'opacity-50 hover:opacity-80 hover:bg-muted/30 border-transparent'
               }`}
             >
-              <div className="w-4 h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
-              <span className="text-sm font-medium text-foreground">High Risk</span>
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded-full border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
+              <span className="text-xs md:text-sm font-medium text-foreground">High</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Weather/Pollution Legend */}
+      {/* Weather/Pollution Legend - Mobile adjusted */}
       {overlayMode !== 'disaster' && (
-        <div className="absolute bottom-20 left-4 glass-strong p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[200px] backdrop-blur-xl">
-          <h3 className="text-xs font-semibold mb-2">
-            {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality Index'}
+        <div className="absolute bottom-20 md:bottom-20 left-4 glass-strong p-2 md:p-3 rounded-xl shadow-elevated border border-white/30 z-[1000] max-w-[160px] md:max-w-[200px] backdrop-blur-xl">
+          <h3 className="text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2">
+            {overlayMode === 'temperature' ? 'Temperature' : 'Air Quality'}
           </h3>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {overlayMode === 'temperature' ? (
               <>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(168, 85, 247)', borderColor: 'rgb(168, 85, 247)' }}></div>
-                  <span className="text-xs">Cold (&lt;22°C)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(168, 85, 247)', borderColor: 'rgb(168, 85, 247)' }}></div>
+                  <span className="text-[10px] md:text-xs">Cold</span>
                 </div>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(251, 146, 60)', borderColor: 'rgb(251, 146, 60)' }}></div>
-                  <span className="text-xs">Mild (22-28°C)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(251, 146, 60)', borderColor: 'rgb(251, 146, 60)' }}></div>
+                  <span className="text-[10px] md:text-xs">Mild</span>
                 </div>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(249, 115, 22)', borderColor: 'rgb(249, 115, 22)' }}></div>
-                  <span className="text-xs">Warm (28-35°C)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(249, 115, 22)', borderColor: 'rgb(249, 115, 22)' }}></div>
+                  <span className="text-[10px] md:text-xs">Warm</span>
                 </div>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' }}></div>
-                  <span className="text-xs">Hot (&gt;35°C)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' }}></div>
+                  <span className="text-[10px] md:text-xs">Hot</span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(34, 197, 94)', borderColor: 'rgb(34, 197, 94)' }}></div>
-                  <span className="text-xs">Good (0-50)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(34, 197, 94)', borderColor: 'rgb(34, 197, 94)' }}></div>
+                  <span className="text-[10px] md:text-xs">Good</span>
                 </div>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(234, 179, 8)', borderColor: 'rgb(234, 179, 8)' }}></div>
-                  <span className="text-xs">Moderate (50-100)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(234, 179, 8)', borderColor: 'rgb(234, 179, 8)' }}></div>
+                  <span className="text-[10px] md:text-xs">Moderate</span>
                 </div>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(251, 146, 60)', borderColor: 'rgb(251, 146, 60)' }}></div>
-                  <span className="text-xs">Unhealthy (100-150)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(251, 146, 60)', borderColor: 'rgb(251, 146, 60)' }}></div>
+                  <span className="text-[10px] md:text-xs">Unhealthy</span>
                 </div>
-                <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' }}></div>
-                  <span className="text-xs">Hazardous (&gt;150)</span>
+                <div className="flex items-center gap-1.5 md:gap-2 p-0.5 md:p-1">
+                  <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' }}></div>
+                  <span className="text-[10px] md:text-xs">Hazardous</span>
                 </div>
               </>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border/30">Click points for details</p>
         </div>
       )}
 
-      {/* Emergency SOS Dynamic Island */}
-      <div className="absolute bottom-6 right-6 z-[1000]">
+      {/* Emergency SOS Dynamic Island - Mobile adjusted */}
+      <div className="absolute bottom-20 right-4 md:bottom-6 md:right-6 z-[1000]">
         <EmergencySOS 
           userLocation={userLocation} 
           nearbyDisasters={nearbyDisasters}
