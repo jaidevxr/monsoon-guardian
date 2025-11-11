@@ -885,39 +885,39 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
             {overlayMode === 'temperature' ? (
               <>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--accent))', borderColor: 'hsl(var(--accent))' }}></div>
-                  <span className="text-xs">Cold (&lt;15°C)</span>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(168, 85, 247)', borderColor: 'rgb(168, 85, 247)' }}></div>
+                  <span className="text-xs">Cold (&lt;22°C)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(251, 146, 60)', borderColor: 'rgb(251, 146, 60)' }}></div>
                   <span className="text-xs">Mild (22-28°C)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(249, 115, 22)', borderColor: 'rgb(249, 115, 22)' }}></div>
                   <span className="text-xs">Warm (28-35°C)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' }}></div>
                   <span className="text-xs">Hot (&gt;35°C)</span>
                 </div>
               </>
             ) : (
               <>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))' }}></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(34, 197, 94)', borderColor: 'rgb(34, 197, 94)' }}></div>
                   <span className="text-xs">Good (0-50)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(234, 179, 8)', borderColor: 'rgb(234, 179, 8)' }}></div>
                   <span className="text-xs">Moderate (50-100)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}></div>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(251, 146, 60)', borderColor: 'rgb(251, 146, 60)' }}></div>
                   <span className="text-xs">Unhealthy (100-150)</span>
                 </div>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}></div>
-                  <span className="text-xs">Hazardous (&gt;200)</span>
+                  <div className="w-3 h-3 rounded-full opacity-70 border-2 shadow-sm" style={{ background: 'rgb(239, 68, 68)', borderColor: 'rgb(239, 68, 68)' }}></div>
+                  <span className="text-xs">Hazardous (&gt;150)</span>
                 </div>
               </>
             )}
