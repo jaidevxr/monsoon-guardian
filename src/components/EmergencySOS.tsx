@@ -14,9 +14,10 @@ import { queueEmergencyAlert } from '@/utils/offlineStorage';
 interface EmergencySOSProps {
   userLocation: Location | null;
   nearbyDisasters?: DisasterEvent[];
+  compact?: boolean; // renders smaller buttons in a single island
 }
 
-const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisasters = [] }) => {
+const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisasters = [], compact = false }) => {
   const [showDialog, setShowDialog] = useState(false);
   const [showContactsDialog, setShowContactsDialog] = useState(false);
   const [status, setStatus] = useState('');
@@ -122,25 +123,25 @@ const EmergencySOS: React.FC<EmergencySOSProps> = ({ userLocation, nearbyDisaste
 
   return (
     <>
-      {/* SOS Button Group */}
-      <div className="flex flex-col gap-3">
+      {/* SOS Button Group - compact renders in a single row */}
+      <div className={`${compact ? 'flex flex-row items-center gap-2' : 'flex flex-col gap-3'}`}>
         <Button
-          size="icon"
+          size={compact ? 'icon' : 'icon'}
           variant="outline"
           onClick={() => setShowContactsDialog(true)}
-          className="h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-background/90 backdrop-blur-sm hover:scale-110 transition-transform border-2 border-primary"
+          className={`${compact ? 'h-10 w-10' : 'h-12 w-12 md:h-14 md:w-14'} rounded-full shadow-lg bg-background/90 backdrop-blur-sm hover:scale-110 transition-transform border-2 border-primary`}
           title="Manage Emergency Contacts"
         >
-          <Users className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+          <Users className={`${compact ? 'h-5 w-5' : 'h-5 w-5 md:h-6 md:w-6'} text-primary`} />
         </Button>
         
         <Button
-          size="lg"
+          size={compact ? 'sm' : 'lg'}
           onClick={() => setShowDialog(true)}
-          className="h-16 w-16 md:h-20 md:w-20 rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-[pulse_1.5s_ease-in-out_infinite] hover:scale-110 transition-transform ring-4 ring-destructive/30"
+          className={`${compact ? 'h-12 w-12' : 'h-16 w-16 md:h-20 md:w-20'} rounded-full shadow-2xl bg-destructive hover:bg-destructive/90 animate-[pulse_1.5s_ease-in-out_infinite] hover:scale-110 transition-transform ring-4 ring-destructive/30`}
           title="Send Emergency Alert"
         >
-          <AlertCircle className="h-8 w-8 md:h-10 md:w-10" />
+          <AlertCircle className={`${compact ? 'h-6 w-6' : 'h-8 w-8 md:h-10 md:w-10'}`} />
         </Button>
       </div>
 

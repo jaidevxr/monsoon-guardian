@@ -935,6 +935,7 @@ const HeatmapOverview: React.FC<HeatmapOverviewProps> = ({ disasters, userLocati
           <EmergencySOS 
             userLocation={userLocation} 
             nearbyDisasters={nearbyDisasters}
+            compact
           />
         </div>
       </div>
